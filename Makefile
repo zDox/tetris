@@ -13,7 +13,7 @@ OBJS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(filter-out $(SRCDIR)/test_%.cp
 # OBJS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 
 # Binary name
-TARGET = $(BINDIR)/snake-game
+TARGET = $(BINDIR)/tetris
 
 all: $(TARGET) $(TESTTARGET)
 
@@ -26,7 +26,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 run: $(TARGET)
-	./bin/snake-game
+	./bin/tetris
 
 clean:
 	rm -rf $(OBJDIR) $(BINDIR)

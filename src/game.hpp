@@ -1,14 +1,22 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
-#include "tetramino.hpp"
 #include <memory>
 #include <vector>
+#include <string>
 
 // 3rd Party libraries
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 
+#include "tetramino.hpp"
+#include "utils.hpp"
+
+enum COLLISION_TYPE{
+    NONE,
+    SIDE,
+    BOTTOM
+};
 
 class Game{
 private:
@@ -26,6 +34,9 @@ private:
 
     static const float SIDE_LENGTH; // Gets calculated later (Not possible here)
 
+    sf::Color BACKGROUND_COLOR = sf::Color::Black;
+    sf::Color GRID_COLOR = sf::Color(0, 128, 255);
+
     // SFML
     std::shared_ptr<sf::RenderWindow> window;
     sf::VideoMode videomode;
@@ -33,18 +44,31 @@ private:
 
     // Game Logic
     // Game Logic -- Config
-    static const int SPEED = 4; // Move tetra 4 Grid slots per second
+    static const int SPEED = 20; // Move tetra SPEED Grid slots per 10 second
                             
     // Game Logic -- Variables
     bool running = true;
+    bool paused = false;
+    bool finished = false;
     std::vector<std::vector<sf::RectangleShape>> grid;
     std::shared_ptr<Tetramino> tetra;
+    int points = 0;
+
+    std::vector<std::vector<sf::RectangleShape>> stationaries;
+    bool hold_up = false;
+    bool hold_left = false;
+    bool hold_right = false;
 
     // Game Logic -- Timer
     sf::Clock tetra_move_timer;
 
     // Game Logic -- Functions
     void spawnTetramino();
+    bool checkCollisions(int dx, int dy, bool clockwise);
+    void lockTetra();
+
+    bool checkLoss();
+    void handleLoss();
 
     // Drawing
     void drawGrid();
@@ -52,7 +76,9 @@ private:
     // Updating
     void resetGrid();
     void putTetraOnGrid();
+    void putStationariesOnGrid();
     void updateTetra();
+    void checkPoint();
 
     void initWindow();
     void initVariables();

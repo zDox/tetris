@@ -8,6 +8,7 @@
 
 #include <SFML/Graphics.hpp>
 
+
 enum TETRAMINO_TYPE{
     STRAIGHT=0,
     SQUARE,

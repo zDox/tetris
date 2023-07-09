@@ -1,7 +1,9 @@
 #include "tetramino.hpp"
-#include "utils.hpp"
 
-Tetramino::Tetramino(TETRAMINO_TYPE t_type, sf::Color t_color):type(t_type), color(t_color){
+
+Tetramino::Tetramino(TETRAMINO_TYPE t_type, sf::Color t_color){
+    type = t_type;
+    color = t_color;
     switch(type){
         case TETRAMINO_TYPE::STRAIGHT:
             form = {{0,0,0,0},

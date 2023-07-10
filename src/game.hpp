@@ -42,6 +42,11 @@ private:
     sf::VideoMode videomode;
     sf::Event event;
 
+    // SFML -- initUI
+    std::shared_ptr<sf::Font> roboto_font;
+    std::shared_ptr<sf::Text> points_text;
+    std::shared_ptr<sf::Text> paused_text;
+
     // Game Logic
     // Game Logic -- Config
     static const int SPEED = 20; // Move tetra SPEED Grid slots per 10 second
@@ -70,18 +75,21 @@ private:
     bool checkLoss();
     void handleLoss();
 
-    // Drawing
-    void drawGrid();
-    
     // Updating
     void resetGrid();
     void putTetraOnGrid();
     void putStationariesOnGrid();
     void updateTetra();
     void checkPoint();
+    void updateUI();
 
+    // Drawing
+    void drawGrid();
+    void drawUI();
+    
     void initWindow();
     void initVariables();
+    void initUI();
     
     void handleEvents();
     void update();

@@ -8,6 +8,7 @@ const float Game::SIDE_LENGTH = static_cast<float>(HEIGHT-(SPACING_TOP + SPACING
 Game::Game(){
     initVariables();
     initWindow();
+    initUI();
 }
 
 void Game::initVariables(){
@@ -23,6 +24,7 @@ void Game::initVariables(){
             stationaries[i].push_back(rect2);
         }
     }
+    tetra_move_timer.restart();
 }
 
 void Game::initWindow(){
@@ -32,6 +34,22 @@ void Game::initWindow(){
     window = std::make_shared<sf::RenderWindow>(videomode, "Snake Game", sf::Style::Titlebar | sf::Style::Close);
     window->setFramerateLimit(FPS);
 }
+
+void Game::initUI(){
+    roboto_font = std::make_shared<sf::Font>();
+    if(!roboto_font->loadFromFile("Resources/Roboto-Regular.ttf")){
+        exit(EXIT_FAILURE);
+    }
+    points_text = std::make_shared<sf::Text>("None", *roboto_font, 40);
+    points_text->setPosition(400, 10);
+
+    paused_text = std::make_shared<sf::Text>("Paused", *roboto_font, 60);
+    float paused_width = paused_text->getLocalBounds().width;
+    float paused_height = paused_text->getLocalBounds().height;
+
+    paused_text->setPosition(WIDTH/2.f-(paused_width/2), HEIGHT/2.f-(paused_height/2));
+}
+
 
 void Game::handleEvents(){
     while(window->pollEvent(event)){
@@ -222,6 +240,9 @@ void Game::handleLoss(){
     std::cout << "Points: " << std::to_string(points) << "\n";
 };
 
+void Game::updateUI(){
+    points_text->setString(std::to_string(points));
+}
 
 void Game::update(){
     if(paused) return;
@@ -232,6 +253,7 @@ void Game::update(){
     updateTetra();
     checkPoint();
     putTetraOnGrid();
+    updateUI();
 };
 
 void Game::drawGrid(){
@@ -243,12 +265,17 @@ void Game::drawGrid(){
     }
 }
 
+void Game::drawUI(){
+    window->draw(*points_text);
+    if(paused) window->draw(*paused_text);
+}
 
 
 void Game::render(){
     window->clear(BACKGROUND_COLOR);
     
     drawGrid();
+    drawUI();
      
     window->display();
 };

@@ -1,6 +1,6 @@
 # Compiler Options
 CXX := g++
-CXXFLAGS := -std=c++20 -lsfml-graphics -lsfml-window -lsfml-system 
+CXXFLAGS := -g -std=c++20 -lsfml-graphics -lsfml-window -lsfml-system 
 # Directories
 SRCDIR = src
 OBJDIR = obj

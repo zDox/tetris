@@ -6,8 +6,12 @@
 #include <string>
 
 // 3rd Party libraries
+// SFML
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
+// tgui
+#include <TGUI/TGUI.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
 
 #include "tetramino.hpp"
 #include "utils.hpp"
@@ -43,9 +47,9 @@ private:
     sf::Event event;
 
     // SFML -- initUI
-    std::shared_ptr<sf::Font> roboto_font;
-    std::shared_ptr<sf::Text> points_text;
-    std::shared_ptr<sf::Text> paused_text;
+    tgui::Gui gui;
+    tgui::Label::Ptr points_label;
+    tgui::Label::Ptr paused_label;
 
     // Game Logic
     // Game Logic -- Config

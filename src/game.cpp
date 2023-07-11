@@ -1,5 +1,4 @@
 #include "game.hpp"
-#include <SFML/Window/Keyboard.hpp>
 #include <memory>
 
 const float Game::SIDE_LENGTH = static_cast<float>(HEIGHT-(SPACING_TOP + SPACING_BOTTOM)) / static_cast<float>(ROWS) - SPACING_PER_RECT;
@@ -33,26 +32,30 @@ void Game::initWindow(){
 
     window = std::make_shared<sf::RenderWindow>(videomode, "Snake Game", sf::Style::Titlebar | sf::Style::Close);
     window->setFramerateLimit(FPS);
+
+    
 }
 
 void Game::initUI(){
-    roboto_font = std::make_shared<sf::Font>();
-    if(!roboto_font->loadFromFile("Resources/Roboto-Regular.ttf")){
-        exit(EXIT_FAILURE);
-    }
-    points_text = std::make_shared<sf::Text>("None", *roboto_font, 40);
-    points_text->setPosition(400, 10);
+    gui.setWindow(*window);
 
-    paused_text = std::make_shared<sf::Text>("Paused", *roboto_font, 60);
-    float paused_width = paused_text->getLocalBounds().width;
-    float paused_height = paused_text->getLocalBounds().height;
+    points_label = tgui::Label::create("None");
+    points_label->setPosition(400, 10);
+    points_label->setTextSize(18);
+    gui.add(points_label);
 
-    paused_text->setPosition(WIDTH/2.f-(paused_width/2), HEIGHT/2.f-(paused_height/2));
+    paused_label = tgui::Label::create("Paused");
+    paused_label->setOrigin(0.5f, 0.5f); // Set its anker to center of label 
+    paused_label->setPosition(WIDTH/2.f, HEIGHT/2.f);
+    paused_label->setTextSize(30);
+
+    gui.add(paused_label);
 }
 
 
 void Game::handleEvents(){
     while(window->pollEvent(event)){
+        gui.handleEvent(event);
         if(event.type == sf::Event::Closed){
             running = false;
         }
@@ -241,18 +244,18 @@ void Game::handleLoss(){
 };
 
 void Game::updateUI(){
-    points_text->setString(std::to_string(points));
+    paused_label->setVisible(paused);
+    points_label->setText("Points: " + std::to_string(points));
 }
 
-void Game::update(){
-    if(paused) return;
-    
-    if(finished) return;
-    resetGrid();
-    putStationariesOnGrid();
-    updateTetra();
-    checkPoint();
-    putTetraOnGrid();
+void Game::update(){ 
+    if(!paused and !finished){
+        resetGrid();
+        putStationariesOnGrid();
+        updateTetra();
+        checkPoint();
+        putTetraOnGrid();
+    }
     updateUI();
 };
 
@@ -265,17 +268,13 @@ void Game::drawGrid(){
     }
 }
 
-void Game::drawUI(){
-    window->draw(*points_text);
-    if(paused) window->draw(*paused_text);
-}
-
 
 void Game::render(){
     window->clear(BACKGROUND_COLOR);
     
     drawGrid();
-    drawUI();
+    
+    gui.draw();
      
     window->display();
 };

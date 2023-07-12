@@ -4,10 +4,11 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#include "utils.hpp"
 
+// 3rd Party
 #include <SFML/Graphics.hpp>
 
+#include "Utils.hpp"
 
 enum TETRAMINO_TYPE{
     STRAIGHT=0,

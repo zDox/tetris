@@ -1,16 +1,17 @@
-#include "game.hpp"
-#include <memory>
+#include "GameState.hpp"
 
-const float Game::SIDE_LENGTH = static_cast<float>(HEIGHT-(SPACING_TOP + SPACING_BOTTOM)) / static_cast<float>(ROWS) - SPACING_PER_RECT;
+GameState::GameState(std::shared_ptr<GameData> t_data) : data(t_data) {
+}
 
-
-Game::Game(){
+void GameState::init(){
     initVariables();
-    initWindow();
     initUI();
 }
 
-void Game::initVariables(){
+void GameState::destroy(){
+};
+
+void GameState::initVariables(){
     std::srand(std::time(0));
     grid.resize(ROWS);
     stationaries.resize(ROWS);
@@ -26,48 +27,28 @@ void Game::initVariables(){
     tetra_move_timer.restart();
 }
 
-void Game::initWindow(){
-    videomode.height = HEIGHT;
-    videomode.width = WIDTH;
-
-    window = std::make_shared<sf::RenderWindow>(videomode, "Snake Game", sf::Style::Titlebar | sf::Style::Close);
-    window->setFramerateLimit(FPS);
-
-    
+void GameState::initWindow(){  
+    data->window->setFramerateLimit(60);
 }
 
-void Game::initUI(){
-    gui.setWindow(*window);
+void GameState::initUI(){
+    data->gui.removeAllWidgets();
 
     points_label = tgui::Label::create("None");
     points_label->setPosition(400, 10);
     points_label->setTextSize(18);
-    gui.add(points_label);
+    data->gui.add(points_label);
 
     paused_label = tgui::Label::create("Paused");
     paused_label->setOrigin(0.5f, 0.5f); // Set its anker to center of label 
     paused_label->setPosition(WIDTH/2.f, HEIGHT/2.f);
     paused_label->setTextSize(30);
 
-    gui.add(paused_label);
+    data->gui.add(paused_label);
 }
 
 
-void Game::handleEvents(){
-    while(window->pollEvent(event)){
-        gui.handleEvent(event);
-        if(event.type == sf::Event::Closed){
-            running = false;
-        }
-        if(event.type == sf::Event::KeyPressed){
-            if(event.key.code == sf::Keyboard::Space){
-                paused = !(paused);
-            }
-        }
-    }
-};
-
-void Game::spawnTetramino(){
+void GameState::spawnTetramino(){
     TETRAMINO_TYPE selection = static_cast<TETRAMINO_TYPE>(std::rand() % (TETRAMINO_TYPE::AMOUNT-1));
     sf::Color random_color = sf::Color(std::rand() % 256, std::rand() % 256, std::rand() % 256, 255);
     tetra = std::make_shared<Tetramino>(selection, random_color);
@@ -78,7 +59,7 @@ void Game::spawnTetramino(){
     }
 }
 
-void Game::resetGrid(){
+void GameState::resetGrid(){
     for(int i=0; i<ROWS; i++){
         for(int k=0; k<COLUMNS; k++){
             grid[i][k].setFillColor(GRID_COLOR);
@@ -86,7 +67,7 @@ void Game::resetGrid(){
     }
 }
 
-void Game::putTetraOnGrid(){
+void GameState::putTetraOnGrid(){
     if(!tetra) return;
     std::vector<std::vector<bool>> form = tetra->getForm();
     for(int i=0; i<form.size(); i++){
@@ -105,7 +86,7 @@ void Game::putTetraOnGrid(){
     }
 };
 
-void Game::putStationariesOnGrid(){
+void GameState::putStationariesOnGrid(){
    for(int i=0; i < ROWS; i++){
        for(int k=0; k<COLUMNS; k++){
            if(stationaries[i][k].getFillColor() != GRID_COLOR){
@@ -115,7 +96,7 @@ void Game::putStationariesOnGrid(){
     }
 };
 
-bool Game::checkCollisions(int dx, int dy, bool clockwise){
+bool GameState::checkCollisions(int dx, int dy, bool clockwise){
     Tetramino temp = *tetra; // Make copy of tetra to check new move
     if(clockwise) temp.rotate(clockwise);
     else if(dx != 0) temp.move(dx,0);
@@ -138,7 +119,7 @@ bool Game::checkCollisions(int dx, int dy, bool clockwise){
     return false;
 };
 
-void Game::lockTetra(){
+void GameState::lockTetra(){
     std::vector<std::vector<bool>> form = tetra->getForm();
     for(int i=0; i<form.size(); i++){
         for(int k=0; k<form.size(); k++){
@@ -157,7 +138,7 @@ void Game::lockTetra(){
     tetra = nullptr;
 };
 
-void Game::updateTetra(){
+void GameState::updateTetra(){
     if(!tetra) spawnTetramino();
     sf::Time max_move_time = sf::seconds(10.f/SPEED);
     if(tetra_move_timer.getElapsedTime() >= max_move_time){
@@ -201,7 +182,7 @@ void Game::updateTetra(){
     }
 }
 
-void Game::checkPoint(){
+void GameState::checkPoint(){
     for(int i=0; i<ROWS; i++){
         bool completed = true;
         for(int k=0; k<COLUMNS; k++){
@@ -227,7 +208,7 @@ void Game::checkPoint(){
     }
 }
 
-bool Game::checkLoss(){
+bool GameState::checkLoss(){
     std::vector<std::vector<bool>> form = tetra->getForm();
     for(int i=0;i<form.size(); i++){
         for(int k=0; k<form.size(); k++){
@@ -238,17 +219,42 @@ bool Game::checkLoss(){
     return false;
 };
             
-void Game::handleLoss(){
+void GameState::handleLoss(){
     finished = true;
     std::cout << "Points: " << std::to_string(points) << "\n";
 };
 
-void Game::updateUI(){
+void GameState::updateUI(){
     paused_label->setVisible(paused);
     points_label->setText("Points: " + std::to_string(points));
 }
 
-void Game::update(){ 
+
+void GameState::drawGrid(){
+    for(int i=0; i < ROWS; i++){
+        for(int k=0; k<COLUMNS; k++){
+            grid[i][k].setPosition(k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_TOP, i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_LEFT);
+            data->window->draw(grid[i][k]);
+        }
+    }
+}
+
+void GameState::handleInputs(){
+    while(data->window->pollEvent(event)){
+        data->gui.handleEvent(event);
+        if(event.type == sf::Event::Closed){
+            running = false;
+        }
+        if(event.type == sf::Event::KeyPressed){
+            if(event.key.code == sf::Keyboard::Space){
+                paused = !(paused);
+            }
+        }
+    }
+};
+
+
+void GameState::update(sf::Time dt){ 
     if(!paused and !finished){
         resetGrid();
         putStationariesOnGrid();
@@ -259,36 +265,13 @@ void Game::update(){
     updateUI();
 };
 
-void Game::drawGrid(){
-    for(int i=0; i < ROWS; i++){
-        for(int k=0; k<COLUMNS; k++){
-            grid[i][k].setPosition(k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_TOP, i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_LEFT);
-            window->draw(grid[i][k]);
-        }
-    }
-}
 
-
-void Game::render(){
-    window->clear(BACKGROUND_COLOR);
+void GameState::draw(){
+    data->window->clear(BACKGROUND_COLOR);
     
     drawGrid();
     
-    gui.draw();
+    data->gui.draw();
      
-    window->display();
+    data->window->display();
 };
-
-void Game::run(){
-    handleEvents();
-    update();
-    render();
-}
-
-void Game::close(){
-    window->close();
-}
-
-bool Game::isRunning(){
-    return running;
-}

@@ -1,4 +1,4 @@
-#include "tetramino.hpp"
+#include "Tetramino.hpp"
 
 
 Tetramino::Tetramino(TETRAMINO_TYPE t_type, sf::Color t_color){

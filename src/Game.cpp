@@ -1,6 +1,6 @@
 #include "Game.hpp"
 
-#include "GameState.hpp"
+#include "LoginState.hpp"
 
 Game::Game(){
     srand(time(NULL));
@@ -8,7 +8,7 @@ Game::Game(){
     data->window->create(sf::VideoMode(WIDTH, HEIGHT), WINDOW_TITLE, sf::Style::Close | sf::Style::Titlebar);
     data->gui.setWindow(*data->window);
 
-    data->state_manager.switchToState(std::make_shared<GameState>(data));
+    data->state_manager.switchToState(std::make_shared<LoginState>(data));
 
     run();
 };

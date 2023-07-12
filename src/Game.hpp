@@ -36,6 +36,8 @@ public:
     Game();
 
     void run();
+
+    void close();
 };
 
 #endif

@@ -8,24 +8,19 @@
 #include "Game.hpp"
 #include "Tetramino.hpp"
 #include "Utils.hpp"
+#include "Definitions.hpp"
 
 class GameState : public State{
 private:
     std::shared_ptr<GameData> data;
-    sf::Color BACKGROUND_COLOR = sf::Color::Black;
-    sf::Color GRID_COLOR = sf::Color(0, 128, 255);
-
 
     // SFML
-    sf::Event event;
-
     // SFML -- initUI
     tgui::Label::Ptr points_label;
     tgui::Label::Ptr paused_label;
 
     // Game Logic                       
     // Game Logic -- Variables
-    bool running = true;
     bool paused = false;
     bool finished = false;
     std::vector<std::vector<sf::RectangleShape>> grid;

@@ -4,15 +4,16 @@ GameState::GameState(std::shared_ptr<GameData> t_data) : data(t_data) {
 }
 
 void GameState::init(){
+    initWindow();
     initVariables();
     initUI();
 }
 
 void GameState::destroy(){
+    data->gui.removeAllWidgets();
 };
 
 void GameState::initVariables(){
-    std::srand(std::time(0));
     grid.resize(ROWS);
     stationaries.resize(ROWS);
     for(int i=0; i<ROWS; i++){
@@ -28,12 +29,10 @@ void GameState::initVariables(){
 }
 
 void GameState::initWindow(){  
-    data->window->setFramerateLimit(60);
+    data->window->setFramerateLimit(GAME_FPS);
 }
 
 void GameState::initUI(){
-    data->gui.removeAllWidgets();
-
     points_label = tgui::Label::create("None");
     points_label->setPosition(400, 10);
     points_label->setTextSize(18);
@@ -240,10 +239,11 @@ void GameState::drawGrid(){
 }
 
 void GameState::handleInputs(){
+    sf::Event event;
     while(data->window->pollEvent(event)){
         data->gui.handleEvent(event);
         if(event.type == sf::Event::Closed){
-            running = false;
+            data->window->close();
         }
         if(event.type == sf::Event::KeyPressed){
             if(event.key.code == sf::Keyboard::Space){

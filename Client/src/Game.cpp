@@ -5,7 +5,8 @@
 Game::Game(){
     srand(time(NULL));
 
-    data->window->create(sf::VideoMode(WIDTH, HEIGHT), WINDOW_TITLE, sf::Style::Close | sf::Style::Titlebar);
+    sf::VideoMode desktop_mode = sf::VideoMode::getDesktopMode();
+    data->window->create(sf::VideoMode(WIDTH, HEIGHT, desktop_mode.bitsPerPixel), WINDOW_TITLE, sf::Style::Close | sf::Style::Titlebar);
     data->gui.setWindow(*data->window);
 
     data->state_manager.switchToState(std::make_shared<LoginState>(data));

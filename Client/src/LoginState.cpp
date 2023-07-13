@@ -11,8 +11,9 @@ void LoginState::initVariables(){
 
 void LoginState::initUi(){
     panel = tgui::Panel::create();
-    panel->setPosition(0, 0);
-    panel->setSize(WIDTH, HEIGHT); 
+    panel->setOrigin(0.5, 0);
+    panel->setPosition(WIDTH/2, 0);
+    panel->setSize(WIDTH/2 < 600 ? WIDTH : WIDTH/2, HEIGHT); 
     data->gui.add(panel);
 
     heading = tgui::Label::create("Connect to Server");

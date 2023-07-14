@@ -16,14 +16,14 @@ private:
     std::shared_ptr<yojimbo::Server> server;
     std::shared_ptr<yojimbo::ConnectionConfig> connection_config;
     bool running = true;
-    sf::Time game_time;
+    sf::Clock game_clock;
 public: 
     GameServer();
     
     void processGridMessage(int client_index, yojimbo::Message* message);
     void processMessage(int client_index, yojimbo::Message* message);
     void processMessages();
-    void update(sf::Time dt);
+    void update();
 
     void run();
 };

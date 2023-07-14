@@ -5,8 +5,8 @@
 #define WINDOW_TITLE "Tetris"
 #define MENU_FPS 60
 #define GAME_FPS 144
-#define HEIGHT 1920
-#define WIDTH 1080
+#define HEIGHT 800
+#define WIDTH 600
 
 #define BACKGROUND_COLOR sf::Color::Black
 #define GRID_COLOR sf::Color(0, 128, 255)

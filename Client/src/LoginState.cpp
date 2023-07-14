@@ -29,6 +29,7 @@ void LoginState::initUi(){
    
     box_ipaddress = tgui::EditBox::create();
     box_ipaddress->setDefaultText("127.0.0.1");
+    box_ipaddress->setText("127.0.0.1");
     box_ipaddress->setPosition(tgui::bindRight(label_ipaddress) + 10.f, "50%");
     box_ipaddress->setTextSize(20);
     panel->add(box_ipaddress);
@@ -53,7 +54,7 @@ void LoginState::destroy(){
 
 void LoginState::login(){
     std::cout << "Address: " << box_ipaddress->getText() << "\n";
-    data->state_manager.switchToState(std::make_shared<GameState>(data));
+    data->network_manager.connect(box_ipaddress->getText().toStdString());
 };
 
 void LoginState::handleInputs(){
@@ -67,6 +68,10 @@ void LoginState::handleInputs(){
 }
 
 void LoginState::update(sf::Time dt){
+    data->network_manager.update();
+    if(data->network_manager.getConnectionStatus() == CONNECTION_STATUS::CONNECTED){
+        data->state_manager.switchToState(std::make_shared<GameState>(data));
+    }
 }
 
 void LoginState::draw(){

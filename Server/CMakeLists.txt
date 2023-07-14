@@ -8,6 +8,7 @@ set(YOJIMBO_DIR ../External/yojimbo)
 set(COMMON_DIR ../Common)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 
 aux_source_directory(src SOURCES)
 

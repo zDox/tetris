@@ -13,6 +13,7 @@
 
 #include "Definitions.hpp"
 #include "StateManager.hpp"
+#include "NetworkManager.hpp"
 
 enum COLLISION_TYPE{
     NONE,
@@ -22,6 +23,7 @@ enum COLLISION_TYPE{
 
 struct GameData{
     StateManager state_manager;
+    NetworkManager network_manager;
     std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>();
     tgui::Gui gui;
 };
@@ -35,6 +37,7 @@ class Game{
 public:
     Game();
 
+    bool init();
     void run();
 
     void close();

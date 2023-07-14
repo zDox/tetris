@@ -3,6 +3,8 @@
 int main()
 {
     Game game;
+    if(!game.init()) return EXIT_FAILURE;
     game.run();
-    return 0;
+    game.close();
+    return EXIT_SUCCESS;
 }

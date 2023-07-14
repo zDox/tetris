@@ -25,10 +25,11 @@ struct GameConnectionConfig : yojimbo::ClientServerConfig {
     GameConnectionConfig()  {
         numChannels = 1;
         channel[(int)GameChannel::RELIABLE].type = yojimbo::CHANNEL_TYPE_RELIABLE_ORDERED;
+        protocolId = 0x0000000000000001;
     }
 };
 
-static GameConnectionConfig config;
+static GameConnectionConfig game_connection_config;
 
 struct GridMessage : public yojimbo::Message
 {

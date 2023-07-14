@@ -1,6 +1,8 @@
 #ifndef LOGINSTATE_HPP
 #define LOGINSTATE_HPP
+
 #include <memory>
+#include <string>
 
 #include "State.hpp"
 #include "Game.hpp"

@@ -1,0 +1,8 @@
+#ifndef DEFINITIONS_HPP
+#define DEFINITIONS_HPP
+
+#define MAX_CLIENTS 4
+#define TICK_RATE 30
+#define SERVER_ADDRESS "127.0.0.1"
+
+#endif

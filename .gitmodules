@@ -1,0 +1,3 @@
+[submodule "External/yojimbo"]
+	path = External/yojimbo
+	url = https://github.com/networkprotocol/yojimbo.git

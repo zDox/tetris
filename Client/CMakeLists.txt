@@ -4,7 +4,7 @@ project(TetrisClient)
 
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-
+set(YOJIMBO_DIR ../External/yojimbo)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -16,7 +16,9 @@ add_executable(TetrisClient ${SOURCES} ${HEADERS})
 
 # Specify the include directories
 target_include_directories(TetrisClient PUBLIC include)
+target_include_directories(TetrisClient PUBLIC ${YOJIMBO_DIR}/include)
 
 # Link any necessary libraries (e.g., SDL or SFML)
+target_link_libraries(TetrisClient -lyojimbo)
 target_link_libraries(TetrisClient -ltgui -lsfml-graphics -lsfml-window -lsfml-system)
 

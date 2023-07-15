@@ -40,7 +40,7 @@ bool NetworkManager::init(){
             yojimbo::GetDefaultAllocator(), 
             yojimbo::Address("0.0.0.0"), 
             game_connection_config, 
-            adapter, 
+            ClientAdapter(), 
             0.0);
     return true;
 }
@@ -66,11 +66,22 @@ void NetworkManager::disconnect(){
 void NetworkManager::processMessages(){
 }
 
-void NetworkManager::sendGrid(){
 
+void NetworkManager::queueGrid(std::vector<std::vector<uint32_t>> grid_colors){
+    if(grid_message) return;
+    GridMessage* message = (GridMessage*) client->CreateMessage((int)MessageType::GRID);
+    message->grid = grid_colors;
+    grid_message = message;
+}
+
+void NetworkManager::sendGrid(){
+    if(!grid_message) return;
+    client->SendMessage((int)GameChannel::RELIABLE, grid_message);
+    grid_message = nullptr;
 }
 
 void NetworkManager::update(){
+    if(next_cycle > network_clock.getElapsedTime()) return;
     client->AdvanceTime(network_clock.getElapsedTime().asSeconds());
     client->ReceivePackets();
 
@@ -81,4 +92,5 @@ void NetworkManager::update(){
         sendGrid();
     }
     client->SendPackets();
+    next_cycle += sf::seconds(1.f/TICK_RATE);
 };

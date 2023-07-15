@@ -25,7 +25,11 @@ private:
     std::shared_ptr<yojimbo::Client> client;
     std::shared_ptr<yojimbo::ClientServerConfig> connection_config;
     uint64_t client_id;
+
     sf::Clock network_clock;
+    sf::Time next_cycle;
+
+    GridMessage* grid_message = nullptr;
 public:
     NetworkManager();
 
@@ -40,7 +44,8 @@ public:
     void disconnect();
 
     void processMessages();
-
+    
+    void queueGrid(std::vector<std::vector<uint32_t>> grid_colors);
     void sendGrid();
 
     void update();

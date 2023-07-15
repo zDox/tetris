@@ -1,14 +1,18 @@
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
 
+#include <vector>
+#include <iostream>
+
 #include "yojimbo.h"
 
 #define SERVER_PORT 4545
+#define TICK_RATE 60
 
 static const uint8_t DEFAULT_PRIVATE_KEY[yojimbo::KeyBytes] = { 0 };
 
 // a simple test message
-enum class GameMessageType {
+enum class MessageType {
     GRID,
     COUNT
 };
@@ -33,21 +37,36 @@ static GameConnectionConfig game_connection_config;
 
 struct GridMessage : public yojimbo::Message
 {
-    uint32_t sequence[20*10];
+    std::vector<std::vector<uint32_t>> grid;
+    uint64_t client_id;
 
-    GridMessage()
-    {
-        for(int i=0; i < 20*10; i++){
-            sequence[i] = 0x0;
-        }
-    }
+    GridMessage(){}; 
 
     template <typename Stream> 
     bool Serialize( Stream & stream )
     {        
-        for(int i=0; i <20*10; i++){
-            serialize_bits(stream, sequence[i], 32 );
+        // Serialze owner
+        serialize_uint64(stream, client_id);
+        // Serialze dimensions
+        uint32_t num_rows = static_cast<uint32_t>(grid.size());
+        serialize_uint32(stream, num_rows);
+        
+        uint32_t num_columns = 0;
+        if(!grid.empty()){
+            num_columns = static_cast<uint32_t>(grid[0].size());
         }
+
+        serialize_uint32(stream, num_columns);
+
+        // Serialze vector
+        grid.resize(num_rows);
+        for(uint32_t i = 0; i < num_rows; i++){
+            grid[i].resize(num_columns);
+            for(uint32_t j = 0; j<num_columns; j++){
+                serialize_uint32(stream, grid[i][j]);
+            }
+        }
+
         return true;
     }
 
@@ -56,16 +75,15 @@ struct GridMessage : public yojimbo::Message
 
 
 // the message factory
-YOJIMBO_MESSAGE_FACTORY_START(GameMessageFactory, (int)GameMessageType::COUNT);
-YOJIMBO_DECLARE_MESSAGE_TYPE((int)GameMessageType::GRID, GridMessage);
+YOJIMBO_MESSAGE_FACTORY_START(GameMessageFactory, (int)MessageType::COUNT);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GRID, GridMessage);
 YOJIMBO_MESSAGE_FACTORY_FINISH();
 
 
 // the adapter
-struct GameAdapter : public yojimbo::Adapter {
+struct ClientAdapter : public yojimbo::Adapter {
     yojimbo::MessageFactory* CreateMessageFactory(yojimbo::Allocator& allocator) override {
         return YOJIMBO_NEW(allocator, GameMessageFactory, allocator);
     }
 };
-static GameAdapter adapter;
 #endif

@@ -85,15 +85,6 @@ void GameState::putTetraOnGrid(){
     }
 };
 
-void GameState::putStationariesOnGrid(){
-   for(int i=0; i < ROWS; i++){
-       for(int k=0; k<COLUMNS; k++){
-           if(stationaries[i][k].getFillColor() != GRID_COLOR){
-               grid[i][k] = stationaries[i][k];
-            }
-        }
-    }
-};
 
 bool GameState::checkCollisions(int dx, int dy, bool clockwise){
     Tetramino temp = *tetra; // Make copy of tetra to check new move
@@ -135,6 +126,47 @@ void GameState::lockTetra(){
         }
     }
     tetra = nullptr;
+};
+
+std::vector<std::vector<uint32_t>> GameState::convertGridToColors(){
+    std::vector<std::vector<uint32_t>> grid_colors;
+    for(const auto& row : grid){
+        std::vector<uint32_t> row_colors;
+        for(const auto& cell : row){
+            const sf::Color& color = cell.getFillColor();
+            uint32_t color_uint = (color.r << 24) | (color.g << 16) | (color.b << 8) | color.a;
+
+            row_colors.push_back(color_uint);
+        }
+        grid_colors.push_back(row_colors);
+    }
+    return grid_colors;
+}
+
+bool GameState::checkLoss(){
+    std::vector<std::vector<bool>> form = tetra->getForm();
+    for(int i=0;i<form.size(); i++){
+        for(int k=0; k<form.size(); k++){
+            if(!form[i][k]) continue;
+            if(stationaries[tetra->getY() + k][tetra->getX() + i].getFillColor() != GRID_COLOR) return true;
+        }
+    }
+    return false;
+};
+
+void GameState::handleLoss(){
+    finished = true;
+    std::cout << "Points: " << std::to_string(points) << "\n";
+};
+
+void GameState::putStationariesOnGrid(){
+   for(int i=0; i < ROWS; i++){
+       for(int k=0; k<COLUMNS; k++){
+           if(stationaries[i][k].getFillColor() != GRID_COLOR){
+               grid[i][k] = stationaries[i][k];
+            }
+        }
+    }
 };
 
 void GameState::updateTetra(){
@@ -207,27 +239,17 @@ void GameState::checkPoint(){
     }
 }
 
-bool GameState::checkLoss(){
-    std::vector<std::vector<bool>> form = tetra->getForm();
-    for(int i=0;i<form.size(); i++){
-        for(int k=0; k<form.size(); k++){
-            if(!form[i][k]) continue;
-            if(stationaries[tetra->getY() + k][tetra->getX() + i].getFillColor() != GRID_COLOR) return true;
-        }
-    }
-    return false;
-};
-            
-void GameState::handleLoss(){
-    finished = true;
-    std::cout << "Points: " << std::to_string(points) << "\n";
-};
+ 
 
 void GameState::updateUI(){
     paused_label->setVisible(paused);
     points_label->setText("Points: " + std::to_string(points));
 }
 
+void GameState::sendGridData(){
+    std::vector<std::vector<uint32_t>> grid_colors = convertGridToColors();
+    data->network_manager.queueGrid(grid_colors);
+}
 
 void GameState::drawGrid(){
     for(int i=0; i < ROWS; i++){
@@ -261,6 +283,7 @@ void GameState::update(sf::Time dt){
         updateTetra();
         checkPoint();
         putTetraOnGrid();
+        sendGridData();
     }
     updateUI();
 };

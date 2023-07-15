@@ -24,7 +24,7 @@ void Game::run(){
     sf::Time current_time = clock.getElapsedTime();
     sf::Time accumulator = sf::seconds(0.0f);
     
-    
+    /* 
     while(data->window->isOpen()){
         data->state_manager.processStateChanges();
 
@@ -44,15 +44,15 @@ void Game::run(){
         interpolation = sf::seconds(accumulator / dt);
         data->state_manager.drawState();
     } 
+    */ 
     
-    /*
     while (data->window->isOpen()){
         data->state_manager.processStateChanges();
+        data->network_manager.update();
         data->state_manager.handleInputs();
         data->state_manager.updateState(current_time);
         data->state_manager.drawState();
-    }
-    */
+    } 
 };
 
 void Game::close(){

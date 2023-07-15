@@ -42,6 +42,9 @@ private:
 
     bool checkLoss();
     void handleLoss();
+    
+    // Conversion functions
+    std::vector<std::vector<uint32_t>> convertGridToColors();
 
     // Updating
     void resetGrid();
@@ -50,6 +53,8 @@ private:
     void updateTetra();
     void checkPoint();
     void updateUI();
+
+    void sendGridData();
 
     // Drawing
     void drawGrid();

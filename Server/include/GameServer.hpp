@@ -12,10 +12,23 @@
 #include "connection.hpp"
 #include "Game.hpp"
 
+struct ServerAdapter : public yojimbo::Adapter {
+private:
+    void* game_server;
+public:
+    explicit ServerAdapter(void* t_game_server = NULL);
+
+    yojimbo::MessageFactory* CreateMessageFactory(yojimbo::Allocator& allocator) override;
+    
+    void OnServerClientConnected(int clientIndex) override;
+    void OnServerClientDisconnected(int clientIndex) override;
+};
+
 
 class GameServer{
 private:
     std::shared_ptr<yojimbo::Server> server;
+    ServerAdapter adapter;
     std::shared_ptr<yojimbo::ConnectionConfig> connection_config;
     bool running = true;
     sf::Clock game_clock;
@@ -38,19 +51,4 @@ public:
     void clientDisconnected(int client_index);
     void run();
 };
-
-// the adapter
-struct ServerAdapter : public yojimbo::Adapter {
-private:
-    std::shared_ptr<GameServer> game_server;
-public:
-    explicit ServerAdapter(std::shared_ptr<GameServer> server);
-
-    yojimbo::MessageFactory* CreateMessageFactory(yojimbo::Allocator& allocator) override;
-    
-    void OnServerClientConnected(int clientIndex) override;
-    void OnServerClientDisconnected(int clientIndex) override;
-};
 #endif
-
-

@@ -43,7 +43,6 @@ public:
     void setPlayerPoints(uint64_t client_id, int t_points);
     void setPlayerHasLost(uint64_t client_id);
     void setPlayerGrid(uint64_t client_id, Grid t_grid);
-    std::vector<Grid> getOpponentGrids(uint64_t client_id);
 
     GAMESTATE getGameState();
     void setGameState(GAMESTATE t_gamestate);

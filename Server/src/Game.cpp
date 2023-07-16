@@ -50,15 +50,6 @@ void Game::setPlayerGrid(uint64_t client_id, Grid t_grid){
     players[client_id].grid = t_grid;
 }
 
-std::vector<Grid> Game::getOpponentGrids(uint64_t client_id){
-    std::vector<Grid> opponents_grid;
-    for(const auto& [p_client_id, p] : players ){
-        if(p.client_id == client_id) continue;
-        opponents_grid.push_back(p.grid);
-    }
-    return opponents_grid;
-}
-
 GAMESTATE Game::getGameState(){
     return gamestate;
 }

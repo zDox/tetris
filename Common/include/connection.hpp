@@ -73,7 +73,6 @@ struct GridMessage : public yojimbo::Message
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
 };
 
-
 // the message factory
 YOJIMBO_MESSAGE_FACTORY_START(GameMessageFactory, (int)MessageType::COUNT);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GRID, GridMessage);

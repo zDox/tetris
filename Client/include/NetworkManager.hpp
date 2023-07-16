@@ -5,6 +5,7 @@
 #include <memory>
 #include <random>
 #include <iostream>
+#include <unordered_map>
 
 #include "yojimbo.h"
 #include "SFML/System.hpp"
@@ -30,6 +31,7 @@ private:
     sf::Time next_cycle;
 
     GridMessage* grid_message = nullptr;
+    std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> opponents_grid;
 public:
     NetworkManager();
 
@@ -43,10 +45,12 @@ public:
     void connect(std::string);
     void disconnect();
 
+    void processGridMessage(GridMessage* message);
     void processMessages();
     
     void queueGrid(std::vector<std::vector<uint32_t>> grid_colors);
     void sendGrid();
+    std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> getOpponentsGrid();
 
     void update();
 };

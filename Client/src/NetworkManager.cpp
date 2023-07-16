@@ -35,12 +35,12 @@ bool NetworkManager::init(){
     }
     yojimbo_log_level( YOJIMBO_LOG_LEVEL_DEBUG );
     std::srand((unsigned int) time(NULL));
-
+    ClientAdapter adapter;
     client = std::make_shared<yojimbo::Client>(
             yojimbo::GetDefaultAllocator(), 
             yojimbo::Address("0.0.0.0"), 
             game_connection_config, 
-            ClientAdapter(), 
+            adapter, 
             0.0);
     return true;
 }
@@ -63,13 +63,32 @@ void NetworkManager::disconnect(){
     client->Disconnect();
 }
 
+void NetworkManager::processGridMessage(GridMessage* message){
+    if (message->client_id == client_id) return;
+    opponents_grid[message->client_id] = message->grid;
+}
+
 void NetworkManager::processMessages(){
+    for (int i = 0; i < connection_config->numChannels; i++) {
+        yojimbo::Message* message = client->ReceiveMessage(i);
+        while (message != NULL) {
+            switch (message->GetType()){
+                case (int) MessageType::GRID:
+                    processGridMessage((GridMessage*)message);
+                    break;
+
+            }
+            client->ReleaseMessage(message);
+            message = client->ReceiveMessage(i);
+        }
+    }
 }
 
 
 void NetworkManager::queueGrid(std::vector<std::vector<uint32_t>> grid_colors){
     if(grid_message) return;
     GridMessage* message = (GridMessage*) client->CreateMessage((int)MessageType::GRID);
+    message->client_id = client_id;
     message->grid = grid_colors;
     grid_message = message;
 }
@@ -78,6 +97,10 @@ void NetworkManager::sendGrid(){
     if(!grid_message) return;
     client->SendMessage((int)GameChannel::RELIABLE, grid_message);
     grid_message = nullptr;
+}
+
+std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> NetworkManager::getOpponentsGrid(){
+    return opponents_grid;
 }
 
 void NetworkManager::update(){

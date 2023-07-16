@@ -1,23 +1,40 @@
 #include "GameServer.hpp"
 
 // ServerAdapter implementation 
-ServerAdapter::ServerAdapter(std::shared_ptr<GameServer> t_game_server) : game_server(t_game_server){};
+ServerAdapter::ServerAdapter(void* t_game_server) : game_server(t_game_server){};
 
 yojimbo::MessageFactory* ServerAdapter::CreateMessageFactory(yojimbo::Allocator& allocator){
     return YOJIMBO_NEW(allocator, GameMessageFactory, allocator);
 }
 void ServerAdapter::OnServerClientConnected(int clientIndex){
     if (game_server != NULL) {
-        game_server->clientConnected(clientIndex);
+        GameServer* g = (GameServer*) game_server;
+        g->clientConnected(clientIndex);
     }
 }
 void ServerAdapter::OnServerClientDisconnected(int clientIndex){
     if (game_server != NULL) {
-        game_server->clientDisconnected(clientIndex);
+        GameServer* g = (GameServer*) game_server;
+        g->clientDisconnected(clientIndex);
     }
 }
 
 // GameServer implementation
+GameServer::GameServer() : adapter(this){
+    server = std::make_shared<yojimbo::Server>(
+            yojimbo::GetDefaultAllocator(),
+            DEFAULT_PRIVATE_KEY,
+            yojimbo::Address(SERVER_ADDRESS, SERVER_PORT),
+            game_connection_config,
+            adapter,
+            0.0);
+    connection_config = std::make_shared<yojimbo::ClientServerConfig>();
+    *(connection_config) = game_connection_config;
+    if(!server) {
+        std::cerr << "Failed creating server\n";
+    }
+}
+
 std::shared_ptr<Game> GameServer::getPlayersGame(uint64_t client_id){
     for(auto game : games){
         if(game->hasPlayer(client_id)){
@@ -48,18 +65,7 @@ void GameServer::removePlayer(u_int64_t client_id){
     current_game->removePlayer(client_id);
 }
 
-GameServer::GameServer(){
-    ServerAdapter adapter(std::make_shared<GameServer>(this));
-    server = std::make_shared<yojimbo::Server>(
-            yojimbo::GetDefaultAllocator(),
-            DEFAULT_PRIVATE_KEY,
-            yojimbo::Address(SERVER_ADDRESS, SERVER_PORT),
-            game_connection_config,
-            adapter,
-            0.0);
-    connection_config = std::make_shared<yojimbo::ClientServerConfig>();
-    *(connection_config) = game_connection_config;
-}
+
 
 void GameServer::processGridMessage(int client_index, GridMessage* message){
     uint64_t client_id = server->GetClientId(client_index);

@@ -1,0 +1,17 @@
+# ignore valgrind files
+vgcore*
+
+.vscode
+.cache
+
+# CMake files
+build/.cmake/
+build/CMakeCache.txt
+build/CMakeFiles/
+build/Client/
+build/Makefile
+build/Server/
+build/Testing/
+build/cmake_install.cmake
+build/compile_commands.json
+compile_commands.json

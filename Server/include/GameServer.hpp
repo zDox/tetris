@@ -1,5 +1,5 @@
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#ifndef GAMESERVER_HPP
+#define GAMESERVER_HPP
 
 #include <memory>
 #include <iostream>
@@ -12,24 +12,15 @@
 #include "connection.hpp"
 #include "Game.hpp"
 
-struct ServerAdapter : public yojimbo::Adapter {
-private:
-    void* game_server;
-public:
-    explicit ServerAdapter(void* t_game_server = NULL);
-
-    yojimbo::MessageFactory* CreateMessageFactory(yojimbo::Allocator& allocator) override;
-    
-    void OnServerClientConnected(int clientIndex) override;
-    void OnServerClientDisconnected(int clientIndex) override;
-};
+struct ServerAdapter;
 
 
-class GameServer{
+class GameServer : public std::enable_shared_from_this<GameServer>{
 private:
     std::shared_ptr<yojimbo::Server> server;
-    ServerAdapter adapter;
     std::shared_ptr<yojimbo::ConnectionConfig> connection_config;
+    std::unique_ptr<ServerAdapter> adapter;
+
     bool running = true;
     sf::Clock game_clock;
     sf::Time next_cycle;
@@ -38,8 +29,12 @@ private:
     std::shared_ptr<Game> getPlayersGame(uint64_t client_id);
     void addPlayer(uint64_t client_id);
     void removePlayer(uint64_t client_id);
+    GameServer() = default;
 public: 
-    GameServer();
+
+    [[nodiscard]] static std::shared_ptr<GameServer> create();
+    std::shared_ptr<GameServer> getPtr();
+    void init();
     
     void processGridMessage(int client_index, GridMessage* message);
     void processMessage(int client_index, yojimbo::Message* message);

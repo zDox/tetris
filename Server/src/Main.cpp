@@ -8,7 +8,9 @@ int main(int argc, char* argv[]){
     yojimbo_log_level(YOJIMBO_LOG_LEVEL_DEBUG);
     std::srand((unsigned int) time(NULL));
 
-    GameServer game_server;
-    game_server.run();
+
+    std::shared_ptr<GameServer> game_server = GameServer::create();
+    game_server->init();
+    game_server->run();
     return EXIT_SUCCESS;
 }

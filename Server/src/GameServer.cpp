@@ -1,38 +1,59 @@
 #include "GameServer.hpp"
 
-// ServerAdapter implementation 
-ServerAdapter::ServerAdapter(void* t_game_server) : game_server(t_game_server){};
+struct ServerAdapter : yojimbo::Adapter{
+private:
+    std::weak_ptr<GameServer> game_server;
+public: 
+    yojimbo::MessageFactory* CreateMessageFactory(yojimbo::Allocator& allocator){
+        return YOJIMBO_NEW(allocator, GameMessageFactory, allocator);
+    }
 
-yojimbo::MessageFactory* ServerAdapter::CreateMessageFactory(yojimbo::Allocator& allocator){
-    return YOJIMBO_NEW(allocator, GameMessageFactory, allocator);
-}
-void ServerAdapter::OnServerClientConnected(int clientIndex){
-    if (game_server != NULL) {
-        GameServer* g = (GameServer*) game_server;
-        g->clientConnected(clientIndex);
+    ServerAdapter(std::shared_ptr<GameServer> t_game_server) : game_server(t_game_server){};
+
+    void OnServerClientConnected(int clientIndex){
+        if (!game_server.expired()) {
+            std::shared_ptr<GameServer> g = game_server.lock();
+            g->clientConnected(clientIndex);
+        }
     }
-}
-void ServerAdapter::OnServerClientDisconnected(int clientIndex){
-    if (game_server != NULL) {
-        GameServer* g = (GameServer*) game_server;
-        g->clientDisconnected(clientIndex);
+    void OnServerClientDisconnected(int clientIndex){
+        if (!game_server.expired()) {
+            std::shared_ptr<GameServer> g = game_server.lock();
+            g->clientDisconnected(clientIndex);
+        }
     }
-}
+};
+
+
 
 // GameServer implementation
-GameServer::GameServer() : adapter(this){
+
+// No public constructor, only a factory function,
+// so there's no way to have getptr return nullptr.
+[[nodiscard]] std::shared_ptr<GameServer> GameServer::create()
+{
+    // Not using std::make_shared<Best> because the c'tor is private.
+    return std::shared_ptr<GameServer>(new GameServer());
+}
+
+void GameServer::init(){
+    adapter = std::make_unique<ServerAdapter>(this->getPtr());
+    connection_config = std::make_shared<yojimbo::ClientServerConfig>();
+    *(connection_config) = game_connection_config;
     server = std::make_shared<yojimbo::Server>(
             yojimbo::GetDefaultAllocator(),
             DEFAULT_PRIVATE_KEY,
             yojimbo::Address(SERVER_ADDRESS, SERVER_PORT),
-            game_connection_config,
-            adapter,
+            *connection_config,
+            *adapter,
             0.0);
-    connection_config = std::make_shared<yojimbo::ClientServerConfig>();
-    *(connection_config) = game_connection_config;
     if(!server) {
         std::cerr << "Failed creating server\n";
     }
+}
+
+std::shared_ptr<GameServer> GameServer::getPtr(){
+    return shared_from_this();
 }
 
 std::shared_ptr<Game> GameServer::getPlayersGame(uint64_t client_id){
@@ -64,7 +85,6 @@ void GameServer::removePlayer(u_int64_t client_id){
     if(!current_game) return;
     current_game->removePlayer(client_id);
 }
-
 
 
 void GameServer::processGridMessage(int client_index, GridMessage* message){

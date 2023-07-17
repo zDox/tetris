@@ -38,7 +38,7 @@ public:
 
 void GameServer::init(){
     adapter = std::make_unique<ServerAdapter>(this->getPtr());
-    connection_config = std::make_shared<yojimbo::ClientServerConfig>();
+    connection_config = std::make_unique<yojimbo::ClientServerConfig>();
     *(connection_config) = game_connection_config;
     server = std::make_shared<yojimbo::Server>(
             yojimbo::GetDefaultAllocator(),

@@ -18,7 +18,7 @@ struct ServerAdapter;
 class GameServer : public std::enable_shared_from_this<GameServer>{
 private:
     std::shared_ptr<yojimbo::Server> server;
-    std::shared_ptr<yojimbo::ConnectionConfig> connection_config;
+    std::unique_ptr<yojimbo::ClientServerConfig> connection_config;
     std::unique_ptr<ServerAdapter> adapter;
 
     bool running = true;

@@ -1,3 +1,6 @@
 [submodule "External/yojimbo"]
 	path = External/yojimbo
 	url = https://github.com/networkprotocol/yojimbo.git
+[submodule "External/zpp_bits"]
+	path = External/zpp_bits
+	url = https://github.com/eyalz800/zpp_bits.git

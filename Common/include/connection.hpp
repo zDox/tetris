@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "yojimbo.h"
+#include "zpp_bits.h"
 
 #define SERVER_PORT 4545
 #define TICK_RATE 60
@@ -45,28 +46,19 @@ struct GridMessage : public yojimbo::Message
     template <typename Stream> 
     bool Serialize( Stream & stream )
     {        
-        // Serialze owner
-        serialize_uint64(stream, client_id);
-        // Serialze dimensions
-        uint32_t num_rows = static_cast<uint32_t>(grid.size());
-        serialize_uint32(stream, num_rows);
-        
-        uint32_t num_columns = 0;
-        if(!grid.empty()){
-            num_columns = static_cast<uint32_t>(grid[0].size());
-        }
-
-        serialize_uint32(stream, num_columns);
-
-        // Serialze vector
-        grid.resize(num_rows);
-        for(uint32_t i = 0; i < num_rows; i++){
-            grid[i].resize(num_columns);
-            for(uint32_t j = 0; j<num_columns; j++){
-                serialize_uint32(stream, grid[i][j]);
+        auto [data, in, out] = zpp::bits::data_in_out();
+        if(Stream::IsWriting){
+            auto result = in(client_id, grid);
+            if (failure(result)) {
+                return false;
             }
         }
-
+        else {
+            auto result = out(client_id, grid);
+            if (failure(result)) {
+                return false;
+            }
+        }
         return true;
     }
 

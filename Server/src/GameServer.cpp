@@ -133,7 +133,6 @@ void GameServer::processMessages(){
 }
 
 void GameServer::update(){
-    std::cout << game_clock.getElapsedTime().asMilliseconds() << "\n";
     if(!server->IsRunning()){
         running = false;
         return;

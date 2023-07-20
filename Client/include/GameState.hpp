@@ -59,6 +59,7 @@ private:
 
     // Drawing
     void drawGrid();
+    void drawOpponentGrids();
     void drawUI();
     
     void initWindow();

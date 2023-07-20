@@ -4,6 +4,7 @@
 #include <memory>
 #include <iostream>
 #include <time.h>
+#include <queue>
 
 #include <SFML/System.hpp>
 #include "yojimbo.h"
@@ -11,6 +12,7 @@
 #include "DEFINITIONS.hpp"
 #include "connection.hpp"
 #include "Game.hpp"
+
 
 struct ServerAdapter;
 
@@ -20,6 +22,8 @@ private:
     std::shared_ptr<yojimbo::Server> server;
     std::unique_ptr<yojimbo::ClientServerConfig> connection_config;
     std::unique_ptr<ServerAdapter> adapter;
+
+    std::queue<uint64_t> opponents_queue;
 
     bool running = true;
     sf::Clock game_clock;
@@ -36,9 +40,10 @@ public:
     std::shared_ptr<GameServer> getPtr();
     void init();
     
-    void processGridMessage(int client_index, GridMessage* message);
+    void processGridMessage(uint64_t client_index, GridMessage* message);
     void processMessage(int client_index, yojimbo::Message* message);
     void processMessages();
+    void sendMessages();
     void update();
     
     // Client Connect/Disconnect Callback from Adapter

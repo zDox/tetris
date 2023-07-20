@@ -35,11 +35,12 @@ bool NetworkManager::init(){
     }
     yojimbo_log_level( YOJIMBO_LOG_LEVEL_DEBUG );
     std::srand((unsigned int) time(NULL));
-    ClientAdapter adapter;
+    connection_config = std::make_shared<yojimbo::ClientServerConfig>();
+    *(connection_config) = game_connection_config;
     client = std::make_shared<yojimbo::Client>(
             yojimbo::GetDefaultAllocator(), 
             yojimbo::Address("0.0.0.0"), 
-            game_connection_config, 
+            *connection_config, 
             adapter, 
             0.0);
     return true;

@@ -25,6 +25,7 @@ class NetworkManager{
 private: 
     std::shared_ptr<yojimbo::Client> client;
     std::shared_ptr<yojimbo::ClientServerConfig> connection_config;
+    ClientAdapter adapter;
     uint64_t client_id;
 
     sf::Clock network_clock;

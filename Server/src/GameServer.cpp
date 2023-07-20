@@ -1,4 +1,5 @@
 #include "GameServer.hpp"
+#include "connection.hpp"
 
 struct ServerAdapter : yojimbo::Adapter{
 private:
@@ -27,6 +28,7 @@ public:
 
 
 // GameServer implementation
+
 
 // No public constructor, only a factory function,
 // so there's no way to have getptr return nullptr.
@@ -70,14 +72,16 @@ void GameServer::addPlayer(u_int64_t client_id){
         std::cout << "Player: " << client_id << " is already ingame\n";
         return;
     }
-    if(games[games.size()-1]->getGameState() == GAMESTATE::LOBBY &&
-       games[games.size()-1]->getPlayers().size() < MAX_PLAYERS){
-        games[games.size()-1]->addPlayer(client_id);
-    }
-    else {
+    // Check if new game should be created
+    if(games.size() == 0){
         games.push_back(std::make_shared<Game>());
-        games[games.size()-1]->addPlayer(client_id);
     }
+    else if (games[games.size()-1]->getGameState() != GAMESTATE::LOBBY &&
+       games[games.size()-1]->getPlayers().size() >= MAX_PLAYERS){
+        games.push_back(std::make_shared<Game>());
+    }
+    // Add player to latest game
+    games[games.size()-1]->addPlayer(client_id);
 }
 
 void GameServer::removePlayer(u_int64_t client_id){
@@ -87,30 +91,30 @@ void GameServer::removePlayer(u_int64_t client_id){
 }
 
 
-void GameServer::processGridMessage(int client_index, GridMessage* message){
-    uint64_t client_id = server->GetClientId(client_index);
+void GameServer::processGridMessage(uint64_t client_id, GridMessage* grid_message){
     std::shared_ptr<Game> current_game = getPlayersGame(client_id);
-    current_game->setPlayerGrid(client_id, message->grid);
 
-    // Sending new opponent Grids
-    for(const auto [p_client_id, p] : current_game->getPlayers()){
-        if(p_client_id == client_id) continue; // No need to send itself its grid
+    std::vector<std::vector<uint32_t>> old_grid = current_game->getPlayer(client_id)->grid;
+    std::vector<std::vector<uint32_t>> o_grid = grid_message->grid;
 
-        GridMessage* message = (GridMessage*) server->CreateMessage(p_client_id, (int)MessageType::GRID);
-        message->grid = p.grid;
-        message->client_id = p_client_id;
-        int i;
-        for(i=0; i<server->GetNumConnectedClients(); i++){
-            if(server->GetClientId(i) == p_client_id) break;
+    for(auto[rec_client_id, rec_player] : current_game->getPlayers()){
+        int rec_index;
+        for(rec_index = 0; rec_index<server->GetNumConnectedClients(); rec_index++){
+            if(server->GetClientId(rec_index) == rec_client_id) break;
+        
         }
-        server->SendMessage(i, (int) GameChannel::RELIABLE, message);
+        GridMessage* response = (GridMessage*) server->CreateMessage(rec_index, (int)MessageType::GRID);
+        response->client_id = client_id;
+        response->grid = o_grid;
+        server->SendMessage(rec_index, (int)GameChannel::RELIABLE, response);
     }
 }
 
 void GameServer::processMessage(int client_index, yojimbo::Message* message){
+    uint64_t client_id = server->GetClientId(client_index);
     switch(message->GetType()){
         case (int)MessageType::GRID:
-            processGridMessage(client_index, (GridMessage*) message);
+            processGridMessage(client_id, reinterpret_cast<GridMessage*>(message));
             break;
         defaul:
             break;
@@ -132,6 +136,9 @@ void GameServer::processMessages(){
     }
 }
 
+void GameServer::sendMessages(){
+}
+
 void GameServer::update(){
     if(!server->IsRunning()){
         running = false;
@@ -140,7 +147,28 @@ void GameServer::update(){
     server->AdvanceTime(game_clock.getElapsedTime().asSeconds());
     server->ReceivePackets();
     processMessages();
+    /*
+    for(int i=0; i< server->GetNumConnectedClients(); i++){
+        if(server->IsClientConnected(i)){
+            for(int j=0; j < connection_config->numChannels; j++){
+                yojimbo::Message* message = server->ReceiveMessage(i, j);
+                while (message != NULL){
+                    switch (message->GetType()){
+                        case (int)MessageType::GRID:
+                            GridMessage* grid_message = static_cast<GridMessage*>(message);
+                            uint64_t client_id = server->GetClientId(i);
+                            processGridMessage(client_id, grid_message); 
+                            break;
+                    }
 
+                    server->ReleaseMessage(i, message);
+                    message = server->ReceiveMessage(i, j);
+                }
+            }
+        }
+    }
+    */
+    
     server->SendPackets();
 }
 

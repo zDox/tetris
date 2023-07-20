@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 #include <SFML/System.hpp>
 
@@ -27,7 +28,7 @@ enum GAMESTATE {
 
 class Game{
 private:
-    std::unordered_map<uint64_t, Player> players;
+    std::unordered_map<uint64_t, std::shared_ptr<Player>> players;
     GAMESTATE gamestate;
     sf::Clock lobby_clock;
     bool lobby_clock_running;
@@ -36,9 +37,9 @@ public:
 
     void addPlayer(uint64_t client_id);
     void removePlayer(uint64_t client_id);
+    std::shared_ptr<Player> getPlayer(uint64_t client_id);
     bool hasPlayer(uint64_t client_id);
-
-    std::unordered_map<uint64_t, Player> getPlayers();
+    std::unordered_map<uint64_t, std::shared_ptr<Player>> getPlayers();
 
     void setPlayerPoints(uint64_t client_id, int t_points);
     void setPlayerHasLost(uint64_t client_id);

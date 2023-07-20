@@ -26,6 +26,7 @@ private:
     std::vector<std::vector<sf::RectangleShape>> grid;
     std::shared_ptr<Tetramino> tetra;
     int points = 0;
+    bool grid_update_needed = true;
 
     std::vector<std::vector<sf::RectangleShape>> stationaries;
     bool hold_up = false;

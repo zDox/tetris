@@ -6,8 +6,8 @@ Game::Game(){
 
 void Game::addPlayer(uint64_t client_id){
     if(players.contains(client_id)) return;
-    Player new_player;
-    new_player.client_id = client_id;
+    std::shared_ptr<Player> new_player = std::make_shared<Player>();
+    new_player->client_id = client_id;
     players[client_id] = new_player;
     if(players.size() >= MIN_STARTING_PLAYERS && !lobby_clock_running){
         lobby_clock_running = true;
@@ -31,23 +31,30 @@ bool Game::hasPlayer(uint64_t client_id){
     return players.contains(client_id);
 }
 
-std::unordered_map<uint64_t, Player> Game::getPlayers(){
+std::shared_ptr<Player> Game::getPlayer(uint64_t client_id){
+    if(players.contains(client_id)){
+        return players[client_id];
+    }
+    return nullptr;
+}
+
+std::unordered_map<uint64_t, std::shared_ptr<Player>> Game::getPlayers(){
     return players;
 }
     
 void Game::setPlayerPoints(uint64_t client_id, int t_points){
-    if(!players.contains(client_id)) return;
-    players[client_id].points = t_points;
+    if(!hasPlayer(client_id)) return;
+    players[client_id]->points = t_points;
 }
 
 void Game::setPlayerHasLost(uint64_t client_id){
     if(!players.contains(client_id)) return;
-    players[client_id].lost = true;
+    players[client_id]->lost = true;
 }
 
 void Game::setPlayerGrid(uint64_t client_id, Grid t_grid){
-    if(!players.contains(client_id)) return;
-    players[client_id].grid = t_grid;
+    if(!hasPlayer(client_id)) return;
+    players[client_id]->grid = t_grid;
 }
 
 GAMESTATE Game::getGameState(){

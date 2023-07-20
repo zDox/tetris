@@ -38,8 +38,9 @@ static GameConnectionConfig game_connection_config;
 
 struct GridMessage : public yojimbo::Message
 {
-    std::vector<std::vector<uint32_t>> grid;
-    uint64_t client_id;
+    std::vector<std::vector<std::uint32_t>> grid;
+    std::uint64_t client_id;
+    std::uint64_t bytes;
 
     GridMessage(){}; 
 
@@ -47,18 +48,40 @@ struct GridMessage : public yojimbo::Message
     bool Serialize( Stream & stream )
     {        
         auto [data, in, out] = zpp::bits::data_in_out();
-        if(Stream::IsWriting){
-            auto result = in(client_id, grid);
-            if (failure(result)) {
-                return false;
+        if(Stream::IsReading){
+            try{
+                serialize_uint64(stream, bytes);
+                data.resize(bytes);
+                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
+                in(client_id).or_throw();
+                in(grid).or_throw();
+
             }
+            catch (const std::exception & error) {
+                std::cout << "Failed reading with error: " << error.what() << '\n';
+                return false;
+            } catch (...) {
+                std::cout << "Unknown error\n";
+                return false;
+            };
         }
         else {
-            auto result = out(client_id, grid);
-            if (failure(result)) {
-                return false;
+            try{
+                out(client_id).or_throw();
+                out(grid).or_throw();
+                bytes = data.size();
+                serialize_uint64(stream, bytes);
+                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
+
             }
-        }
+            catch (const std::exception & error) {
+                std::cout << "Failed writing with error: " << error.what() << '\n';
+                return false;
+            } catch (...) {
+                std::cout << "Unknown error\n";
+                return false;
+            };
+        } 
         return true;
     }
 

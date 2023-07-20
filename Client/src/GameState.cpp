@@ -53,6 +53,7 @@ void GameState::spawnTetramino(){
     tetra = std::make_shared<Tetramino>(selection, random_color);
     tetra->setPosition(7-tetra->getForm().size(), 0);
 
+    grid_update_needed = true;
     if(checkLoss()){
         handleLoss();
     }
@@ -179,6 +180,7 @@ void GameState::updateTetra(){
         }
         tetra->move(0, 1);
         tetra_move_timer.restart();
+        grid_update_needed = true;
     }
 
     // Move left or right
@@ -186,6 +188,7 @@ void GameState::updateTetra(){
         hold_left = true;
         if(checkCollisions(-1, 0, false)) return;
         tetra->move(-1, 0);
+        grid_update_needed = true;
     }
     if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) hold_left = false;
 
@@ -193,6 +196,7 @@ void GameState::updateTetra(){
         hold_right = true;
         if(checkCollisions(1, 0, false)) return;
         tetra->move(1, 0);
+        grid_update_needed = true;
     }
     if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) hold_right = false;
 
@@ -201,6 +205,7 @@ void GameState::updateTetra(){
         hold_up = true;
         if(checkCollisions(0, 0, true)) return;
         tetra->rotate(true);
+        grid_update_needed = true;
     }
     if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) hold_up = false;
 
@@ -210,6 +215,7 @@ void GameState::updateTetra(){
             return;
         }
         tetra->move(0, 1);
+        grid_update_needed = true;
     }
 }
 
@@ -235,6 +241,7 @@ void GameState::checkPoint(){
                     stationaries[j][k].setFillColor(stationaries[j-1][k].getFillColor());
                 }
             }
+            grid_update_needed = true;
         }
     }
 }
@@ -247,8 +254,10 @@ void GameState::updateUI(){
 }
 
 void GameState::sendGridData(){
+    if(!grid_update_needed) return;
     std::vector<std::vector<uint32_t>> grid_colors = convertGridToColors();
     data->network_manager.queueGrid(grid_colors);
+    grid_update_needed = false;
 }
 
 void GameState::drawGrid(){

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.26)
 
+set(CMAKE_TOOLCHAIN_FILE WindowsToolchain.cmake)
+
 project(TetrisClient)
+
 
 # Binary paths
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)

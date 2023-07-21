@@ -272,7 +272,7 @@ void GameState::drawGrid(){
 
 void GameState::drawOpponentGrids(){
     std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> oponent_grids = data->network_manager.getOpponentsGrid();
-    int grid_pixel_width = (SIDE_LENGTH*COLUMNS);
+    int grid_pixel_width = ((SPACING_PER_RECT+SIDE_LENGTH)*COLUMNS);
     int max_grids_to_draw = std::min((int) oponent_grids.size()+1, (int)std::floor(WIDTH/grid_pixel_width));
     int count = 1; // Count of how many grids have been drawn
     for(auto[client_id, opponent_grid] : oponent_grids){
@@ -280,7 +280,7 @@ void GameState::drawOpponentGrids(){
         for(int i = 0; i < ROWS; i++){
             for(int k = 0; k < COLUMNS; k++){
                 sf::RectangleShape rect(sf::Vector2(SIDE_LENGTH, SIDE_LENGTH));
-                int pos_x = k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT + count*grid_pixel_width + SPACING_BETWEEN_GRIDS;
+                int pos_x = k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT + count*grid_pixel_width + count*SPACING_BETWEEN_GRIDS;
                 int pos_y = i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP;
                 uint32_t color_uint = opponent_grid[i][k];
                 uint8_t red = (color_uint >> 24) & 0xFF;

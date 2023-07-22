@@ -50,6 +50,10 @@ void NetworkManager::destroy(){
     ShutdownYojimbo();
 }
 
+int NetworkManager::getGameID(){
+    return game_id;
+}
+
 void NetworkManager::connect(std::string text_address){
     if(client->IsConnecting()) return;
 
@@ -67,6 +71,12 @@ void NetworkManager::disconnect(){
 void NetworkManager::processGridMessage(GridMessage* message){
     if (message->client_id == client_id) return;
     opponents_grid[message->client_id] = message->grid;
+}
+
+void NetworkManager::processGameMessage(GameMessage* message){
+    game_id = message->game_id;
+    gamestate = static_cast<GAMESTATE>(message->game_state);
+    switch gamestate
 }
 
 void NetworkManager::processMessages(){

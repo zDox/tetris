@@ -7,8 +7,10 @@
 #include <memory>
 
 #include <SFML/System.hpp>
+#include "yojimbo.h"
 
 #include "DEFINITIONS.hpp"
+#include "connection.hpp"
 
 typedef std::vector<std::vector<uint32_t>> Grid;
 
@@ -19,21 +21,31 @@ struct Player{
     bool lost = false;
 };
 
-enum GAMESTATE {
-    LOBBY,
-    INGAME,
-    END,
-    COUNT
-};
-
 class Game{
 private:
+    std::shared_ptr<yojimbo::Server> server;
+
+    int game_id;
     std::unordered_map<uint64_t, std::shared_ptr<Player>> players;
-    GAMESTATE gamestate;
+    GameState gamestate;
+
     sf::Clock lobby_clock;
-    bool lobby_clock_running;
+    bool lobby_clock_running; 
+    
+    int getPlayersClientIndex(uint64_t client_id);
+
+    void sendGameState(uint64_t client_id);
+    void sendGameStates();
+
+
+    void updateLobbyState(sf::Time dt);
+    void updateIngameState(sf::Time dt);
+    void updateEndState(sf::Time dt);
+    
 public:
-    Game();
+    Game(std::shared_ptr<yojimbo::Server> t_server, int t_game_id);
+
+    int getGameID();
 
     void addPlayer(uint64_t client_id);
     void removePlayer(uint64_t client_id);
@@ -41,18 +53,11 @@ public:
     bool hasPlayer(uint64_t client_id);
     std::unordered_map<uint64_t, std::shared_ptr<Player>> getPlayers();
 
-    void setPlayerPoints(uint64_t client_id, int t_points);
-    void setPlayerHasLost(uint64_t client_id);
-    void setPlayerGrid(uint64_t client_id, Grid t_grid);
-
-    GAMESTATE getGameState();
-    void setGameState(GAMESTATE t_gamestate);
-
-    void updateLobbyState();
-    void updateIngameState();
-    void updateEndState();
+    GameState getGameState();
     
-    void update();
+    void processGridMessage(uint64_t client_id, GridMessage* message);
+
+    void update(sf::Time dt);
 };
 
 #endif

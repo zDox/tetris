@@ -59,7 +59,7 @@ std::shared_ptr<GameServer> GameServer::getPtr(){
 }
 
 std::shared_ptr<Game> GameServer::getPlayersGame(uint64_t client_id){
-    for(auto game : games){
+    for(auto [game_id, game] : games){
         if(game->hasPlayer(client_id)){
             return game;
         }
@@ -72,16 +72,22 @@ void GameServer::addPlayer(u_int64_t client_id){
         std::cout << "Player: " << client_id << " is already ingame\n";
         return;
     }
-    // Check if new game should be created
-    if(games.size() == 0){
-        games.push_back(std::make_shared<Game>());
+
+    std::shared_ptr<Game> latest_game = nullptr;
+    if(next_game_id > 0 && games.contains(next_game_id-1)){
+        latest_game = games[next_game_id-1];
     }
-    else if (games[games.size()-1]->getGameState() != GAMESTATE::LOBBY &&
-       games[games.size()-1]->getPlayers().size() >= MAX_PLAYERS){
-        games.push_back(std::make_shared<Game>());
+
+    // Check if new game should be created
+    if(!latest_game){
+        createGame();
+    }
+    else if (latest_game->getGameState() != GAMESTATE::LOBBY &&
+       latest_game->getPlayers().size() >= MAX_PLAYERS){
+        createGame();
     }
     // Add player to latest game
-    games[games.size()-1]->addPlayer(client_id);
+    latest_game->addPlayer(client_id);
 }
 
 void GameServer::removePlayer(u_int64_t client_id){
@@ -90,31 +96,20 @@ void GameServer::removePlayer(u_int64_t client_id){
     current_game->removePlayer(client_id);
 }
 
-
-void GameServer::processGridMessage(uint64_t client_id, GridMessage* grid_message){
-    std::shared_ptr<Game> current_game = getPlayersGame(client_id);
-
-    std::vector<std::vector<uint32_t>> old_grid = current_game->getPlayer(client_id)->grid;
-    std::vector<std::vector<uint32_t>> o_grid = grid_message->grid;
-
-    for(auto[rec_client_id, rec_player] : current_game->getPlayers()){
-        int rec_index;
-        for(rec_index = 0; rec_index<server->GetNumConnectedClients(); rec_index++){
-            if(server->GetClientId(rec_index) == rec_client_id) break;
-        
-        }
-        GridMessage* response = (GridMessage*) server->CreateMessage(rec_index, (int)MessageType::GRID);
-        response->client_id = client_id;
-        response->grid = o_grid;
-        server->SendMessage(rec_index, (int)GameChannel::RELIABLE, response);
-    }
+int GameServer::createGame(){ // Returns the game_id of the game it created
+    games[next_game_id] = std::make_shared<Game>(server, next_game_id);
+    next_game_id++;
+    return next_game_id-1;
 }
+
 
 void GameServer::processMessage(int client_index, yojimbo::Message* message){
     uint64_t client_id = server->GetClientId(client_index);
     switch(message->GetType()){
         case (int)MessageType::GRID:
-            processGridMessage(client_id, reinterpret_cast<GridMessage*>(message));
+            GridMessage* grid_message = reinterpret_cast<GridMessage*>(message);
+            if(!games.contains(grid_message->game_id)) return;
+            games[grid_message->game_id]->processGridMessage(client_id, reinterpret_cast<GridMessage*>(message));
             break;
         defaul:
             break;
@@ -136,39 +131,23 @@ void GameServer::processMessages(){
     }
 }
 
-void GameServer::sendMessages(){
+void GameServer::updateGames(sf::Time dt){
+    for(auto [game_id, game] : games){
+        game->update(dt);
+    }
 }
 
-void GameServer::update(){
+void GameServer::update(sf::Time dt){
     if(!server->IsRunning()){
         running = false;
         return;
     }
     server->AdvanceTime(game_clock.getElapsedTime().asSeconds());
     server->ReceivePackets();
-    processMessages();
-    /*
-    for(int i=0; i< server->GetNumConnectedClients(); i++){
-        if(server->IsClientConnected(i)){
-            for(int j=0; j < connection_config->numChannels; j++){
-                yojimbo::Message* message = server->ReceiveMessage(i, j);
-                while (message != NULL){
-                    switch (message->GetType()){
-                        case (int)MessageType::GRID:
-                            GridMessage* grid_message = static_cast<GridMessage*>(message);
-                            uint64_t client_id = server->GetClientId(i);
-                            processGridMessage(client_id, grid_message); 
-                            break;
-                    }
 
-                    server->ReleaseMessage(i, message);
-                    message = server->ReceiveMessage(i, j);
-                }
-            }
-        }
-    }
-    */
-    
+    processMessages();
+    updateGames(dt);
+
     server->SendPackets();
 }
 
@@ -184,12 +163,14 @@ void GameServer::clientDisconnected(int client_index){
 
 void GameServer::run(){
     sf::Time fixed_dt = sf::seconds(1.0f / TICK_RATE);
+    sf::Time last_tick_duration = sf::seconds(0);
 
     server->Start(MAX_CLIENTS);
  
     while (running){
         if(next_cycle <= game_clock.getElapsedTime()){
-            update();
+            last_tick_duration = game_clock.getElapsedTime() - next_cycle;
+            update(last_tick_duration);
             next_cycle += fixed_dt;
         }
         else{

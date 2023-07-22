@@ -18,7 +18,6 @@ enum CONNECTION_STATUS {
     CONNECTING,
     DISCONNECTED,
     ERROR,
-    COUNT
 };
 
 class NetworkManager{
@@ -31,6 +30,7 @@ private:
     sf::Clock network_clock;
     sf::Time next_cycle;
 
+    int game_id = -1;
     GridMessage* grid_message = nullptr;
     std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> opponents_grid;
 public:
@@ -49,6 +49,8 @@ public:
     void processGridMessage(GridMessage* message);
     void processMessages();
     
+    int getGameID();
+
     void queueGrid(std::vector<std::vector<uint32_t>> grid_colors);
     void sendGrid();
     std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> getOpponentsGrid();

@@ -1,11 +1,11 @@
 #include "GameState.hpp"
-#include "Definitions.hpp"
 
 GameState::GameState(std::shared_ptr<GameData> t_data) : data(t_data) {
 }
 
 void GameState::init(){
     initWindow();
+    game_logic.init();
     initUI();
 }
 
@@ -16,6 +16,19 @@ void GameState::destroy(){
 
 void GameState::initWindow(){  
     data->window->setFramerateLimit(GAME_FPS);
+}
+
+void GameState::initVariables(){
+    drawing_grid.resize(ROWS);
+    for(int i=0; i<ROWS; i++){
+        for(int k=0; k<COLUMNS; k++){
+            sf::RectangleShape rect(sf::Vector2f(SIDE_LENGTH, SIDE_LENGTH));
+            rect.setFillColor(GRID_COLOR);
+            rect.setPosition(k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT, i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP);
+            drawing_grid[i].push_back(rect);
+        }
+    }
+
 }
 
 void GameState::initUI(){
@@ -36,14 +49,47 @@ void GameState::initUI(){
  
 
 void GameState::updateUI(){
-    points_label->setText("Points: " + std::to_string(points));
+    points_label->setText("Points: " + std::to_string(game_logic.getPoints()));
+}
+
+void GameState::handleKeyboard(){
+    PlayerCommandType player_command = PlayerCommandType::NONE;
+    // Left
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !(hold_left)){
+        hold_left = true;
+        player_command = PlayerCommandType::MOVE_LEFT;
+    }
+    if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) hold_left = false;
+
+    // Right
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !(hold_right)){
+        hold_right = true;
+        player_command = PlayerCommandType::MOVE_RIGHT;
+    }
+    if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) hold_right = false;
+
+    // Rotate
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !(hold_up)){
+        hold_up = true;
+        player_command = PlayerCommandType::ROTATE_CLOCKWISE;
+    }
+    if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) hold_up = false;
+
+    // Down
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
+        player_command = PlayerCommandType::MOVE_DOWN;
+    }
+    
+    data->network_manager.queuePlayerCommand(player_command);
+    game_logic.setPlayerCommand(player_command);
 }
 
 void GameState::drawGrid(){
+    auto grid = game_logic.getGrid();
     for(int i=0; i < ROWS; i++){
         for(int k=0; k<COLUMNS; k++){
-            grid[i][k].setPosition(k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT, i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP);
-            data->window->draw(grid[i][k]);
+            drawing_grid[i][k].setFillColor(grid[i][k]);
+            data->window->draw(drawing_grid[i][k]);
         }
     }
 }
@@ -87,6 +133,7 @@ void GameState::handleInputs(){
 
 
 void GameState::update(sf::Time dt){ 
+    handleKeyboard();
     game_logic.update(dt);
     updateUI();
 };

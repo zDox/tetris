@@ -1,5 +1,4 @@
 #include "GameServer.hpp"
-#include "connection.hpp"
 
 struct ServerAdapter : yojimbo::Adapter{
 private:

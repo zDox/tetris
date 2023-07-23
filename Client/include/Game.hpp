@@ -15,7 +15,7 @@
 #include "StateManager.hpp"
 #include "NetworkManager.hpp"
 
-enum COLLISION_TYPE{
+enum CollisionType{
     NONE,
     SIDE,
     BOTTOM

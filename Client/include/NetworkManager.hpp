@@ -14,7 +14,7 @@
 #include "network.hpp"
 #include "Definitions.hpp"
 
-enum CONNECTION_STATUS {
+enum ConnectionStatus {
     CONNECTED,
     CONNECTING,
     DISCONNECTED,
@@ -38,7 +38,7 @@ private:
 public:
     NetworkManager();
 
-    CONNECTION_STATUS getConnectionStatus();
+    ConnectionStatus getConnectionStatus();
 
     void generateClientID();
     

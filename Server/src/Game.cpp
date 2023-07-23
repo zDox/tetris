@@ -1,7 +1,7 @@
 #include "Game.hpp"
 
 Game::Game(std::shared_ptr<yojimbo::Server> t_server, int t_game_id) : server(t_server), game_id(t_game_id){
-    gamestate = GameState::LOBBY;
+    roundstate = RoundStateType::LOBBY;
 }
 
 void Game::addPlayer(uint64_t client_id){
@@ -15,7 +15,7 @@ void Game::addPlayer(uint64_t client_id){
         lobby_clock.restart();
         std::cout << std::to_string(game_id) << " Lobby countdown is has started.\n";
     }
-    sendGameState(client_id);
+    sendRoundState(client_id);
 }
 
 
@@ -23,13 +23,13 @@ void Game::removePlayer(uint64_t client_id){
     if(!players.contains(client_id)) return;
     players.erase(client_id);
     std::cout << std::to_string(game_id) << " Player (" << std::to_string(client_id) << ") leaved the game.\n";
-    if(gamestate == GameState::INGAME && players.size() < MIN_INGAME_PLAYERS){
-        gamestate = GameState::END;
-        sendGameStates();
+    if(roundstate == RoundStateType::INGAME && players.size() < MIN_INGAME_PLAYERS){
+        roundstate = RoundStateType::END;
+        sendRoundStates();
     }
-    else if(gamestate == GameState::LOBBY && players.size() < MIN_STARTING_PLAYERS){
+    else if(roundstate == RoundStateType::LOBBY && players.size() < MIN_STARTING_PLAYERS){
         lobby_clock_running = false;
-        sendGameStates();
+        sendRoundStates();
     }
 }
 
@@ -56,8 +56,8 @@ std::unordered_map<uint64_t, std::shared_ptr<Player>> Game::getPlayers(){
     return players;
 }
 
-GameState Game::getGameState(){
-    return gamestate;
+RoundStateType Game::getRoundState(){
+    return roundstate;
 }
 
 void Game::processGridMessage(uint64_t client_id, GridMessage* grid_message){
@@ -79,19 +79,16 @@ void Game::processGridMessage(uint64_t client_id, GridMessage* grid_message){
         server->SendMessage(rec_index, (int)GameChannel::RELIABLE, response);
     }
 }
-void Game::sendGameState(uint64_t client_id){
+void Game::sendRoundState(uint64_t client_id){
     int client_index = getPlayersClientIndex(client_id);
-    GameMessage* message = (GameMessage*) server->CreateMessage(client_index, (int)MessageType::GAME);
-    message->game_id = game_id;
-    if(lobby_clock_running) message->countdown = lobby_clock.getElapsedTime().asSeconds();
-    else message->countdown = -1;
-    message->gamestate = (int) gamestate;
+    RoundStateChangeMessage* message = (RoundStateChangeMessage*) server->CreateMessage(client_index, (int)MessageType::ROUNDSTATECHANGE);
+    message->roundstate = roundstate;
     server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
 }
 
-void Game::sendGameStates(){
+void Game::sendRoundStates(){
     for(auto [p_client_id, player] : players){
-        sendGameState(p_client_id);
+        sendRoundState(p_client_id);
     }
 }
 
@@ -100,8 +97,8 @@ void Game::updateLobbyState(sf::Time dt){
         if(players.size() < MIN_STARTING_PLAYERS) {
             return;
         }
-        gamestate = GameState::INGAME;
-        sendGameStates(); 
+        roundstate = RoundStateType::INGAME;
+        sendRoundStates(); 
         return;
     }
 }
@@ -114,14 +111,14 @@ void Game::updateEndState(sf::Time dt){
 }
 
 void Game::update(sf::Time dt){
-    switch(gamestate){
-        case GameState::LOBBY:
+    switch(roundstate){
+        case RoundStateType::LOBBY:
            updateLobbyState(dt);
            break;
-        case GameState::INGAME:
+        case RoundStateType::INGAME:
            updateIngameState(dt);
            break;
-        case GameState::END:
+        case RoundStateType::END:
            updateEndState(dt);
            break;
         default:

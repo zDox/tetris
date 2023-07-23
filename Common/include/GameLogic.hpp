@@ -7,9 +7,12 @@
 #include "SFML/Graphics/Color.hpp"
 
 #include "Tetramino.hpp"
+#include "GameDefinitions.hpp"
+#include "Command.hpp"
 
 class GameLogic{
 private:
+    PlayerCommandType player_command;
     int points = 0;
     bool finished = false;
 
@@ -36,6 +39,10 @@ private:
     void initVariables();
 public:
     GameLogic();
+
+    void setPlayerCommand(PlayerCommandType t_player_command);
+    std::vector<std::vector<sf::Color>> getGrid();
+    int getPoints();
 
     void init();
     void reset();

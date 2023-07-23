@@ -1,7 +1,7 @@
 #ifndef TETRAMINO_TYPE
 #define TETRAMINO_TYPE
 
-enum TetraminoType{
+enum class TetraminoType{
     STRAIGHT=0,
     SQUARE,
     T_SHAPE,

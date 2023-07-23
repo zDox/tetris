@@ -10,7 +10,8 @@
 #include "yojimbo.h"
 
 #include "DEFINITIONS.hpp"
-#include "connection.hpp"
+#include "network.hpp"
+#include "Player.hpp"
 
 typedef std::vector<std::vector<uint32_t>> Grid;
 
@@ -21,15 +22,15 @@ private:
 
     int game_id;
     std::unordered_map<uint64_t, std::shared_ptr<Player>> players;
-    GameState gamestate;
+    RoundStateType roundstate;
 
     sf::Clock lobby_clock;
     bool lobby_clock_running; 
     
     int getPlayersClientIndex(uint64_t client_id);
 
-    void sendGameState(uint64_t client_id);
-    void sendGameStates();
+    void sendRoundState(uint64_t client_id);
+    void sendRoundStates();
 
 
     void updateLobbyState(sf::Time dt);
@@ -47,7 +48,7 @@ public:
     bool hasPlayer(uint64_t client_id);
     std::unordered_map<uint64_t, std::shared_ptr<Player>> getPlayers();
 
-    GameState getGameState();
+    RoundStateType getRoundState();
     
     void processGridMessage(uint64_t client_id, GridMessage* message);
 

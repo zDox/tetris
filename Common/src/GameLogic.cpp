@@ -3,22 +3,32 @@
 GameLogic::GameLogic(){
 };
 
+void GameLogic::setPlayerCommand(PlayerCommandType t_player_command){
+    player_command = t_player_command;
+}
+
+std::vector<std::vector<sf::Color>> GameLogic::getGrid(){
+    return grid;
+}
+
+int GameLogic::getPoints(){
+    return points;
+}
+
 void GameLogic::initVariables(){
     grid.resize(ROWS);
     stationaries.resize(ROWS);
     for(int i=0; i<ROWS; i++){
         for(int k=0; k<COLUMNS; k++){
-            sf::RectangleShape rect(sf::Vector2f(SIDE_LENGTH, SIDE_LENGTH));
-            grid[i].push_back(rect);
-            sf::RectangleShape rect2 = rect;
-            stationaries[i].push_back(rect2);
+            grid[i].push_back(GRID_COLOR);
+            stationaries[i].push_back(GRID_COLOR);
         }
     }
     tetra_move_timer.restart();
 }
 
 void GameLogic::spawnTetramino(){
-    TetraminoType selection = static_cast<TetraminoType>(std::rand() % (TetraminoType::AMOUNT-1));
+    TetraminoType selection = static_cast<TetraminoType>(std::rand() % ((int)TetraminoType::AMOUNT - 1));
     sf::Color random_color = sf::Color(std::rand() % 256, std::rand() % 256, std::rand() % 256, 255);
     tetra = std::make_shared<Tetramino>(selection, random_color);
     tetra->setPosition(7-tetra->getForm().size(), 0);
@@ -51,6 +61,16 @@ void GameLogic::putTetraOnGrid(){
                 continue;             
                                      
             grid[tetra->getY()+i][tetra->getX()+k] = tetra->getColor();
+        }
+    }
+};
+
+void GameLogic::putStationariesOnGrid(){
+    for(int i=0; i < ROWS; i++){
+        for(int k=0; k<COLUMNS; k++){
+            if(stationaries[i][k] != GRID_COLOR){
+                grid[i][k] = stationaries[i][k];
+            }
         }
     }
 };
@@ -113,46 +133,6 @@ void GameLogic::handleLoss(){
     std::cout << "Points: " << std::to_string(points) << "\n";
 };
 
-void GameLogic::putStationariesOnGrid(){
-    for(int i=0; i < ROWS; i++){
-        for(int k=0; k<COLUMNS; k++){
-            if(stationaries[i][k].getFillColor() != GRID_COLOR){
-                grid[i][k] = stationaries[i][k];
-            }
-        }
-    }
-};
-
-void GameLogic::updateTetra(PlayerCommandType command_type){
-    sf::Time max_move_time = sf::seconds(10.f/SPEED);
-    if(tetra_move_timer.getElapsedTime() >= max_move_time){
-        if(checkCollisions(0, 1, false)){
-            lockTetra();
-            return;
-        }
-        tetra->move(0, 1);
-        tetra_move_timer.restart();
-    }
-
-    // Move left or right
-    switch(command_type){
-        case PlayerCommandType::MOVE_LEFT:
-            if(checkCollisions(-1, 0, false)) return;
-            tetra->move(-1, 0);
-            break;
-
-        case PlayerCommandType::MOVE_RIGHT: 
-            if(checkCollisions(1, 0, false)) return;
-            tetra->move(1, 0);
-            break;
-
-        case PlayerCommandType::ROTATE_CLOCKWISE:
-            if(checkCollisions(0, 0, true)) return;
-            tetra->rotate(true);
-            break;
-    }
-}
-
 void GameLogic::checkPoint(){
     for(int i=0; i<ROWS; i++){
         bool completed = true;
@@ -177,4 +157,54 @@ void GameLogic::checkPoint(){
             }
         }
     }
+}
+
+void GameLogic::updateTetra(){
+    sf::Time max_move_time = sf::seconds(10.f/SPEED);
+    if(tetra_move_timer.getElapsedTime() >= max_move_time){
+        if(checkCollisions(0, 1, false)){
+            lockTetra();
+            return;
+        }
+        tetra->move(0, 1);
+        tetra_move_timer.restart();
+    }
+
+    // Move left or right
+    switch(player_command){
+        case PlayerCommandType::MOVE_DOWN:
+            if(checkCollisions(0, 1, false)){
+                lockTetra();
+            }
+            tetra->move(0, 1);
+            return;
+        
+        tetra->move(0, 1);
+        case PlayerCommandType::MOVE_LEFT:
+            if(checkCollisions(-1, 0, false)) return;
+            tetra->move(-1, 0);
+            break;
+
+        case PlayerCommandType::MOVE_RIGHT: 
+            if(checkCollisions(1, 0, false)) return;
+            tetra->move(1, 0);
+            break;
+
+        case PlayerCommandType::ROTATE_CLOCKWISE:
+            if(checkCollisions(0, 0, true)) return;
+            tetra->rotate(true);
+            break;
+
+        default:
+            break;
+    }
+    player_command = PlayerCommandType::NONE;
+}
+
+void GameLogic::update(sf::Time dt){
+    resetGrid();
+    putStationariesOnGrid();
+    updateTetra();
+    checkPoint();
+    putTetraOnGrid();
 }

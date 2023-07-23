@@ -1,6 +1,6 @@
 #ifndef ROUNDSTATE_TYPE
 #define ROUNDSTATE_TYPE
-enum RoundStateType {
+enum class RoundStateType {
     LOBBY,
     INGAME,
     END,

@@ -10,7 +10,7 @@
 #include "yojimbo.h"
 
 #include "DEFINITIONS.hpp"
-#include "connection.hpp"
+#include "network.hpp"
 #include "Game.hpp"
 
 

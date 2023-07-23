@@ -6,10 +6,10 @@
 
 #include "State.hpp"
 #include "Game.hpp"
-#include "Tetramino.hpp"
-#include "Utils.hpp"
 #include "Definitions.hpp"
+#include "GameDefinitions.hpp"
 #include "Command.hpp"
+#include "GameLogic.hpp"
 
 class GameState : public State{
 private:
@@ -20,18 +20,18 @@ private:
     tgui::Label::Ptr points_label;
     tgui::Label::Ptr paused_label;
 
-    // Game Logic                       
-    // Game Logic -- Variables
+    // SFML -- Drawing data
+    std::vector<std::vector<sf::RectangleShape>> drawing_grid;
 
+    // Game Logic                       
+    GameLogic game_logic;
     bool hold_up = false;
     bool hold_left = false;
     bool hold_right = false;
 
-    // Game Logic -- Timer
 
+    void handleKeyboard();
     void updateUI();
-
-    void sendPlayerCommand(PlayerCommandType command);
 
     // Drawing
     void drawGrid();
@@ -39,6 +39,7 @@ private:
     void drawUI();
     
     void initWindow();
+    void initVariables();
     void initUI();
 
 public:

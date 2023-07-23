@@ -36,7 +36,7 @@ bool NetworkManager::init(){
     yojimbo_log_level( YOJIMBO_LOG_LEVEL_DEBUG );
     std::srand((unsigned int) time(NULL));
     connection_config = std::make_shared<yojimbo::ClientServerConfig>();
-    *(connection_config) = game_connection_config;
+    *(connection_config) = GameConnectionConfig();
     client = std::make_shared<yojimbo::Client>(
             yojimbo::GetDefaultAllocator(), 
             yojimbo::Address("0.0.0.0"), 
@@ -73,10 +73,7 @@ void NetworkManager::processGridMessage(GridMessage* message){
     opponents_grid[message->client_id] = message->grid;
 }
 
-void NetworkManager::processGameMessage(GameMessage* message){
-    game_id = message->game_id;
-    gamestate = static_cast<GAMESTATE>(message->game_state);
-    switch gamestate
+void NetworkManager::processRoundStateChangeMessage(RoundStateChangeMessage* message){
 }
 
 void NetworkManager::processMessages(){
@@ -96,18 +93,22 @@ void NetworkManager::processMessages(){
 }
 
 
-void NetworkManager::queueGrid(std::vector<std::vector<uint32_t>> grid_colors){
-    if(grid_message) return;
-    GridMessage* message = (GridMessage*) client->CreateMessage((int)MessageType::GRID);
-    message->client_id = client_id;
-    message->grid = grid_colors;
-    grid_message = message;
+void NetworkManager::queuePlayerCommand(PlayerCommandType command_type){
+    player_command_queue.push(command_type);
 }
 
-void NetworkManager::sendGrid(){
-    if(!grid_message) return;
-    client->SendMessage((int)GameChannel::RELIABLE, grid_message);
-    grid_message = nullptr;
+void NetworkManager::sendPlayerCommands(){
+    while(!player_command_queue.empty()){
+        PlayerCommandMessage* message = (PlayerCommandMessage*) client->CreateMessage((int)MessageType::PLAYER_COMMAND);
+        message->game_id = game_id;
+        message->command_type = player_command_queue.front();
+        player_command_queue.pop();
+        client->SendMessage((int)GameChannel::RELIABLE, message);
+    }
+}
+
+void NetworkManager::sendMessages(){
+    sendPlayerCommands();
 }
 
 std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> NetworkManager::getOpponentsGrid(){
@@ -123,7 +124,7 @@ void NetworkManager::update(){
         processMessages();
 
         // Sending Messages
-        sendGrid();
+        sendMessages();
     }
     client->SendPackets();
     next_cycle += sf::seconds(1.f/TICK_RATE);

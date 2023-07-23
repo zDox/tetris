@@ -6,11 +6,12 @@
 #include <random>
 #include <iostream>
 #include <unordered_map>
+#include <queue>
 
 #include "yojimbo.h"
 #include "SFML/System.hpp"
 
-#include "connection.hpp"
+#include "network.hpp"
 #include "Definitions.hpp"
 
 enum CONNECTION_STATUS {
@@ -30,8 +31,9 @@ private:
     sf::Clock network_clock;
     sf::Time next_cycle;
 
+    std::queue<PlayerCommandType> player_command_queue;
+
     int game_id = -1;
-    GridMessage* grid_message = nullptr;
     std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> opponents_grid;
 public:
     NetworkManager();
@@ -47,12 +49,15 @@ public:
     void disconnect();
 
     void processGridMessage(GridMessage* message);
+    void processTetraminoPlacement(TetraminoPlacementMessage* message);
     void processMessages();
+
+    void sendPlayerCommands();
+    void sendMessages();
     
     int getGameID();
 
-    void queueGrid(std::vector<std::vector<uint32_t>> grid_colors);
-    void sendGrid();
+    void queuePlayerCommand(PlayerCommandType command_type);
     std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> getOpponentsGrid();
 
     void update();

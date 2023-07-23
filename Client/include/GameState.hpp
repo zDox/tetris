@@ -9,6 +9,7 @@
 #include "Tetramino.hpp"
 #include "Utils.hpp"
 #include "Definitions.hpp"
+#include "Command.hpp"
 
 class GameState : public State{
 private:
@@ -21,41 +22,16 @@ private:
 
     // Game Logic                       
     // Game Logic -- Variables
-    bool paused = false;
-    bool finished = false;
-    std::vector<std::vector<sf::RectangleShape>> grid;
-    std::shared_ptr<Tetramino> tetra;
-    int points = 0;
-    bool grid_update_needed = true;
 
-    std::vector<std::vector<sf::RectangleShape>> stationaries;
     bool hold_up = false;
     bool hold_left = false;
     bool hold_right = false;
 
     // Game Logic -- Timer
-    sf::Clock tetra_move_timer;
 
-    // Game Logic -- Functions
-    void spawnTetramino();
-    bool checkCollisions(int dx, int dy, bool clockwise);
-    void lockTetra();
-
-    bool checkLoss();
-    void handleLoss();
-    
-    // Conversion functions
-    std::vector<std::vector<uint32_t>> convertGridToColors();
-
-    // Updating
-    void resetGrid();
-    void putTetraOnGrid();
-    void putStationariesOnGrid();
-    void updateTetra();
-    void checkPoint();
     void updateUI();
 
-    void sendGridData();
+    void sendPlayerCommand(PlayerCommandType command);
 
     // Drawing
     void drawGrid();
@@ -63,7 +39,6 @@ private:
     void drawUI();
     
     void initWindow();
-    void initVariables();
     void initUI();
 
 public:

@@ -14,12 +14,6 @@
 
 typedef std::vector<std::vector<uint32_t>> Grid;
 
-struct Player{
-    uint64_t client_id;
-    Grid grid;
-    int points = 0;
-    bool lost = false;
-};
 
 class Game{
 private:

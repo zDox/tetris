@@ -10,6 +10,7 @@
 #include "GameDefinitions.hpp"
 #include "Command.hpp"
 #include "GameLogic.hpp"
+#include "LoginState.hpp"
 
 class GameState : public State{
 private:
@@ -30,6 +31,7 @@ private:
     bool hold_right = false;
 
 
+    void handleNextTetramino();
     void handleKeyboard();
     void updateUI();
 

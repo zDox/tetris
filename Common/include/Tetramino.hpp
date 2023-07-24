@@ -15,7 +15,7 @@ class Tetramino{
 private:
     TetraminoType type;
     std::vector<std::vector<bool>> form;
-    int rotation;
+    int rotation=0;
     int x, y;
     sf::Color color;
 public:

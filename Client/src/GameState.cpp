@@ -5,6 +5,7 @@ GameState::GameState(std::shared_ptr<GameData> t_data) : data(t_data) {
 
 void GameState::init(){
     initWindow();
+    initVariables();
     game_logic.init();
     initUI();
 }
@@ -84,6 +85,11 @@ void GameState::handleKeyboard(){
     game_logic.setPlayerCommand(player_command);
 }
 
+void GameState::handleNextTetramino(){
+    if(!game_logic.isNeedingNextTetramino()) return;
+    game_logic.setNextTetramino(data->network_manager.getNextTetramino());
+}
+
 void GameState::drawGrid(){
     auto grid = game_logic.getGrid();
     for(int i=0; i < ROWS; i++){
@@ -133,8 +139,14 @@ void GameState::handleInputs(){
 
 
 void GameState::update(sf::Time dt){ 
-    handleKeyboard();
-    game_logic.update(dt);
+    if(data->network_manager.getConnectionStatus() == ConnectionStatus::DISCONNECTED){
+        data->state_manager.switchToState(std::make_shared<LoginState>(data));
+    }
+    if(data->network_manager.getGameID() != -1 && data->network_manager.getRoundState() == RoundStateType::INGAME){
+        handleKeyboard();
+        handleNextTetramino();
+        game_logic.update(dt);
+    }
     updateUI();
 };
 

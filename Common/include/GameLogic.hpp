@@ -17,6 +17,7 @@ private:
     bool finished = false;
 
     std::shared_ptr<Tetramino> tetra;
+    std::shared_ptr<TetraminoType> next_tetramino;
     std::vector<std::vector<sf::Color>> grid;
     std::vector<std::vector<sf::Color>> stationaries;
 
@@ -40,6 +41,8 @@ private:
 public:
     GameLogic();
 
+    void setNextTetramino(TetraminoType tetramino);
+    bool isNeedingNextTetramino();
     void setPlayerCommand(PlayerCommandType t_player_command);
     std::vector<std::vector<sf::Color>> getGrid();
     int getPoints();

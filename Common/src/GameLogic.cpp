@@ -7,6 +7,15 @@ void GameLogic::init(){
     initVariables();
 }
 
+void GameLogic::setNextTetramino(TetraminoType tetramino){
+    next_tetramino = std::make_shared<TetraminoType>();
+    *next_tetramino = tetramino;
+}
+
+bool GameLogic::isNeedingNextTetramino(){
+    return next_tetramino == nullptr;
+}
+
 void GameLogic::setPlayerCommand(PlayerCommandType t_player_command){
     player_command = t_player_command;
 }
@@ -32,10 +41,12 @@ void GameLogic::initVariables(){
 }
 
 void GameLogic::spawnTetramino(){
-    TetraminoType selection = static_cast<TetraminoType>(std::rand() % ((int)TetraminoType::AMOUNT - 1));
-    sf::Color random_color = sf::Color(std::rand() % 256, std::rand() % 256, std::rand() % 256, 255);
-    tetra = std::make_shared<Tetramino>(selection, random_color);
+    std::cout << "Spawning new Tetramino\n";
+    if(next_tetramino == nullptr) return;
+    tetra = std::make_shared<Tetramino>(*next_tetramino, sf::Color::Yellow);
     tetra->setPosition(7-tetra->getForm().size(), 0);
+
+    next_tetramino = nullptr;
 
     if(checkLoss()){
         handleLoss();
@@ -164,6 +175,11 @@ void GameLogic::checkPoint(){
 }
 
 void GameLogic::updateTetra(){
+    if(!tetra){
+        spawnTetramino();
+
+    }
+
     sf::Time max_move_time = sf::seconds(10.f/SPEED);
     if(tetra_move_timer.getElapsedTime() >= max_move_time){
         if(checkCollisions(0, 1, false)){

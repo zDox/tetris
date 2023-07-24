@@ -19,7 +19,7 @@ typedef std::vector<std::vector<uint32_t>> Grid;
 struct ServerPlayer{
     Player player;
     GameLogic gamelogic;
-    int tetramino_cursor = 0;
+    int tetramino_cursor = -1;
 };
 
 class Game{
@@ -32,9 +32,10 @@ private:
     RoundStateType roundstate;
 
     sf::Clock lobby_clock;
-    bool lobby_clock_running; 
+    bool lobby_clock_running = false;
     
     int getPlayersClientIndex(uint64_t client_id);
+    void handleNextTetramino(uint64_t client_id);
 
     void sendRoundState(uint64_t client_id);
     void sendRoundStates();

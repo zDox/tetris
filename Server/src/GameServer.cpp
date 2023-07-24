@@ -85,6 +85,7 @@ void GameServer::addPlayer(u_int64_t client_id){
        latest_game->getPlayers().size() >= MAX_PLAYERS){
         createGame();
     }
+    latest_game = games[next_game_id-1];
     // Add player to latest game
     latest_game->addPlayer(client_id);
 }
@@ -96,8 +97,9 @@ void GameServer::removePlayer(u_int64_t client_id){
 }
 
 int GameServer::createGame(){ // Returns the game_id of the game it created
-    games[next_game_id] = std::make_shared<Game>(server, next_game_id);
+    games.emplace(next_game_id, std::make_shared<Game>(server, next_game_id));
     next_game_id++;
+    std::cout << "Created game " << next_game_id-1 << "\n";
     return next_game_id-1;
 }
 
@@ -105,13 +107,6 @@ int GameServer::createGame(){ // Returns the game_id of the game it created
 void GameServer::processMessage(int client_index, yojimbo::Message* message){
     uint64_t client_id = server->GetClientId(client_index);
     switch(message->GetType()){
-        case (int)MessageType::GRID:
-        {
-            GridMessage* grid_message = reinterpret_cast<GridMessage*>(message);
-            if(!games.contains(grid_message->game_id)) return;
-            games[grid_message->game_id]->processGridMessage(client_id, reinterpret_cast<GridMessage*>(message));
-            break;
-        }
         case (int)MessageType::PLAYER_COMMAND:
         {
             PlayerCommandMessage* player_command_message = reinterpret_cast<PlayerCommandMessage*>(message);

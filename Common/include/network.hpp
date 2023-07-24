@@ -155,7 +155,7 @@ struct PlayerScoreMessage : public yojimbo::Message
         serialize_int(stream, game_id, 0, std::numeric_limits<int>::max());
         serialize_uint64(stream, client_id);
         serialize_int(stream, position, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-        serialize_int(stream, points, -1, std::numeric_limits<int>::max());
+        serialize_int(stream, points, 0, std::numeric_limits<int>::max());
         return true;
     }
 

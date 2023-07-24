@@ -5,7 +5,7 @@ int main(int argc, char* argv[]){
         std::cerr << "Error: Failed to Initialize yojimbo\n";
         return EXIT_FAILURE;
     }
-    yojimbo_log_level(YOJIMBO_LOG_LEVEL_DEBUG);
+    yojimbo_log_level(YOJIMBO_LOG_LEVEL_INFO);
     std::srand((unsigned int) time(NULL));
 
 

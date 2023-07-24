@@ -40,7 +40,7 @@ public:
 void GameServer::init(){
     adapter = std::make_unique<ServerAdapter>(this->getPtr());
     connection_config = std::make_unique<yojimbo::ClientServerConfig>();
-    *(connection_config) = game_connection_config;
+    *(connection_config) = GameConnectionConfig();
     server = std::make_shared<yojimbo::Server>(
             yojimbo::GetDefaultAllocator(),
             DEFAULT_PRIVATE_KEY,
@@ -81,7 +81,7 @@ void GameServer::addPlayer(u_int64_t client_id){
     if(!latest_game){
         createGame();
     }
-    else if (latest_game->getGameState() != GAMESTATE::LOBBY &&
+    else if (latest_game->getRoundState() != RoundStateType::LOBBY &&
        latest_game->getPlayers().size() >= MAX_PLAYERS){
         createGame();
     }
@@ -106,11 +106,20 @@ void GameServer::processMessage(int client_index, yojimbo::Message* message){
     uint64_t client_id = server->GetClientId(client_index);
     switch(message->GetType()){
         case (int)MessageType::GRID:
+        {
             GridMessage* grid_message = reinterpret_cast<GridMessage*>(message);
             if(!games.contains(grid_message->game_id)) return;
             games[grid_message->game_id]->processGridMessage(client_id, reinterpret_cast<GridMessage*>(message));
             break;
-        defaul:
+        }
+        case (int)MessageType::PLAYER_COMMAND:
+        {
+            PlayerCommandMessage* player_command_message = reinterpret_cast<PlayerCommandMessage*>(message);
+            if(!games.contains(player_command_message->game_id)) return;
+            games[player_command_message->game_id]->processPlayerCommandMessage(client_id, reinterpret_cast<PlayerCommandMessage*>(message));
+            break;
+        }
+        default:
             break;
     }
 }

@@ -12,16 +12,23 @@
 #include "DEFINITIONS.hpp"
 #include "network.hpp"
 #include "Player.hpp"
+#include "GameLogic.hpp"
 
 typedef std::vector<std::vector<uint32_t>> Grid;
 
+struct ServerPlayer{
+    Player player;
+    GameLogic gamelogic;
+    int tetramino_cursor = 0;
+};
 
 class Game{
 private:
     std::shared_ptr<yojimbo::Server> server;
 
     int game_id;
-    std::unordered_map<uint64_t, std::shared_ptr<Player>> players;
+    std::vector<TetraminoType> tetramino_sequenz;
+    std::unordered_map<uint64_t, std::shared_ptr<ServerPlayer>> players;
     RoundStateType roundstate;
 
     sf::Clock lobby_clock;
@@ -44,13 +51,14 @@ public:
 
     void addPlayer(uint64_t client_id);
     void removePlayer(uint64_t client_id);
-    std::shared_ptr<Player> getPlayer(uint64_t client_id);
+    std::shared_ptr<ServerPlayer> getPlayer(uint64_t client_id);
     bool hasPlayer(uint64_t client_id);
-    std::unordered_map<uint64_t, std::shared_ptr<Player>> getPlayers();
+    std::unordered_map<uint64_t, std::shared_ptr<ServerPlayer>> getPlayers();
 
     RoundStateType getRoundState();
     
     void processGridMessage(uint64_t client_id, GridMessage* message);
+    void processPlayerCommandMessage(uint64_t client_id, PlayerCommandMessage* message);
 
     void update(sf::Time dt);
 };

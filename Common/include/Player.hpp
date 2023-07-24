@@ -8,6 +8,6 @@ struct Player{
     uint64_t client_id;
     std::vector<std::vector<uint32_t>> grid;
     int points = 0;
-    bool lost = false;
+    int position = -1;
 };
 #endif

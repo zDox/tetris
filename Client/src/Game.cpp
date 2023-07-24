@@ -22,9 +22,9 @@ void Game::run(){
     sf::Time new_time, frame_time, interpolation;
 
     sf::Time current_time = clock.getElapsedTime();
+    /*
     sf::Time accumulator = sf::seconds(0.0f);
     
-    /* 
     while(data->window->isOpen()){
         data->state_manager.processStateChanges();
 

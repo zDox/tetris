@@ -5,12 +5,12 @@ void transpose(std::vector<std::vector<bool>> &matrix){
     
     // Resize temp
     temp.resize(matrix.size());
-    for (int i=0; i < matrix.size(); i++){
+    for (std::vector<std::vector<bool>>::size_type i=0; i < matrix.size(); i++){
         temp[i].resize(matrix.size());
     }
     // Transpose
-    for(int j=0; j<matrix.size();j++){
-        for(int k=0; k<matrix[0].size(); k++){
+    for(std::vector<std::vector<bool>>::size_type j=0; j<matrix.size();j++){
+        for(std::vector<bool>::size_type k=0; k<matrix[0].size(); k++){
             temp[k][j] = matrix[j][k];
         }
     }
@@ -19,7 +19,7 @@ void transpose(std::vector<std::vector<bool>> &matrix){
 
 void reverse_rows(std::vector<std::vector<bool>> &matrix){
     // Reverse every row
-    for(int i=0; i<matrix.size();i++){
+    for(std::vector<std::vector<bool>>::size_type i=0; i<matrix.size();i++){
         std::reverse(matrix[i].begin(), matrix[i].end());
     }
 }

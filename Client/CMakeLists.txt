@@ -4,6 +4,7 @@ set(CMAKE_TOOLCHAIN_FILE WindowsToolchain.cmake)
 
 project(TetrisClient)
 
+add_compile_options(-Wall -Werror)
 
 # Binary paths
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
@@ -22,8 +23,10 @@ set(COMMON_DIR ../Common)
 
 aux_source_directory(src SOURCES)
 aux_source_directory(include HEADERS)
+aux_source_directory(${COMMON_DIR}/include COMMON_HEADERS)
+aux_source_directory(${COMMON_DIR}/src COMMON_SOURCES)
 
-add_executable(TetrisClient ${SOURCES} ${HEADERS})
+add_executable(TetrisClient ${SOURCES} ${COMMON_SOURCES} ${HEADERS} ${COMMON_HEADERS})
 
 # Specify the include directories
 target_include_directories(TetrisClient PUBLIC include)

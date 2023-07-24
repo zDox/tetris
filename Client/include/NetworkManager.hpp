@@ -13,6 +13,7 @@
 
 #include "network.hpp"
 #include "Definitions.hpp"
+#include "Player.hpp"
 
 enum ConnectionStatus {
     CONNECTED,
@@ -31,14 +32,35 @@ private:
     sf::Clock network_clock;
     sf::Time next_cycle;
 
+    // Queues for Messages to be send
     std::queue<PlayerCommandType> player_command_queue;
 
+    // Game Details
     int game_id = -1;
-    std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> opponents_grid;
+    std::unordered_map<uint64_t, Player> players;
+    RoundStateType roundstate;
+    std::queue<TetraminoType> tetramino_queue;
+    
+    // Processing of Messages funcitons
+    void processGridMessage(GridMessage* message);
+    void processRoundStateChangeMessage(RoundStateChangeMessage* message);
+    void processTetraminoPlacementMessage(TetraminoPlacementMessage* message);
+    void processPlayerScoreMessage(PlayerScoreMessage* message);
+    void processPlayerJoinMessage(PlayerJoinMessage* message);
+    void processPlayerLeaveMessage(PlayerLeaveMessage* message);
+    void processMessages();
+    
+    // Sending of Messages
+    void sendPlayerCommands();
+    void sendMessages(); 
 public:
     NetworkManager();
-
+    
+    // Getter and Setter
     ConnectionStatus getConnectionStatus();
+    int getGameID();
+    RoundStateType getRoundState();
+    TetraminoType getNextTetramino();
 
     void generateClientID();
     
@@ -47,15 +69,6 @@ public:
 
     void connect(std::string);
     void disconnect();
-
-    void processGridMessage(GridMessage* message);
-    void processTetraminoPlacement(TetraminoPlacementMessage* message);
-    void processMessages();
-
-    void sendPlayerCommands();
-    void sendMessages();
-    
-    int getGameID();
 
     void queuePlayerCommand(PlayerCommandType command_type);
     std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> getOpponentsGrid();

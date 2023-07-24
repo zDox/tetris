@@ -1,46 +1,46 @@
 #include "Tetramino.hpp"
 
 
-Tetramino::Tetramino(TETRAMINO_TYPE t_type, sf::Color t_color){
+Tetramino::Tetramino(TetraminoType t_type, sf::Color t_color){
     type = t_type;
     color = t_color;
     switch(type){
-        case TETRAMINO_TYPE::STRAIGHT:
+        case TetraminoType::STRAIGHT:
             form = {{0,0,0,0},
                     {1,1,1,1},
                     {0,0,0,0},
                     {0,0,0,0}};
             break;
-        case TETRAMINO_TYPE::SQUARE:
+        case TetraminoType::SQUARE:
             form = {{1,1},
                     {1,1}};
             break;
-        case TETRAMINO_TYPE::T_SHAPE:
+        case TetraminoType::T_SHAPE:
             form = {{0,1,0},
                     {1,1,1},
                     {0,0,0}};
             break;
-        case TETRAMINO_TYPE::L_SHAPE:
+        case TetraminoType::L_SHAPE:
             form = {{0,0,1},
                     {1,1,1},
                     {0,0,0}};
             break;
-        case TETRAMINO_TYPE::J_SHAPE:
+        case TetraminoType::J_SHAPE:
             form = {{1,0,0},
                     {1,1,1},
                     {0,0,0}};
             break;
-        case TETRAMINO_TYPE::S_SHAPE:
+        case TetraminoType::S_SHAPE:
             form = {{0,1,1},
                     {1,1,0},
                     {0,0,0}};
             break;
-        case TETRAMINO_TYPE::Z_SHAPE:
+        case TetraminoType::Z_SHAPE:
             form = {{1,1,0},
                     {0,1,1},
                     {0,0,0}};
             break;
-        case TETRAMINO_TYPE::AMOUNT:
+        case TetraminoType::AMOUNT:
             break;
     }
     rotation = 0;
@@ -88,8 +88,8 @@ void Tetramino::rotate(bool clockwise){
 };
 
 void Tetramino::print(){
-    for(int i=0; i<form.size(); i++){
-        for(int k=0; k< form[0].size(); k++){
+    for(std::vector<std::vector<bool>>::size_type i=0; i<form.size(); i++){
+        for(std::vector<bool>::size_type k=0; k< form[0].size(); k++){
             std::cout << std::to_string(form[i][k]);
             if(k != form[0].size()-1){
                 std::cout << ", ";

@@ -102,6 +102,7 @@ struct GridMessage : public yojimbo::Message
 
 struct RoundStateChangeMessage : public yojimbo::Message
 {
+    int game_id;
     RoundStateType roundstate;
     RoundStateChangeMessage(){
         roundstate = RoundStateType::LOBBY;
@@ -109,6 +110,7 @@ struct RoundStateChangeMessage : public yojimbo::Message
 
     template <typename Stream> 
     bool Serialize( Stream & stream ){        
+        serialize_int(stream, game_id, 0, std::numeric_limits<int>::max());
         int roundstate_value = static_cast<int>(roundstate);
         serialize_int(stream, roundstate_value, 0, 64);
         roundstate = static_cast<RoundStateType>(roundstate_value);
@@ -142,8 +144,8 @@ struct PlayerScoreMessage : public yojimbo::Message
 {
     int game_id;
     uint64_t client_id;
-    int game_outcome;
-    int score;
+    int position;
+    int points;
 
 
     PlayerScoreMessage(){}; 
@@ -152,8 +154,8 @@ struct PlayerScoreMessage : public yojimbo::Message
     bool Serialize( Stream & stream ){        
         serialize_int(stream, game_id, 0, std::numeric_limits<int>::max());
         serialize_uint64(stream, client_id);
-        serialize_int(stream, game_outcome, 0, std::numeric_limits<int>::max());
-        serialize_int(stream, score, 0, std::numeric_limits<int>::max());
+        serialize_int(stream, position, std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+        serialize_int(stream, points, -1, std::numeric_limits<int>::max());
         return true;
     }
 

@@ -3,6 +3,10 @@
 GameLogic::GameLogic(){
 };
 
+void GameLogic::init(){
+    initVariables();
+}
+
 void GameLogic::setPlayerCommand(PlayerCommandType t_player_command){
     player_command = t_player_command;
 }
@@ -49,8 +53,8 @@ void GameLogic::resetGrid(){
 void GameLogic::putTetraOnGrid(){
     if(!tetra) return;
     std::vector<std::vector<bool>> form = tetra->getForm();
-    for(int i=0; i<form.size(); i++){
-        for(int k=0; k<form.size(); k++){
+    for(std::vector<std::vector<bool>>::size_type i=0; i<form.size(); i++){
+        for(std::vector<bool>::size_type k=0; k<form.size(); k++){
             if(!form[i][k]) continue;
             
             // Dont if out of grid in X Direction
@@ -83,8 +87,8 @@ bool GameLogic::checkCollisions(int dx, int dy, bool clockwise){
 
     std::vector<std::vector<bool>> form = temp.getForm();
 
-    for(int i=0; i<form.size(); i++){
-        for(int k=0; k<form[0].size(); k++){
+    for(std::vector<std::vector<bool>>::size_type i=0; i<form.size(); i++){
+        for(std::vector<bool>::size_type k=0; k<form[0].size(); k++){
             if(!form[i][k]) continue;
             // Out of grid, left or right check
             if((!(0<=temp.getX()+ k && temp.getX() + k < COLUMNS)) or temp.getY()+i >= ROWS){
@@ -100,8 +104,8 @@ bool GameLogic::checkCollisions(int dx, int dy, bool clockwise){
 
 void GameLogic::lockTetra(){
     std::vector<std::vector<bool>> form = tetra->getForm();
-    for(int i=0; i<form.size(); i++){
-        for(int k=0; k<form.size(); k++){
+    for(std::vector<std::vector<bool>>::size_type i=0; i<form.size(); i++){
+        for(std::vector<bool>::size_type k=0; k<form.size(); k++){
             if(!form[i][k]) continue;
             
             // Dont if out of grid in X Direction
@@ -119,8 +123,8 @@ void GameLogic::lockTetra(){
 
 bool GameLogic::checkLoss(){
     std::vector<std::vector<bool>> form = tetra->getForm();
-    for(int i=0;i<form.size(); i++){
-        for(int k=0; k<form.size(); k++){
+    for(std::vector<std::vector<bool>>::size_type i=0;i<form.size(); i++){
+        for(std::vector<bool>::size_type k=0; k<form.size(); k++){
             if(!form[i][k]) continue;
             if(stationaries[tetra->getY() + k][tetra->getX() + i] != GRID_COLOR) return true;
         }

@@ -8,6 +8,6 @@
 // Gameplay
 #define ROWS 20
 #define COLUMNS 10
-#define SPEED 4 // 4 Grid pixel per 10 Seconds
+#define SPEED 20 // SPEED Grid pixel per 10 Seconds
 
 #endif 

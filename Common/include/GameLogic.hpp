@@ -15,6 +15,7 @@ private:
     PlayerCommandType player_command;
     int points = 0;
     bool finished = false;
+    bool running = false;
 
     std::shared_ptr<Tetramino> tetra;
     std::shared_ptr<TetraminoType> next_tetramino;
@@ -22,6 +23,7 @@ private:
     std::vector<std::vector<sf::Color>> stationaries;
 
     sf::Clock tetra_move_timer;
+    sf::Time next_move_time;
 
     void spawnTetramino();
     bool checkCollisions(int dx, int dy, bool clockwise);
@@ -41,12 +43,14 @@ private:
 public:
     GameLogic();
 
+    bool isRunning();
     void setNextTetramino(TetraminoType tetramino);
     bool isNeedingNextTetramino();
     void setPlayerCommand(PlayerCommandType t_player_command);
     std::vector<std::vector<sf::Color>> getGrid();
     int getPoints();
 
+    void start();
     void init();
     void reset();
     void update(sf::Time dt);

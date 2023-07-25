@@ -29,6 +29,7 @@ RoundStateType NetworkManager::getRoundState(){
 }
 
 TetraminoType NetworkManager::getNextTetramino(){
+    if(tetramino_queue.empty()) throw std::out_of_range("Tetramino queue is empty not able to retrive element!");
     TetraminoType next = tetramino_queue.front();
     tetramino_queue.pop();
     return next;
@@ -48,7 +49,7 @@ bool NetworkManager::init(){
         std::cerr << "ERROR: Failed to Initialize yojimbo\n";
         return false;
     }
-    yojimbo_log_level( YOJIMBO_LOG_LEVEL_DEBUG );
+    yojimbo_log_level( YOJIMBO_LOG_LEVEL_INFO );
     std::srand((unsigned int) time(NULL));
     connection_config = std::make_shared<yojimbo::ClientServerConfig>();
     *(connection_config) = GameConnectionConfig();
@@ -98,6 +99,7 @@ void NetworkManager::processRoundStateChangeMessage(RoundStateChangeMessage* mes
 void NetworkManager::processTetraminoPlacementMessage(TetraminoPlacementMessage* message){
     if(game_id != message->game_id) return;
     tetramino_queue.push(message->tetramino_type);
+    std::cout << "NetworkManager - TetraminoPlacementMessage " << (int)message->tetramino_type << "\n";
 }
 
 void NetworkManager::processPlayerScoreMessage(PlayerScoreMessage* message){
@@ -105,6 +107,21 @@ void NetworkManager::processPlayerScoreMessage(PlayerScoreMessage* message){
     if(game_id != message->game_id) return;
     players[message->client_id].points = message->points;
     players[message->client_id].position = message->position;
+}
+
+void NetworkManager::processPlayerJoinMessage(PlayerJoinMessage* message){
+    if(players.contains(message->client_id)) return;
+    std::cout<< "Player (" << message->client_id << ") joined the game (" << game_id << ")\n";
+    Player player;
+    player.client_id = message->client_id;
+    players.emplace(message->client_id, player);
+
+}
+
+void NetworkManager::processPlayerLeaveMessage(PlayerLeaveMessage *message) {
+    if(!players.contains(message->client_id)) return;
+    std::cout<< "Player (" << message->client_id << ") leaved the game (" << game_id << ")\n";
+    players.erase(message->client_id);
 }
 
 void NetworkManager::processMessages(){
@@ -124,6 +141,14 @@ void NetworkManager::processMessages(){
                     processTetraminoPlacementMessage((TetraminoPlacementMessage*) message);
                     break;
 
+                case (int) MessageType::PLAYERJOIN:
+                    processPlayerJoinMessage((PlayerJoinMessage*) message);
+                    break;
+
+                case (int) MessageType::PLAYERLEAVE:
+                    processPlayerLeaveMessage((PlayerLeaveMessage*) message);
+                    break;
+
                 case (int) MessageType::PLAYERSCORE:
                     processPlayerScoreMessage((PlayerScoreMessage*) message);
                     break;
@@ -136,17 +161,18 @@ void NetworkManager::processMessages(){
 
 
 void NetworkManager::queuePlayerCommand(PlayerCommandType command_type){
-    player_command_queue.push(command_type);
+    player_command = command_type;
 }
 
 void NetworkManager::sendPlayerCommands(){
-    while(!player_command_queue.empty()){
-        PlayerCommandMessage* message = (PlayerCommandMessage*) client->CreateMessage((int)MessageType::PLAYER_COMMAND);
-        message->game_id = game_id;
-        message->command_type = player_command_queue.front();
-        player_command_queue.pop();
-        client->SendMessage((int)GameChannel::RELIABLE, message);
-    }
+    if(player_command == PlayerCommandType::NONE) return;
+
+    PlayerCommandMessage* message = (PlayerCommandMessage*) client->CreateMessage((int)MessageType::PLAYER_COMMAND);
+    message->game_id = game_id;
+    message->command_type = player_command;
+    client->SendMessage((int)GameChannel::RELIABLE, message);
+    player_command = PlayerCommandType::NONE;
+    std::cout << "NetworkManager - Send - PlayerCommandMessage - Type: "<< (int) message->command_type << "\n";
 }
 
 void NetworkManager::sendMessages(){
@@ -155,8 +181,9 @@ void NetworkManager::sendMessages(){
 
 std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> NetworkManager::getOpponentsGrid(){
     std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> opponents_grid;
-    for(auto [client_id, player] : players){
-        opponents_grid[client_id] = player.grid;
+    for(auto [p_client_id, player] : players){
+        if(player.grid.size() == 0) continue;
+        opponents_grid[p_client_id] = player.grid;
     }
     return opponents_grid;
 }

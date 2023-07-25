@@ -33,7 +33,7 @@ private:
     sf::Time next_cycle;
 
     // Queues for Messages to be send
-    std::queue<PlayerCommandType> player_command_queue;
+    PlayerCommandType player_command;
 
     // Game Details
     int game_id = -1;

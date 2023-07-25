@@ -7,7 +7,17 @@ void GameLogic::init(){
     initVariables();
 }
 
+void GameLogic::start(){
+    tetra_move_timer.restart();
+    next_move_time = sf::seconds(0);
+    running = true;
+}
+
+bool GameLogic::isRunning(){
+    return running;
+}
 void GameLogic::setNextTetramino(TetraminoType tetramino){
+    std::cout << "Next Tetramino: " << (int)tetramino << "\n";
     next_tetramino = std::make_shared<TetraminoType>();
     *next_tetramino = tetramino;
 }
@@ -42,7 +52,10 @@ void GameLogic::initVariables(){
 
 void GameLogic::spawnTetramino(){
     std::cout << "Spawning new Tetramino\n";
-    if(next_tetramino == nullptr) return;
+    if(!next_tetramino.get()) {
+        std::cout << "No new TetraminoType available\n";
+        return;
+    }
     tetra = std::make_shared<Tetramino>(*next_tetramino, sf::Color::Yellow);
     tetra->setPosition(7-tetra->getForm().size(), 0);
 
@@ -62,7 +75,7 @@ void GameLogic::resetGrid(){
 }
 
 void GameLogic::putTetraOnGrid(){
-    if(!tetra) return;
+    if(!tetra.get()) return;
     std::vector<std::vector<bool>> form = tetra->getForm();
     for(std::vector<std::vector<bool>>::size_type i=0; i<form.size(); i++){
         for(std::vector<bool>::size_type k=0; k<form.size(); k++){
@@ -175,19 +188,19 @@ void GameLogic::checkPoint(){
 }
 
 void GameLogic::updateTetra(){
-    if(!tetra){
+    if(!tetra.get()){
         spawnTetramino();
-
+        if(!tetra.get()) return;
     }
 
     sf::Time max_move_time = sf::seconds(10.f/SPEED);
-    if(tetra_move_timer.getElapsedTime() >= max_move_time){
+    if(next_move_time <= tetra_move_timer.getElapsedTime()){
         if(checkCollisions(0, 1, false)){
             lockTetra();
             return;
         }
         tetra->move(0, 1);
-        tetra_move_timer.restart();
+        next_move_time+=max_move_time;
     }
 
     // Move left or right
@@ -222,6 +235,7 @@ void GameLogic::updateTetra(){
 }
 
 void GameLogic::update(sf::Time dt){
+    if(!running) return;
     resetGrid();
     putStationariesOnGrid();
     updateTetra();

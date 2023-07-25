@@ -80,14 +80,20 @@ void GameState::handleKeyboard(){
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
         player_command = PlayerCommandType::MOVE_DOWN;
     }
-    
-    data->network_manager.queuePlayerCommand(player_command);
+    if(player_command != PlayerCommandType::NONE){
+        data->network_manager.queuePlayerCommand(player_command);
+    }
     game_logic.setPlayerCommand(player_command);
 }
 
 void GameState::handleNextTetramino(){
     if(!game_logic.isNeedingNextTetramino()) return;
-    game_logic.setNextTetramino(data->network_manager.getNextTetramino());
+    try{
+        game_logic.setNextTetramino(data->network_manager.getNextTetramino());
+    }
+    catch (std::out_of_range &e){
+        // No next Tetramino available
+    }
 }
 
 void GameState::drawGrid(){
@@ -139,9 +145,15 @@ void GameState::handleInputs(){
 
 
 void GameState::update(sf::Time dt){ 
-    if(data->network_manager.getConnectionStatus() == ConnectionStatus::DISCONNECTED){
+    if(data->network_manager.getConnectionStatus() == ConnectionStatus::DISCONNECTED or
+       data->network_manager.getConnectionStatus() == ConnectionStatus::ERROR){
         data->state_manager.switchToState(std::make_shared<LoginState>(data));
     }
+
+    if(data->network_manager.getRoundState() == RoundStateType::INGAME && !game_logic.isRunning()){
+        game_logic.start();
+    }
+
     if(data->network_manager.getGameID() != -1 && data->network_manager.getRoundState() == RoundStateType::INGAME){
         handleKeyboard();
         handleNextTetramino();

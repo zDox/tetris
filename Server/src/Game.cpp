@@ -17,6 +17,7 @@ void Game::addPlayer(uint64_t client_id){
         lobby_clock.restart();
         std::cout << std::to_string(game_id) << " Lobby countdown has started.\n";
     }
+    sendPlayerJoin(client_id);
     sendRoundState(client_id);
 }
 
@@ -24,7 +25,7 @@ void Game::addPlayer(uint64_t client_id){
 void Game::removePlayer(uint64_t client_id){
     if(!players.contains(client_id)) return;
     players.erase(client_id);
-
+    sendPlayerLeave(client_id);
     std::cout << std::to_string(game_id) << " Player (" << std::to_string(client_id) << ") leaved the game.\n";
     if(roundstate == RoundStateType::INGAME && players.size() < MIN_INGAME_PLAYERS){
         roundstate = RoundStateType::END;
@@ -108,6 +109,37 @@ void Game::sendRoundStates(){
     }
 }
 
+void Game::sendGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid){
+    for(auto [p_client_id, player] : players){
+        int client_index = getPlayersClientIndex(p_client_id);
+        GridMessage* message = (GridMessage*) server->CreateMessage(client_index, (int)MessageType::GRID);
+        message->game_id = game_id;
+        message->client_id = client_id;
+        message->grid = convertGridToColors(grid);
+        server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
+    }
+}
+
+void Game::sendPlayerJoin(uint64_t client_id){
+    for(auto [p_client_id, player] : players){
+        int client_index = getPlayersClientIndex(p_client_id);
+        PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYERJOIN);
+        message->game_id = game_id;
+        message->client_id = client_id;
+        server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
+    }
+}
+
+void Game::sendPlayerLeave(uint64_t client_id){
+    for(auto [p_client_id, player] : players){
+        int client_index = getPlayersClientIndex(p_client_id);
+        PlayerLeaveMessage* message = (PlayerLeaveMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYERLEAVE);
+        message->game_id = game_id;
+        message->client_id = client_id;
+        server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
+    }
+}
+
 void Game::updateLobbyState(sf::Time dt){
     if(lobby_clock.getElapsedTime() >= sf::seconds(LOBBY_WAIT_TIME) && lobby_clock_running){
         if(players.size() < MIN_STARTING_PLAYERS) {
@@ -115,15 +147,24 @@ void Game::updateLobbyState(sf::Time dt){
         }
         roundstate = RoundStateType::INGAME;
         std::cout << "Switched to Ingame State\n";
-        sendRoundStates(); 
+        sendRoundStates();
+        for(auto [p_client_id, p] : players){
+            p->gamelogic.start();
+        }
         return;
     }
 }
 
+
 void Game::updateIngameState(sf::Time dt){
     for(auto [client_id, player] : players){
         handleNextTetramino(client_id);
+        std::vector<std::vector<sf::Color>> old_grid = players[client_id]->gamelogic.getGrid();
         players[client_id]->gamelogic.update(dt);
+        std::vector<std::vector<sf::Color>> new_grid = players[client_id]->gamelogic.getGrid();
+        if(!vecsAreEqual(old_grid, new_grid)){
+            sendGrid(client_id, new_grid);
+        }
     }
 }
 

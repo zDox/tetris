@@ -56,6 +56,7 @@ void Tetramino::setPosition(int t_x, int t_y){
 };
 
 void Tetramino::move(int dx, int dy){
+
     x += dx;
     y += dy;
 };

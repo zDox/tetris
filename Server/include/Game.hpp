@@ -33,15 +33,21 @@ private:
 
     sf::Clock lobby_clock;
     bool lobby_clock_running = false;
+
+    void printGrid(std::vector<std::vector<sf::Color>> grid);
     
     int getPlayersClientIndex(uint64_t client_id);
     void handleNextTetramino(uint64_t client_id);
 
     void sendRoundState(uint64_t client_id);
     void sendRoundStates();
+    void sendGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid);
+    void sendPlayerJoin(uint64_t client_id);
+    void sendPlayerLeave(uint64_t client_id);
 
 
-    void updateLobbyState(sf::Time dt);
+
+        void updateLobbyState(sf::Time dt);
     void updateIngameState(sf::Time dt);
     void updateEndState(sf::Time dt);
     
@@ -58,7 +64,6 @@ public:
 
     RoundStateType getRoundState();
     
-    void processGridMessage(uint64_t client_id, GridMessage* message);
     void processPlayerCommandMessage(uint64_t client_id, PlayerCommandMessage* message);
 
     void update(sf::Time dt);

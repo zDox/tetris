@@ -6,13 +6,14 @@
 #include <vector>
 #include <memory>
 
-#include <SFML/System.hpp>
-#include "yojimbo.h"
-
+#include "GameLogic.hpp"
 #include "DEFINITIONS.hpp"
 #include "network.hpp"
 #include "Player.hpp"
-#include "GameLogic.hpp"
+
+#include <SFML/System.hpp>
+#include "yojimbo.h"
+
 
 typedef std::vector<std::vector<uint32_t>> Grid;
 

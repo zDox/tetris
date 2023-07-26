@@ -6,6 +6,7 @@
 
 #include "SFML/Graphics/Color.hpp"
 
+#include "Log.hpp"
 #include "Tetramino.hpp"
 #include "GameDefinitions.hpp"
 #include "Command.hpp"

@@ -93,6 +93,7 @@ void GameState::handleNextTetramino(){
     }
     catch (std::out_of_range &e){
         // No next Tetramino available
+        CORE_INFO("GameState - No next Tetramino available ");
     }
 }
 

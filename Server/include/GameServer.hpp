@@ -6,12 +6,13 @@
 #include <time.h>
 #include <queue>
 
+#include "Game.hpp"
+#include "DEFINITIONS.hpp"
+#include "network.hpp"
+
 #include <SFML/System.hpp>
 #include "yojimbo.h"
 
-#include "DEFINITIONS.hpp"
-#include "network.hpp"
-#include "Game.hpp"
 
 
 struct ServerAdapter;

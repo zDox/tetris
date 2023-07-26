@@ -1,5 +1,4 @@
 #include "NetworkManager.hpp"
-#include "network.hpp"
 
 NetworkManager::NetworkManager(){
     generateClientID();
@@ -46,7 +45,7 @@ void NetworkManager::generateClientID(){
 
 bool NetworkManager::init(){
     if (!InitializeYojimbo() ){
-        std::cerr << "ERROR: Failed to Initialize yojimbo\n";
+        // NETWORK_ERROR("ERROR: Failed to Initialize yojimbo\n");
         return false;
     }
     yojimbo_log_level( YOJIMBO_LOG_LEVEL_INFO );
@@ -82,11 +81,13 @@ void NetworkManager::disconnect(){
 }
 
 void NetworkManager::processGridMessage(GridMessage* message){
+    NETWORK_TRACE("PROCESS_MESSAGE - GridMessage - Player({}", message->client_id);
     if(!players.contains(message->client_id)) return;
     players[message->client_id].grid = message->grid;
 }
 
 void NetworkManager::processRoundStateChangeMessage(RoundStateChangeMessage* message){
+    NETWORK_TRACE("PROCESS_MESSAGE - RoundStateChangeMessage - RoundState: {}", (int)message->roundstate);
     if(game_id == -1){
         game_id = message->game_id;
     }
@@ -97,12 +98,13 @@ void NetworkManager::processRoundStateChangeMessage(RoundStateChangeMessage* mes
 }
 
 void NetworkManager::processTetraminoPlacementMessage(TetraminoPlacementMessage* message){
+    NETWORK_TRACE("PROCESS_MESSAGE - TetraminoPlacementMessage - TetraminoTye: {}", (int)message->tetramino_type);
     if(game_id != message->game_id) return;
     tetramino_queue.push(message->tetramino_type);
-    std::cout << "NetworkManager - TetraminoPlacementMessage " << (int)message->tetramino_type << "\n";
 }
 
 void NetworkManager::processPlayerScoreMessage(PlayerScoreMessage* message){
+    NETWORK_TRACE("PROCESS_MESSAGE - PlayerScoreMessage - Player({}) Points: {} Position: {}", message->client_id, message->points, message->position);
     if(!players.contains(message->client_id)) return;
     if(game_id != message->game_id) return;
     players[message->client_id].points = message->points;
@@ -110,8 +112,8 @@ void NetworkManager::processPlayerScoreMessage(PlayerScoreMessage* message){
 }
 
 void NetworkManager::processPlayerJoinMessage(PlayerJoinMessage* message){
+    NETWORK_INFO("PROCESS_MESSAGE - PlayerJoinMessage - Player({})", message->client_id);
     if(players.contains(message->client_id)) return;
-    std::cout<< "Player (" << message->client_id << ") joined the game (" << game_id << ")\n";
     Player player;
     player.client_id = message->client_id;
     players.emplace(message->client_id, player);
@@ -119,8 +121,8 @@ void NetworkManager::processPlayerJoinMessage(PlayerJoinMessage* message){
 }
 
 void NetworkManager::processPlayerLeaveMessage(PlayerLeaveMessage *message) {
+    NETWORK_INFO("PROCESS_MESSAGE - PlayerLeaveMessage - Player({})", message->client_id);
     if(!players.contains(message->client_id)) return;
-    std::cout<< "Player (" << message->client_id << ") leaved the game (" << game_id << ")\n";
     players.erase(message->client_id);
 }
 
@@ -172,7 +174,7 @@ void NetworkManager::sendPlayerCommands(){
     message->command_type = player_command;
     client->SendMessage((int)GameChannel::RELIABLE, message);
     player_command = PlayerCommandType::NONE;
-    std::cout << "NetworkManager - Send - PlayerCommandMessage - Type: "<< (int) message->command_type << "\n";
+    NETWORK_TRACE("SEND_MESSAGE - PlayerCommandMessage - CommandType: {}", (int) message->command_type);
 }
 
 void NetworkManager::sendMessages(){

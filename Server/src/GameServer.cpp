@@ -49,7 +49,7 @@ void GameServer::init(){
             *adapter,
             0.0);
     if(!server) {
-        std::cerr << "Failed creating server\n";
+        CORE_ERROR("Failed creating server");
     }
 }
 
@@ -68,7 +68,7 @@ std::shared_ptr<Game> GameServer::getPlayersGame(uint64_t client_id){
 void GameServer::addPlayer(u_int64_t client_id){
     std::shared_ptr<Game> current_game = getPlayersGame(client_id);
     if(current_game){
-        std::cout << "Player: " << client_id << " is already ingame\n";
+        CORE_WARN("Matchmaking - Player({}) is already ingame", client_id);
         return;
     }
 
@@ -99,7 +99,7 @@ void GameServer::removePlayer(u_int64_t client_id){
 int GameServer::createGame(){ // Returns the game_id of the game it created
     games.emplace(next_game_id, std::make_shared<Game>(server, next_game_id));
     next_game_id++;
-    std::cout << "Created game " << next_game_id-1 << "\n";
+    CORE_INFO("Created Game with game_id = {}", next_game_id-1);
     return next_game_id-1;
 }
 

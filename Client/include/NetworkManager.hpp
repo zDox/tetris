@@ -1,5 +1,7 @@
 #ifndef NETWORK_MANAGER
 #define NETWORK_MANAGER
+// Log needs to be first
+#include "Log.hpp"
 
 #include <string>
 #include <memory>
@@ -7,6 +9,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <queue>
+
 
 #include "yojimbo.h"
 #include "SFML/System.hpp"

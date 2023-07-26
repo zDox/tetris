@@ -11,11 +11,11 @@ void Game::addPlayer(uint64_t client_id){
     new_player->gamelogic.init();
     players.emplace(client_id, new_player);
 
-    std::cout << std::to_string(game_id) << " Player (" << std::to_string(client_id) << ") joined the game.\n";
+    CORE_INFO("Matchmaking - Player({}) joined the game({})", client_id, game_id);
     if(players.size() >= MIN_STARTING_PLAYERS && !lobby_clock_running){
         lobby_clock_running = true;
         lobby_clock.restart();
-        std::cout << std::to_string(game_id) << " Lobby countdown has started.\n";
+        CORE_DEBUG("State - Lobbycountdown in game({}) has started. Remaining {} seconds", game_id, LOBBY_WAIT_TIME);
     }
     sendPlayerJoin(client_id);
     sendRoundState(client_id);
@@ -26,7 +26,7 @@ void Game::removePlayer(uint64_t client_id){
     if(!players.contains(client_id)) return;
     players.erase(client_id);
     sendPlayerLeave(client_id);
-    std::cout << std::to_string(game_id) << " Player (" << std::to_string(client_id) << ") leaved the game.\n";
+    CORE_INFO("Matchmaking - Player({}) leaved the game({})", client_id, game_id);
     if(roundstate == RoundStateType::INGAME && players.size() < MIN_INGAME_PLAYERS){
         roundstate = RoundStateType::END;
         sendRoundStates();
@@ -146,7 +146,7 @@ void Game::updateLobbyState(sf::Time dt){
             return;
         }
         roundstate = RoundStateType::INGAME;
-        std::cout << "Switched to Ingame State\n";
+        CORE_TRACE("Game - Game ({}): Switched to Ingame State", game_id);
         sendRoundStates();
         for(auto [p_client_id, p] : players){
             p->gamelogic.start();

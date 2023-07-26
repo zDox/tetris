@@ -8,6 +8,7 @@ void GameLogic::init(){
 }
 
 void GameLogic::start(){
+    CORE_INFO("GameLogic - Starting GameLogic");
     tetra_move_timer.restart();
     next_move_time = sf::seconds(0);
     running = true;
@@ -17,7 +18,7 @@ bool GameLogic::isRunning(){
     return running;
 }
 void GameLogic::setNextTetramino(TetraminoType tetramino){
-    std::cout << "Next Tetramino: " << (int)tetramino << "\n";
+    CORE_TRACE("GameLogic - Next Tetramino: {}", (int)tetramino);
     next_tetramino = std::make_shared<TetraminoType>();
     *next_tetramino = tetramino;
 }
@@ -51,9 +52,9 @@ void GameLogic::initVariables(){
 }
 
 void GameLogic::spawnTetramino(){
-    std::cout << "Spawning new Tetramino\n";
+    CORE_TRACE("GameLogic - Spawning new Tetramino");
     if(!next_tetramino.get()) {
-        std::cout << "No new TetraminoType available\n";
+        CORE_WARN("GameLogic - No new TetraminoType available");
         return;
     }
     tetra = std::make_shared<Tetramino>(*next_tetramino, sf::Color::Yellow);
@@ -158,7 +159,6 @@ bool GameLogic::checkLoss(){
 
 void GameLogic::handleLoss(){
     finished = true;
-    std::cout << "Points: " << std::to_string(points) << "\n";
 };
 
 void GameLogic::checkPoint(){

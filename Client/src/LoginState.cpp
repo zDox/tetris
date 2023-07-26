@@ -53,7 +53,6 @@ void LoginState::destroy(){
 }
 
 void LoginState::login(){
-    std::cout << "Address: " << box_ipaddress->getText() << "\n";
     data->network_manager.connect(box_ipaddress->getText().toStdString());
 };
 

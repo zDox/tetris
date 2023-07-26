@@ -1,8 +1,10 @@
+#include "Log.hpp"
 #include "GameServer.hpp"
 
 int main(int argc, char* argv[]){
+    Log::init();
     if(!InitializeYojimbo()){
-        std::cerr << "Error: Failed to Initialize yojimbo\n";
+        CORE_ERROR("Libs -  Failed to Initialize yojimbo");
         return EXIT_FAILURE;
     }
     yojimbo_log_level(YOJIMBO_LOG_LEVEL_INFO);

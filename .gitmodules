@@ -4,3 +4,6 @@
 [submodule "External/zpp_bits"]
 	path = External/zpp_bits
 	url = https://github.com/eyalz800/zpp_bits.git
+[submodule "External/spdlog"]
+	path = External/spdlog
+	url = https://github.com/gabime/spdlog.git

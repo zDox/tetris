@@ -10,4 +10,10 @@ struct Player{
     int points = 0;
     int position = -1;
 };
+
+struct PlayerInput{
+    bool left = false, right = false, up=false, down=false;
+    long frame;
+};
+
 #endif

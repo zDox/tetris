@@ -8,7 +8,7 @@
 #include "Game.hpp"
 #include "Definitions.hpp"
 #include "GameDefinitions.hpp"
-#include "Command.hpp"
+#include "Player.hpp"
 #include "GameLogic.hpp"
 #include "LoginState.hpp"
 
@@ -23,6 +23,7 @@ private:
 
     // SFML -- Drawing data
     std::vector<std::vector<sf::RectangleShape>> drawing_grid;
+    long frame_counter;
 
     // Game Logic                       
     GameLogic game_logic;

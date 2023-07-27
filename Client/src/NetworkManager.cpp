@@ -58,6 +58,7 @@ bool NetworkManager::init(){
             *connection_config, 
             adapter, 
             0.0);
+    client->SetLatency(200);
     return true;
 }
 
@@ -143,15 +144,15 @@ void NetworkManager::processMessages(){
                     processTetraminoPlacementMessage((TetraminoPlacementMessage*) message);
                     break;
 
-                case (int) MessageType::PLAYERJOIN:
+                case (int) MessageType::PLAYER_JOIN:
                     processPlayerJoinMessage((PlayerJoinMessage*) message);
                     break;
 
-                case (int) MessageType::PLAYERLEAVE:
+                case (int) MessageType::PLAYER_LEAVE:
                     processPlayerLeaveMessage((PlayerLeaveMessage*) message);
                     break;
 
-                case (int) MessageType::PLAYERSCORE:
+                case (int) MessageType::PLAYER_SCORE:
                     processPlayerScoreMessage((PlayerScoreMessage*) message);
                     break;
             }
@@ -162,23 +163,28 @@ void NetworkManager::processMessages(){
 }
 
 
-void NetworkManager::queuePlayerCommand(PlayerCommandType command_type){
-    player_command = command_type;
+void NetworkManager::queuePlayerInput(PlayerInput t_player_input){
+    player_input = std::make_shared<PlayerInput>();
+    *player_input = t_player_input;
 }
 
-void NetworkManager::sendPlayerCommands(){
-    if(player_command == PlayerCommandType::NONE) return;
+void NetworkManager::sendPlayerInput(){
+    if(!player_input) return;
 
-    PlayerCommandMessage* message = (PlayerCommandMessage*) client->CreateMessage((int)MessageType::PLAYER_COMMAND);
+    PlayerInputMessage* message = (PlayerInputMessage*) client->CreateMessage((int)MessageType::PLAYER_INPUT);
     message->game_id = game_id;
-    message->command_type = player_command;
+    message->player_input = *player_input;
     client->SendMessage((int)GameChannel::RELIABLE, message);
-    player_command = PlayerCommandType::NONE;
-    NETWORK_TRACE("SEND_MESSAGE - PlayerCommandMessage - CommandType: {}", (int) message->command_type);
+    player_input = nullptr;
+    NETWORK_TRACE("SEND_MESSAGE - PlayerInputMessage - left: {}, right: {}, up: {}, down: {}", 
+            message->player_input.left, 
+            message->player_input.right, 
+            message->player_input.up, 
+            message->player_input.down);
 }
 
 void NetworkManager::sendMessages(){
-    sendPlayerCommands();
+    sendPlayerInput();
 }
 
 std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> NetworkManager::getOpponentsGrid(){

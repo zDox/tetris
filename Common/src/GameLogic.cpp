@@ -1,5 +1,4 @@
 #include "GameLogic.hpp"
-
 GameLogic::GameLogic(){
 };
 
@@ -9,7 +8,7 @@ void GameLogic::init(){
 
 void GameLogic::start(){
     CORE_INFO("GameLogic - Starting GameLogic");
-    tetra_move_timer.restart();
+    game_time = sf::seconds(0);
     next_move_time = sf::seconds(0);
     running = true;
 }
@@ -27,8 +26,9 @@ bool GameLogic::isNeedingNextTetramino(){
     return next_tetramino == nullptr;
 }
 
-void GameLogic::setPlayerCommand(PlayerCommandType t_player_command){
-    player_command = t_player_command;
+void GameLogic::setPlayerInput(PlayerInput t_player_input){
+    player_input = std::make_shared<PlayerInput>();
+    *player_input = t_player_input;
 }
 
 std::vector<std::vector<sf::Color>> GameLogic::getGrid(){
@@ -48,7 +48,6 @@ void GameLogic::initVariables(){
             stationaries[i].push_back(GRID_COLOR);
         }
     }
-    tetra_move_timer.restart();
 }
 
 void GameLogic::spawnTetramino(){
@@ -65,6 +64,10 @@ void GameLogic::spawnTetramino(){
     if(checkLoss()){
         handleLoss();
     }
+}
+
+void GameLogic::updateTime(sf::Time dt){
+    game_time += dt;
 }
 
 void GameLogic::resetGrid(){
@@ -194,7 +197,7 @@ void GameLogic::updateTetra(){
     }
 
     sf::Time max_move_time = sf::seconds(10.f/SPEED);
-    if(next_move_time <= tetra_move_timer.getElapsedTime()){
+    if(next_move_time <= game_time){
         if(checkCollisions(0, 1, false)){
             lockTetra();
             return;
@@ -203,39 +206,36 @@ void GameLogic::updateTetra(){
         next_move_time+=max_move_time;
     }
 
-    // Move left or right
-    switch(player_command){
-        case PlayerCommandType::MOVE_DOWN:
-            if(checkCollisions(0, 1, false)){
-                lockTetra();
-            }
-            tetra->move(0, 1);
-            return;
-        
+    if(!player_input) return;
+
+    if(player_input->down){
+        if(checkCollisions(0, 1, false)){
+            lockTetra();
+        }
         tetra->move(0, 1);
-        case PlayerCommandType::MOVE_LEFT:
-            if(checkCollisions(-1, 0, false)) return;
-            tetra->move(-1, 0);
-            break;
-
-        case PlayerCommandType::MOVE_RIGHT: 
-            if(checkCollisions(1, 0, false)) return;
-            tetra->move(1, 0);
-            break;
-
-        case PlayerCommandType::ROTATE_CLOCKWISE:
-            if(checkCollisions(0, 0, true)) return;
-            tetra->rotate(true);
-            break;
-
-        default:
-            break;
     }
-    player_command = PlayerCommandType::NONE;
+        
+    if(player_input->left){
+        if(checkCollisions(-1, 0, false)) return;
+        tetra->move(-1, 0);
+    }
+
+    if(player_input->right){
+        if(checkCollisions(1, 0, false)) return;
+        tetra->move(1, 0);
+    }
+
+    if(player_input->up){
+        if(checkCollisions(0, 0, true)) return;
+        tetra->rotate(true);
+    }
+    player_input = nullptr;
 }
+
 
 void GameLogic::update(sf::Time dt){
     if(!running) return;
+    updateTime(dt);
     resetGrid();
     putStationariesOnGrid();
     updateTetra();

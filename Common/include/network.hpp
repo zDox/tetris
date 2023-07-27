@@ -10,7 +10,7 @@
 
 #include "TetraminoType.hpp"
 #include "RoundStateType.hpp"
-#include "Command.hpp"
+#include "Player.hpp"
 
 #define SERVER_PORT 4545
 #define TICK_RATE 60
@@ -22,10 +22,10 @@ enum class MessageType {
     GRID,
     ROUNDSTATECHANGE,
     TETRAMINO_PLACEMENT,
-    PLAYERSCORE,
-    PLAYERJOIN,
-    PLAYERLEAVE,
-    PLAYER_COMMAND,
+    PLAYER_SCORE,
+    PLAYER_JOIN,
+    PLAYER_LEAVE,
+    PLAYER_INPUT,
     COUNT
 };
 
@@ -41,7 +41,7 @@ struct GameConnectionConfig : yojimbo::ClientServerConfig {
     GameConnectionConfig()  {
         numChannels = 1;
         channel[(int)GameChannel::RELIABLE].type = yojimbo::CHANNEL_TYPE_RELIABLE_ORDERED;
-        protocolId = 2;
+        protocolId = 3;
     }
 };
 
@@ -196,20 +196,22 @@ struct PlayerLeaveMessage : public yojimbo::Message
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
 };
 
-struct PlayerCommandMessage : public yojimbo::Message
+struct PlayerInputMessage : public yojimbo::Message
 {
 
     int game_id;
-    PlayerCommandType command_type;
+    int frame;
+    PlayerInput player_input; 
 
-    PlayerCommandMessage(){}; 
+    PlayerInputMessage(){}; 
 
     template <typename Stream> 
-    bool Serialize( Stream & stream ){        
-        serialize_int(stream, game_id, 0, std::numeric_limits<int>::max());
-        int command_type_value = static_cast<int>(command_type);
-        serialize_int(stream, command_type_value, 0, 32);
-        command_type = static_cast<PlayerCommandType>(command_type_value);
+    bool Serialize( Stream & stream ){ 
+        serialize_int(stream, frame, 0, std::numeric_limits<int>::max());
+        serialize_bool(stream, player_input.left);
+        serialize_bool(stream, player_input.right);
+        serialize_bool(stream, player_input.up);
+        serialize_bool(stream, player_input.down);
         return true;
     }
 
@@ -221,10 +223,10 @@ YOJIMBO_MESSAGE_FACTORY_START(GameMessageFactory, (int)MessageType::COUNT);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GRID, GridMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::ROUNDSTATECHANGE, RoundStateChangeMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::TETRAMINO_PLACEMENT, TetraminoPlacementMessage);
-YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYERSCORE, PlayerScoreMessage);
-YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYERJOIN, PlayerJoinMessage);
-YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYERLEAVE, PlayerLeaveMessage);
-YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_COMMAND, PlayerCommandMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_SCORE, PlayerScoreMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_JOIN, PlayerJoinMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_LEAVE, PlayerLeaveMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_INPUT, PlayerInputMessage);
 YOJIMBO_MESSAGE_FACTORY_FINISH();
 
 

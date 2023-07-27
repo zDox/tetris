@@ -51,6 +51,7 @@ void GameServer::init(){
     if(!server) {
         CORE_ERROR("Failed creating server");
     }
+    server->SetLatency(100);
 }
 
 std::shared_ptr<GameServer> GameServer::getPtr(){
@@ -107,11 +108,11 @@ int GameServer::createGame(){ // Returns the game_id of the game it created
 void GameServer::processMessage(int client_index, yojimbo::Message* message){
     uint64_t client_id = server->GetClientId(client_index);
     switch(message->GetType()){
-        case (int)MessageType::PLAYER_COMMAND:
+        case (int)MessageType::PLAYER_INPUT:
         {
-            PlayerCommandMessage* player_command_message = reinterpret_cast<PlayerCommandMessage*>(message);
-            if(!games.contains(player_command_message->game_id)) return;
-            games[player_command_message->game_id]->processPlayerCommandMessage(client_id, reinterpret_cast<PlayerCommandMessage*>(message));
+            PlayerInputMessage* player_input_message = reinterpret_cast<PlayerInputMessage*>(message);
+            if(!games.contains(player_input_message->game_id)) return;
+            games[player_input_message->game_id]->processPlayerInputMessage(client_id, reinterpret_cast<PlayerInputMessage*>(message));
             break;
         }
         default:

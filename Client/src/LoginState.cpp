@@ -68,7 +68,6 @@ void LoginState::handleInputs(){
 
 void LoginState::update(sf::Time dt){
     if(data->network_manager.getConnectionStatus() == ConnectionStatus::CONNECTED){
-        data->state_manager.switchToState(std::make_shared<GameState>(data));
     }
 }
 

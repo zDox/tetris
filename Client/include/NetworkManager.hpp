@@ -36,7 +36,7 @@ private:
     sf::Time next_cycle;
 
     // Queues for Messages to be send
-    PlayerCommandType player_command;
+    std::shared_ptr<PlayerInput> player_input;
 
     // Game Details
     int game_id = -1;
@@ -54,7 +54,7 @@ private:
     void processMessages();
     
     // Sending of Messages
-    void sendPlayerCommands();
+    void sendPlayerInput();
     void sendMessages(); 
 public:
     NetworkManager();
@@ -73,7 +73,7 @@ public:
     void connect(std::string);
     void disconnect();
 
-    void queuePlayerCommand(PlayerCommandType command_type);
+    void queuePlayerInput(PlayerInput t_player_input);
     std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> getOpponentsGrid();
 
     void update();

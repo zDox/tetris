@@ -9,11 +9,11 @@
 #include "Log.hpp"
 #include "Tetramino.hpp"
 #include "GameDefinitions.hpp"
-#include "Command.hpp"
+#include "Player.hpp"
 
 class GameLogic{
 private:
-    PlayerCommandType player_command;
+    std::shared_ptr<PlayerInput> player_input;
     int points = 0;
     bool finished = false;
     bool running = false;
@@ -23,7 +23,7 @@ private:
     std::vector<std::vector<sf::Color>> grid;
     std::vector<std::vector<sf::Color>> stationaries;
 
-    sf::Clock tetra_move_timer;
+    sf::Time game_time;
     sf::Time next_move_time;
 
     void spawnTetramino();
@@ -34,6 +34,7 @@ private:
     void handleLoss();
 
      // Updating
+    void updateTime(sf::Time dt);
     void resetGrid();
     void putTetraOnGrid();
     void putStationariesOnGrid();
@@ -47,7 +48,7 @@ public:
     bool isRunning();
     void setNextTetramino(TetraminoType tetramino);
     bool isNeedingNextTetramino();
-    void setPlayerCommand(PlayerCommandType t_player_command);
+    void setPlayerInput(PlayerInput t_player_input);
     std::vector<std::vector<sf::Color>> getGrid();
     int getPoints();
 

@@ -54,36 +54,36 @@ void GameState::updateUI(){
 }
 
 void GameState::handleKeyboard(){
-    PlayerCommandType player_command = PlayerCommandType::NONE;
+    PlayerInput player_input;
     // Left
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !(hold_left)){
         hold_left = true;
-        player_command = PlayerCommandType::MOVE_LEFT;
+        player_input.left = true;
     }
     if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) hold_left = false;
 
     // Right
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !(hold_right)){
         hold_right = true;
-        player_command = PlayerCommandType::MOVE_RIGHT;
+        player_input.right = true;
     }
     if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) hold_right = false;
 
     // Rotate
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !(hold_up)){
         hold_up = true;
-        player_command = PlayerCommandType::ROTATE_CLOCKWISE;
+        player_input.up = true;
     }
     if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) hold_up = false;
 
     // Down
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
-        player_command = PlayerCommandType::MOVE_DOWN;
+        player_input.down = true;
     }
-    if(player_command != PlayerCommandType::NONE){
-        data->network_manager.queuePlayerCommand(player_command);
-    }
-    game_logic.setPlayerCommand(player_command);
+
+    player_input.frame = frame_counter;
+    data->network_manager.queuePlayerInput(player_input);
+    game_logic.setPlayerInput(player_input);
 }
 
 void GameState::handleNextTetramino(){
@@ -146,6 +146,7 @@ void GameState::handleInputs(){
 
 
 void GameState::update(sf::Time dt){ 
+    data->network_manager.update();
     if(data->network_manager.getConnectionStatus() == ConnectionStatus::DISCONNECTED or
        data->network_manager.getConnectionStatus() == ConnectionStatus::ERROR){
         data->state_manager.switchToState(std::make_shared<LoginState>(data));
@@ -158,6 +159,7 @@ void GameState::update(sf::Time dt){
     if(data->network_manager.getGameID() != -1 && data->network_manager.getRoundState() == RoundStateType::INGAME){
         handleKeyboard();
         handleNextTetramino();
+        data->network_manager.update();
         game_logic.update(dt);
     }
     updateUI();
@@ -173,4 +175,6 @@ void GameState::draw(){
     data->gui.draw();
      
     data->window->display();
+
+    frame_counter++;
 };

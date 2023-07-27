@@ -87,12 +87,12 @@ void Game::handleNextTetramino(uint64_t client_id){
     server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
 }
 
-void Game::processPlayerCommandMessage(uint64_t client_id, PlayerCommandMessage* message){
+void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message){
     if(!players.contains(client_id)) return;
     if(game_id != message->game_id) return;
 
 
-    players[client_id]->gamelogic.setPlayerCommand(message->command_type);
+    players[client_id]->gamelogic.setPlayerInput(message->player_input);
 }
 
 void Game::sendRoundState(uint64_t client_id){

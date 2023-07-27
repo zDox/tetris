@@ -6,7 +6,7 @@
 
 #include "State.hpp"
 #include "Game.hpp"
-#include "GameState.hpp"
+#include "GameDefinitions.hpp"
 
 class LoginState : public State{
 private:

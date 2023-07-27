@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <list>
+#include <algorithm>
 
 #include "GameLogic.hpp"
 #include "DEFINITIONS.hpp"
@@ -21,6 +23,7 @@ struct ServerPlayer{
     Player player;
     GameLogic gamelogic;
     int tetramino_cursor = -1;
+    std::list<PlayerInput> playout_buffer;
 };
 
 class Game{
@@ -34,9 +37,11 @@ private:
 
     sf::Clock lobby_clock;
     bool lobby_clock_running = false;
+    bool gamelogic_running = false;
 
     void printGrid(std::vector<std::vector<sf::Color>> grid);
     
+    bool needTimeForPlayoutBuffer();
     int getPlayersClientIndex(uint64_t client_id);
     void handleNextTetramino(uint64_t client_id);
 
@@ -47,8 +52,7 @@ private:
     void sendPlayerLeave(uint64_t client_id);
 
 
-
-        void updateLobbyState(sf::Time dt);
+    void updateLobbyState(sf::Time dt);
     void updateIngameState(sf::Time dt);
     void updateEndState(sf::Time dt);
     

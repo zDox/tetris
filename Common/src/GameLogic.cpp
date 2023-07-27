@@ -8,8 +8,6 @@ void GameLogic::init(){
 
 void GameLogic::start(){
     CORE_INFO("GameLogic - Starting GameLogic");
-    game_time = sf::seconds(0);
-    next_move_time = sf::seconds(0);
     running = true;
 }
 

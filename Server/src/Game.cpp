@@ -9,6 +9,13 @@ void Game::addPlayer(uint64_t client_id){
     std::shared_ptr<ServerPlayer> new_player = std::make_shared<ServerPlayer>();
     new_player->player.client_id = client_id;
     new_player->gamelogic.init();
+    
+    // Fill playout_buffer with imaginary inputs
+    for(int i=0; i < MIN_PLAYOUT_BUFFER; i++){
+        PlayerInput player_input;
+        player_input.frame = i-MIN_PLAYOUT_BUFFER;
+        new_player->playout_buffer.push_back(player_input);
+    }
     players.emplace(client_id, new_player);
 
     CORE_INFO("Matchmaking - Player({}) joined the game({})", client_id, game_id);
@@ -17,6 +24,7 @@ void Game::addPlayer(uint64_t client_id){
         lobby_clock.restart();
         CORE_DEBUG("State - Lobbycountdown in game({}) has started. Remaining {} seconds", game_id, LOBBY_WAIT_TIME);
     }
+
     sendPlayerJoin(client_id);
     sendRoundState(client_id);
 }
@@ -56,6 +64,14 @@ RoundStateType Game::getRoundState(){
     return roundstate;
 }
 
+
+bool Game::needTimeForPlayoutBuffer(){
+    for(auto [client_id, player] : players){
+        if(player->gamelogic.isRunning() && player->playout_buffer.size() == 0) return true;
+    }
+    return false;
+}
+
 int Game::getPlayersClientIndex(uint64_t client_id){
     int i;
     for(i = 0; i < server->GetNumConnectedClients(); i++){
@@ -90,9 +106,21 @@ void Game::handleNextTetramino(uint64_t client_id){
 void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message){
     if(!players.contains(client_id)) return;
     if(game_id != message->game_id) return;
+    std::shared_ptr<ServerPlayer> player = players[client_id];
 
+    if(player->playout_buffer.size() == 0){
+        player->playout_buffer.push_back(message->player_input);
+        return;
+    }
 
-    players[client_id]->gamelogic.setPlayerInput(message->player_input);
+    if(player->playout_buffer.back().frame +1 != message->player_input.frame){
+        NETWORK_WARN("PROCESS_MESSAGE - PlayerInputMessage - PlayerInput came in wrong order");
+        auto it = std::lower_bound(player->playout_buffer.begin(), player->playout_buffer.end(), message->frame, comp);
+        player->playout_buffer.insert(it, message->player_input);
+    }
+    else {
+        player->playout_buffer.push_back(message->player_input);
+    }
 }
 
 void Game::sendRoundState(uint64_t client_id){
@@ -123,7 +151,7 @@ void Game::sendGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid
 void Game::sendPlayerJoin(uint64_t client_id){
     for(auto [p_client_id, player] : players){
         int client_index = getPlayersClientIndex(p_client_id);
-        PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYERJOIN);
+        PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_JOIN);
         message->game_id = game_id;
         message->client_id = client_id;
         server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
@@ -133,12 +161,13 @@ void Game::sendPlayerJoin(uint64_t client_id){
 void Game::sendPlayerLeave(uint64_t client_id){
     for(auto [p_client_id, player] : players){
         int client_index = getPlayersClientIndex(p_client_id);
-        PlayerLeaveMessage* message = (PlayerLeaveMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYERLEAVE);
+        PlayerLeaveMessage* message = (PlayerLeaveMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_LEAVE);
         message->game_id = game_id;
         message->client_id = client_id;
         server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
     }
 }
+
 
 void Game::updateLobbyState(sf::Time dt){
     if(lobby_clock.getElapsedTime() >= sf::seconds(LOBBY_WAIT_TIME) && lobby_clock_running){
@@ -148,20 +177,33 @@ void Game::updateLobbyState(sf::Time dt){
         roundstate = RoundStateType::INGAME;
         CORE_TRACE("Game - Game ({}): Switched to Ingame State", game_id);
         sendRoundStates();
-        for(auto [p_client_id, p] : players){
-            p->gamelogic.start();
-        }
         return;
     }
 }
 
 
 void Game::updateIngameState(sf::Time dt){
+    if(needTimeForPlayoutBuffer()) {
+        NETWORK_DEBUG("PlayoutBuffer - Waiting for PlayoutBuffer");
+        return; 
+    }
+
+    if(!gamelogic_running){
+        for(auto [client_id, player] : players){
+            player->gamelogic.start();
+        }
+        gamelogic_running = true;
+    }
+
     for(auto [client_id, player] : players){
+        // Set next player_input from playout_buffer
+        player->gamelogic.setPlayerInput(player->playout_buffer.front());
+        player->playout_buffer.pop_front();
+
         handleNextTetramino(client_id);
-        std::vector<std::vector<sf::Color>> old_grid = players[client_id]->gamelogic.getGrid();
-        players[client_id]->gamelogic.update(dt);
-        std::vector<std::vector<sf::Color>> new_grid = players[client_id]->gamelogic.getGrid();
+        std::vector<std::vector<sf::Color>> old_grid = player->gamelogic.getGrid();
+        player->gamelogic.update(dt);
+        std::vector<std::vector<sf::Color>> new_grid = player->gamelogic.getGrid();
         if(!vecsAreEqual(old_grid, new_grid)){
             sendGrid(client_id, new_grid);
         }

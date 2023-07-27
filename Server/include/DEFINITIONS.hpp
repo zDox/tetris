@@ -3,6 +3,7 @@
 
 #define MAX_CLIENTS 4
 #define SERVER_ADDRESS "127.0.0.1"
+#define MIN_PLAYOUT_BUFFER 4
 
 // Game Settings
 #define LOBBY_WAIT_TIME 10 // in seconds

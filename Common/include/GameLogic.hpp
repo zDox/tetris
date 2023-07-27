@@ -23,8 +23,8 @@ private:
     std::vector<std::vector<sf::Color>> grid;
     std::vector<std::vector<sf::Color>> stationaries;
 
-    sf::Time game_time;
-    sf::Time next_move_time;
+    sf::Time game_time = sf::seconds(0);
+    sf::Time next_move_time = sf::seconds(0);
 
     void spawnTetramino();
     bool checkCollisions(int dx, int dy, bool clockwise);

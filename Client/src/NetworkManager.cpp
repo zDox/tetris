@@ -58,7 +58,6 @@ bool NetworkManager::init(){
             *connection_config, 
             adapter, 
             0.0);
-    client->SetLatency(200);
     return true;
 }
 

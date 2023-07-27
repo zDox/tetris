@@ -16,4 +16,6 @@ struct PlayerInput{
     long frame;
 };
 
+bool comp(const PlayerInput &l, const long &frame);
+
 #endif

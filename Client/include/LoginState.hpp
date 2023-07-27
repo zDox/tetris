@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "GameState.hpp"
 #include "State.hpp"
 #include "Game.hpp"
 #include "GameDefinitions.hpp"

@@ -207,6 +207,7 @@ struct PlayerInputMessage : public yojimbo::Message
 
     template <typename Stream> 
     bool Serialize( Stream & stream ){ 
+        serialize_int(stream, game_id, -1, std::numeric_limits<int>::max());
         serialize_int(stream, frame, 0, std::numeric_limits<int>::max());
         serialize_bool(stream, player_input.left);
         serialize_bool(stream, player_input.right);

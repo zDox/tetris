@@ -175,7 +175,9 @@ void NetworkManager::sendPlayerInput(){
     message->player_input = *player_input;
     client->SendMessage((int)GameChannel::RELIABLE, message);
     player_input = nullptr;
-    NETWORK_TRACE("SEND_MESSAGE - PlayerInputMessage - left: {}, right: {}, up: {}, down: {}", 
+    NETWORK_TRACE("SEND_MESSAGE - PlayerInputMessage - game_id: {}, client_id: {}, \nleft: {}, right: {}, up: {}, down: {}", 
+            game_id,
+            client->GetClientId(),
             message->player_input.left, 
             message->player_input.right, 
             message->player_input.up, 

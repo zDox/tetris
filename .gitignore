@@ -6,6 +6,7 @@ vgcore*
 .cache
 cmake-build-debug/
 .idea
+.ccls-cache
 
 # CMake files
 build/.cmake/

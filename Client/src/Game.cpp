@@ -21,7 +21,8 @@ bool Game::init(){
 void Game::run(){
     sf::Time new_time, frame_time, interpolation;
 
-    sf::Time current_time = clock.getElapsedTime();
+    sf::Time current_time = clock.restart();
+    /*
     sf::Time accumulator = sf::seconds(0.0f);
     
     while(data->window->isOpen()){
@@ -42,15 +43,17 @@ void Game::run(){
         }
         data->state_manager.drawState();
     } 
-    /*
+    */
     while (data->window->isOpen()){
+        new_time = clock.getElapsedTime();
+        frame_time = new_time - current_time;
+        current_time = new_time;
         data->state_manager.processStateChanges();
         data->state_manager.handleInputs();
-        data->state_manager.updateState(current_time);
+        data->state_manager.updateState(frame_time);
         data->network_manager.update();
         data->state_manager.drawState();
-    } 
-    */
+    }  
 };
 
 void Game::close(){

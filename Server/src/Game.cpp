@@ -10,12 +10,6 @@ void Game::addPlayer(uint64_t client_id){
     new_player->player.client_id = client_id;
     new_player->gamelogic.init();
     
-    // Fill playout_buffer with imaginary inputs
-    for(int i=0; i < MIN_PLAYOUT_BUFFER; i++){
-        PlayerInput player_input;
-        player_input.frame = i-MIN_PLAYOUT_BUFFER;
-        new_player->playout_buffer.push_back(player_input);
-    }
     players.emplace(client_id, new_player);
 
     CORE_INFO("Matchmaking - Player({}) joined the game({})", client_id, game_id);
@@ -68,6 +62,7 @@ RoundStateType Game::getRoundState(){
 bool Game::needTimeForPlayoutBuffer(){
     for(auto [client_id, player] : players){
         if(player->gamelogic.isRunning() && player->playout_buffer.size() == 0) return true;
+        if(!player->gamelogic.isRunning() && player->playout_buffer.size() < MIN_PLAYOUT_BUFFER) return true;
     }
     return false;
 }
@@ -106,6 +101,14 @@ void Game::handleNextTetramino(uint64_t client_id){
 void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message){
     if(!players.contains(client_id)) return;
     if(game_id != message->game_id) return;
+    NETWORK_TRACE("PROCESS_MESSAGE - PlayerInputMessage - game_id: {}, client_id: {}, \nleft: {}, right: {}, up: {}, down: {}", 
+            message->game_id,
+            client_id,
+            message->player_input.left, 
+            message->player_input.right, 
+            message->player_input.up, 
+            message->player_input.down);
+
     std::shared_ptr<ServerPlayer> player = players[client_id];
 
     if(player->playout_buffer.size() == 0){
@@ -183,6 +186,13 @@ void Game::updateLobbyState(sf::Time dt){
 
 
 void Game::updateIngameState(sf::Time dt){
+    if(!gamelogic_running){
+
+        for( auto [client_id, player] : players){
+            handleNextTetramino(client_id);
+        }
+    }
+
     if(needTimeForPlayoutBuffer()) {
         NETWORK_DEBUG("PlayoutBuffer - Waiting for PlayoutBuffer");
         return; 

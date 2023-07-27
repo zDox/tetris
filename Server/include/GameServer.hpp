@@ -29,7 +29,7 @@ private:
 
     bool running = true;
     sf::Clock game_clock;
-    sf::Time next_cycle;
+    sf::Time next_cycle = sf::seconds(0);
     std::unordered_map<int, std::shared_ptr<Game>> games;
     int next_game_id = 0;
     

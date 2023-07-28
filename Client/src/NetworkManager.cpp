@@ -175,9 +175,10 @@ void NetworkManager::sendPlayerInput(){
     message->player_input = *player_input;
     client->SendMessage((int)GameChannel::RELIABLE, message);
     player_input = nullptr;
-    NETWORK_TRACE("SEND_MESSAGE - PlayerInputMessage - game_id: {}, client_id: {}, \nleft: {}, right: {}, up: {}, down: {}", 
+    NETWORK_TRACE("SEND_MESSAGE - PlayerInputMessage - game_id: {}, client_id: {}, frame:  {}\nleft: {}, right: {}, up: {}, down: {}", 
             game_id,
             client->GetClientId(),
+            message->player_input.frame,
             message->player_input.left, 
             message->player_input.right, 
             message->player_input.up, 
@@ -198,7 +199,6 @@ std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> NetworkManager:
 }
 
 void NetworkManager::update(){
-    if(next_cycle > network_clock.getElapsedTime()) return;
     client->AdvanceTime(network_clock.getElapsedTime().asSeconds());
     client->ReceivePackets();
 
@@ -209,5 +209,4 @@ void NetworkManager::update(){
         sendMessages();
     }
     client->SendPackets();
-    next_cycle += sf::seconds(1.f/TICK_RATE);
 };

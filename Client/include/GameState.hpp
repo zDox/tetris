@@ -23,13 +23,15 @@ private:
 
     // SFML -- Drawing data
     std::vector<std::vector<sf::RectangleShape>> drawing_grid;
-    long frame_counter;
+    long frame_counter=0;
 
     // Game Logic                       
     GameLogic game_logic;
     bool hold_up = false;
     bool hold_left = false;
     bool hold_right = false;
+    sf::Clock game_clock;
+    sf::Time next_cycle = sf::seconds(0);
 
 
     void handleNextTetramino();

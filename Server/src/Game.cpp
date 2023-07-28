@@ -117,8 +117,10 @@ void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* mes
     }
 
     if(player->playout_buffer.back().frame +1 != message->player_input.frame){
-        NETWORK_WARN("PROCESS_MESSAGE - PlayerInputMessage - PlayerInput came in wrong order");
-        auto it = std::lower_bound(player->playout_buffer.begin(), player->playout_buffer.end(), message->frame, comp);
+        NETWORK_WARN("PROCESS_MESSAGE - PlayerInputMessage - PlayerInput came in wrong order last frame: {}, new frame: {}", 
+                player->playout_buffer.back().frame, 
+                message->player_input.frame);
+        auto it = std::lower_bound(player->playout_buffer.begin(), player->playout_buffer.end(), message->player_input.frame, comp);
         player->playout_buffer.insert(it, message->player_input);
     }
     else {

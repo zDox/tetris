@@ -158,15 +158,11 @@ void GameState::update(sf::Time dt){
     }
 
     if(data->network_manager.getGameID() != -1 && data->network_manager.getRoundState() == RoundStateType::INGAME){
-        if(next_cycle <= game_clock.getElapsedTime()){
-            handleKeyboard();
-            handleNextTetramino();
-            data->network_manager.update();
-            game_logic.update(dt);
-            CORE_TRACE("PERFORMANCE - Frame: {} game_clock: {}, next_cycle:{}", frame_counter, game_clock.getElapsedTime().asMilliseconds(), next_cycle.asMilliseconds());
-            next_cycle = next_cycle + sf::seconds(1/TICK_RATE);
-            frame_counter++;
-        }
+        handleKeyboard();
+        handleNextTetramino();
+        data->network_manager.update();
+        game_logic.update(dt);
+        frame_counter++;
     }
     updateUI();
 };

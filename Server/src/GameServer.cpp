@@ -167,7 +167,7 @@ void GameServer::clientDisconnected(int client_index){
 }
 
 void GameServer::run(){
-    sf::Time fixed_dt = sf::seconds(1.0f / TICK_RATE);
+    sf::Time fixed_dt = sf::seconds(1.0f / (float)TICK_RATE);
     sf::Time last_tick = sf::seconds(0);
 
     server->Start(MAX_CLIENTS);

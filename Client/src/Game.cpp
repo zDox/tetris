@@ -19,9 +19,10 @@ bool Game::init(){
     return true;
 }
 void Game::run(){
-    sf::Time new_time, frame_time, interpolation;
+    sf::Time next_cycle, frame_time, last_tick=sf::seconds(0.f);
+    sf::Time fixed_dt = sf::seconds(1.0f / (float)TICK_RATE);
 
-    sf::Time current_time = clock.restart();
+    clock.restart();
     /*
     sf::Time accumulator = sf::seconds(0.0f);
     
@@ -45,14 +46,20 @@ void Game::run(){
     } 
     */
     while (data->window->isOpen()){
-        new_time = clock.getElapsedTime();
-        frame_time = new_time - current_time;
-        current_time = new_time;
-        data->state_manager.processStateChanges();
-        data->state_manager.handleInputs();
-        data->state_manager.updateState(frame_time);
-        data->network_manager.update();
-        data->state_manager.drawState();
+
+        if(next_cycle <= clock.getElapsedTime()){
+            CORE_TRACE("PERFORMANCE - Last tick: {}us next_cycle: {}", ((clock.getElapsedTime() - last_tick).asMicroseconds()), next_cycle.asMicroseconds());
+            data->state_manager.processStateChanges();
+            data->state_manager.handleInputs();
+            data->state_manager.updateState(frame_time);
+            data->network_manager.update();
+            data->state_manager.drawState();
+            next_cycle += fixed_dt;
+            last_tick = clock.getElapsedTime();
+        }
+        else {
+            sf::sleep(next_cycle - clock.getElapsedTime());
+        }
     }  
 };
 

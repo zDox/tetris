@@ -66,6 +66,7 @@ void GameLogic::spawnTetramino(){
 
 void GameLogic::updateTime(sf::Time dt){
     game_time += dt;
+    CORE_TRACE("GameLogic - GameTime: {} us", game_time.asMicroseconds());
 }
 
 void GameLogic::resetGrid(){
@@ -159,6 +160,7 @@ bool GameLogic::checkLoss(){
 };
 
 void GameLogic::handleLoss(){
+    running = false;
     finished = true;
 };
 

@@ -168,19 +168,21 @@ void GameServer::clientDisconnected(int client_index){
 
 void GameServer::run(){
     sf::Time fixed_dt = sf::seconds(1.0f / (float)TICK_RATE);
-    sf::Time last_tick = sf::seconds(0);
+    sf::Time last_frame_tick = sf::seconds(0), frame_time, current_time;
 
     server->Start(MAX_CLIENTS);
  
     while (running){
-        if(next_cycle <= game_clock.getElapsedTime()){
-            CORE_TRACE("PERFORMANCE - Last tick: {}ms", ((game_clock.getElapsedTime() - last_tick).asMicroseconds()));
-            update(game_clock.getElapsedTime() - last_tick);
+        current_time = game_clock.getElapsedTime();
+        if(next_cycle <= current_time){
+            frame_time = current_time - last_frame_tick;
+            last_frame_tick = current_time;
+            CORE_TRACE("PERFORMANCE - Last tick: {}us", frame_time.asMicroseconds());
+            update(frame_time);
             next_cycle += fixed_dt;
-            last_tick = game_clock.getElapsedTime();
         }
         else{
-            sf::sleep(next_cycle - game_clock.getElapsedTime());
+            sf::sleep(next_cycle - current_time);
         }
     }
 

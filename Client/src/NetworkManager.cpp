@@ -83,6 +83,7 @@ void NetworkManager::disconnect(){
 void NetworkManager::processGridMessage(GridMessage* message){
     NETWORK_TRACE("PROCESS_MESSAGE - GridMessage - Player({}", message->client_id);
     if(!players.contains(message->client_id)) return;
+    if(message->client_id == client_id) return;
     players[message->client_id].grid = message->grid;
 }
 

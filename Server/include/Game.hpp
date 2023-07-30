@@ -50,6 +50,7 @@ private:
     void sendGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid);
     void sendPlayerJoin(uint64_t client_id);
     void sendPlayerLeave(uint64_t client_id);
+    void sendPlayerScore(uint64_t client_id);
 
 
     void updateLobbyState(sf::Time dt);

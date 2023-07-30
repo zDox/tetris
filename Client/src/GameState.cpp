@@ -33,16 +33,6 @@ void GameState::initVariables(){
 }
 
 void GameState::initUI(){
-    points_label = tgui::Label::create("None");
-    points_label->setPosition(400, 10);
-    points_label->setTextSize(18);
-    data->gui.add(points_label);
-
-    paused_label = tgui::Label::create("Paused");
-    paused_label->setOrigin(0.5f, 0.5f); // Set its anker to center of label 
-    paused_label->setPosition(WIDTH/2.f, HEIGHT/2.f);
-    paused_label->setTextSize(30);
-
     data->gui.add(paused_label);
 }
 
@@ -55,30 +45,32 @@ void GameState::updateUI(){
 
 void GameState::handleKeyboard(){
     PlayerInput player_input;
-    // Left
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !(hold_left)){
-        hold_left = true;
-        player_input.left = true;
-    }
-    if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) hold_left = false;
+    if(data->window->hasFocus()){
+        // Left
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !(hold_left)){
+            hold_left = true;
+            player_input.left = true;
+        }
+        if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) hold_left = false;
 
-    // Right
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !(hold_right)){
-        hold_right = true;
-        player_input.right = true;
-    }
-    if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) hold_right = false;
+        // Right
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !(hold_right)){
+            hold_right = true;
+            player_input.right = true;
+        }
+        if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) hold_right = false;
 
-    // Rotate
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !(hold_up)){
-        hold_up = true;
-        player_input.up = true;
-    }
-    if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) hold_up = false;
+        // Rotate
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !(hold_up)){
+            hold_up = true;
+            player_input.up = true;
+        }
+        if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) hold_up = false;
 
-    // Down
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
-        player_input.down = true;
+        // Down
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
+            player_input.down = true;
+        }
     }
 
     player_input.frame = frame_counter;
@@ -112,6 +104,7 @@ void GameState::drawOpponentGrids(){
     int grid_pixel_width = ((SPACING_PER_RECT+SIDE_LENGTH)*COLUMNS);
     int max_grids_to_draw = std::min((int) oponent_grids.size()+1, (int)std::floor(WIDTH/grid_pixel_width));
     int count = 1; // Count of how many grids have been drawn
+     
     for(auto[client_id, opponent_grid] : oponent_grids){
         if(count >= max_grids_to_draw) break;
         for(int i = 0; i < ROWS; i++){

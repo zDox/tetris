@@ -154,12 +154,22 @@ void Game::sendGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid
 }
 
 void Game::sendPlayerJoin(uint64_t client_id){
+    // Send all other player his join message
     for(auto [p_client_id, player] : players){
         int client_index = getPlayersClientIndex(p_client_id);
         PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_JOIN);
         message->game_id = game_id;
         message->client_id = client_id;
         server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
+    }
+    // Send him all players that are already connected
+    int client_index = getPlayersClientIndex(client_id);
+    for(auto [p_client_id, player] : players){
+        if(p_client_id == client_id) continue;
+        PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_JOIN);
+        message->game_id = game_id;
+        message->client_id = p_client_id;
+        server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
     }
 }
 
@@ -170,6 +180,19 @@ void Game::sendPlayerLeave(uint64_t client_id){
         message->game_id = game_id;
         message->client_id = client_id;
         server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
+    }
+}
+
+void Game::sendPlayerScore(uint64_t client_id){
+    std::shared_ptr<ServerPlayer> player = players[client_id];
+    for(auto [p_client_id, p_player] : players){
+        int client_index = getPlayersClientIndex(p_client_id);
+        PlayerScoreMessage* message = (PlayerScoreMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_SCORE);
+        message->game_id = game_id;
+        message->client_id = client_id;
+        message->points = player->player.points;
+        message->position = player->player.position;
+        server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
     }
 }
 
@@ -213,9 +236,18 @@ void Game::updateIngameState(sf::Time dt){
         player->playout_buffer.pop_front();
 
         handleNextTetramino(client_id);
+
         std::vector<std::vector<sf::Color>> old_grid = player->gamelogic.getGrid();
+        auto old_points = player->gamelogic.getPoints();
         player->gamelogic.update(dt);
+
+        auto new_points = player->gamelogic.getPoints();
         std::vector<std::vector<sf::Color>> new_grid = player->gamelogic.getGrid();
+
+        if(old_points != new_points){
+            sendPlayerScore(client_id);
+        }
+
         if(!vecsAreEqual(old_grid, new_grid)){
             sendGrid(client_id, new_grid);
         }

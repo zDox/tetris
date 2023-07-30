@@ -19,8 +19,9 @@ bool Game::init(){
     return true;
 }
 void Game::run(){
-    sf::Time next_cycle, frame_time, last_tick=sf::seconds(0.f);
+    sf::Time next_cycle, frame_time, current_time, last_frame_time;
     sf::Time fixed_dt = sf::seconds(1.0f / (float)TICK_RATE);
+
 
     clock.restart();
     /*
@@ -46,16 +47,17 @@ void Game::run(){
     } 
     */
     while (data->window->isOpen()){
-
-        if(next_cycle <= clock.getElapsedTime()){
-            CORE_TRACE("PERFORMANCE - Last tick: {}us next_cycle: {}", ((clock.getElapsedTime() - last_tick).asMicroseconds()), next_cycle.asMicroseconds());
+        current_time = clock.getElapsedTime();
+        if(next_cycle <= current_time){ 
+            frame_time = current_time - last_frame_time; 
+            last_frame_time = current_time;
+            CORE_TRACE("PERFORMANCE - Last tick: {}us next_cycle: {}", ((frame_time).asMicroseconds()), next_cycle.asMicroseconds());
             data->state_manager.processStateChanges();
             data->state_manager.handleInputs();
             data->state_manager.updateState(frame_time);
             data->network_manager.update();
             data->state_manager.drawState();
             next_cycle += fixed_dt;
-            last_tick = clock.getElapsedTime();
         }
         else {
             sf::sleep(next_cycle - clock.getElapsedTime());

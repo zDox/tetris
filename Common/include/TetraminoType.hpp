@@ -2,7 +2,7 @@
 #define TETRAMINO_TYPE
 
 enum class TetraminoType{
-    STRAIGHT=0,
+    STRAIGHT,
     SQUARE,
     T_SHAPE,
     L_SHAPE,

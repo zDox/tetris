@@ -40,7 +40,8 @@ Tetramino::Tetramino(TetraminoType t_type, sf::Color t_color){
                     {0,1,1},
                     {0,0,0}};
             break;
-        case TetraminoType::AMOUNT:
+        default:
+            CORE_WARN("Tetramino - Form not defined for TetraminoType {}.", (int) type);
             break;
     }
     rotation = 0;

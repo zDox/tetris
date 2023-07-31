@@ -6,6 +6,7 @@ GameState::GameState(std::shared_ptr<GameData> t_data) : data(t_data) {
 void GameState::init(){
     initWindow();
     initVariables();
+    initHandlers();
     game_logic.init();
     initUI();
 }
@@ -32,15 +33,35 @@ void GameState::initVariables(){
 
 }
 
+void GameState::initHandlers(){
+    data->network_manager.registerMessageHandler(
+            MessageType::GRID, 
+            std::bind(&GameState::handleGridMessage, this, std::placeholders::_1));
+    data->network_manager.registerMessageHandler(
+            MessageType::ROUNDSTATECHANGE, 
+            std::bind(&GameState::handleRoundStateChangeMessage, this, std::placeholders::_1));
+    data->network_manager.registerMessageHandler(
+            MessageType::TETRAMINO_PLACEMENT,
+            std::bind(&GameState::handleTetraminoPlacementMessage, this, std::placeholders::_1));
+    data->network_manager.registerMessageHandler(
+            MessageType::PLAYER_SCORE, 
+            std::bind(&GameState::handlePlayerScoreMessage, this, std::placeholders::_1));
+    data->network_manager.registerMessageHandler(
+            MessageType::PLAYER_JOIN, 
+            std::bind(&GameState::handlePlayerJoinMessage, this, std::placeholders::_1));
+    data->network_manager.registerMessageHandler(
+            MessageType::PLAYER_LEAVE, 
+            std::bind(&GameState::handlePlayerLeaveMessage, this, std::placeholders::_1));
+    CORE_DEBUG("GameState - registration of message handler completed");
+}
+
 void GameState::initUI(){
-    data->gui.add(paused_label);
 }
 
 
  
 
 void GameState::updateUI(){
-    points_label->setText("Points: " + std::to_string(game_logic.getPoints()));
 }
 
 void GameState::handleKeyboard(){
@@ -80,13 +101,10 @@ void GameState::handleKeyboard(){
 
 void GameState::handleNextTetramino(){
     if(!game_logic.isNeedingNextTetramino()) return;
-    try{
-        game_logic.setNextTetramino(data->network_manager.getNextTetramino());
-    }
-    catch (std::out_of_range &e){
-        // No next Tetramino available
-        CORE_INFO("GameState - No next Tetramino available ");
-    }
+    if(tetramino_queue.empty()) CORE_INFO("GameState - No next Tetramino available ");
+    TetraminoType next = tetramino_queue.front();
+    tetramino_queue.pop();
+    game_logic.setNextTetramino(next);
 }
 
 void GameState::drawGrid(){
@@ -100,19 +118,20 @@ void GameState::drawGrid(){
 }
 
 void GameState::drawOpponentGrids(){
-    std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> oponent_grids = data->network_manager.getOpponentsGrid();
     int grid_pixel_width = ((SPACING_PER_RECT+SIDE_LENGTH)*COLUMNS);
-    int max_grids_to_draw = std::min((int) oponent_grids.size()+1, (int)std::floor(WIDTH/grid_pixel_width));
+    int max_grids_to_draw = std::min((int) players.size()+1, (int)std::floor(WIDTH/grid_pixel_width));
     int count = 1; // Count of how many grids have been drawn
      
-    for(auto[client_id, opponent_grid] : oponent_grids){
+    for(auto[p_client_id, player] : players){
+        if(p_client_id == client_id) continue;
+        if(player.grid.size() < ROWS-1)continue;
         if(count >= max_grids_to_draw) break;
         for(int i = 0; i < ROWS; i++){
             for(int k = 0; k < COLUMNS; k++){
                 sf::RectangleShape rect(sf::Vector2(SIDE_LENGTH, SIDE_LENGTH));
                 int pos_x = k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT + count*grid_pixel_width + count*SPACING_BETWEEN_GRIDS;
                 int pos_y = i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP;
-                uint32_t color_uint = opponent_grid[i][k];
+                uint32_t color_uint = player.grid[i][k];
                 uint8_t red = (color_uint >> 24) & 0xFF;
                 uint8_t green = (color_uint >> 16) & 0xFF;
                 uint8_t blue = (color_uint >> 8) & 0xFF;
@@ -126,6 +145,61 @@ void GameState::drawOpponentGrids(){
         count+=1;
     }
 }
+
+// Functions to process messages
+
+void GameState::handleGridMessage(yojimbo::Message* t_message){
+    GridMessage* message = (GridMessage*) t_message;
+    NETWORK_TRACE("PROCESS_MESSAGE - GridMessage - Player({}", message->client_id);
+    if(!players.contains(message->client_id)) return;
+    if(message->client_id == client_id) return;
+    players[message->client_id].grid = message->grid;
+}
+
+void GameState::handleRoundStateChangeMessage(yojimbo::Message* t_message){
+    RoundStateChangeMessage* message = (RoundStateChangeMessage*) t_message;
+    NETWORK_TRACE("PROCESS_MESSAGE - RoundStateChangeMessage - RoundState: {}", (int)message->roundstate);
+    if(game_id == -1){
+        game_id = message->game_id;
+    }
+    else if(game_id != message->game_id){
+        return;
+    }
+    roundstate = message->roundstate;
+};
+
+void GameState::handleTetraminoPlacementMessage(yojimbo::Message* t_message){
+    TetraminoPlacementMessage* message = (TetraminoPlacementMessage*) t_message;
+    NETWORK_TRACE("PROCESS_MESSAGE - TetraminoPlacementMessage - TetraminoTye: {}", (int)message->tetramino_type);
+    if(game_id != message->game_id) return;
+    tetramino_queue.push(message->tetramino_type);
+};
+
+void GameState::handlePlayerScoreMessage(yojimbo::Message* t_message){
+    PlayerScoreMessage* message = (PlayerScoreMessage*) t_message;
+    NETWORK_TRACE("PROCESS_MESSAGE - PlayerScoreMessage - Player({}) Points: {} Position: {}", message->client_id, message->points, message->position);
+    if(!players.contains(message->client_id)) return;
+    if(game_id != message->game_id) return;
+    players[message->client_id].points = message->points;
+    players[message->client_id].position = message->position;
+};
+
+void GameState::handlePlayerJoinMessage(yojimbo::Message* t_message){
+    PlayerJoinMessage* message = (PlayerJoinMessage*) t_message;
+    NETWORK_INFO("PROCESS_MESSAGE - PlayerJoinMessage - Player({})", message->client_id);
+    if(players.contains(message->client_id)) return;
+    Player player;
+    player.client_id = message->client_id;
+    players.emplace(message->client_id, player);
+};
+
+void GameState::handlePlayerLeaveMessage(yojimbo::Message* t_message){
+    PlayerLeaveMessage* message = (PlayerLeaveMessage*) t_message;
+    NETWORK_INFO("PROCESS_MESSAGE - PlayerLeaveMessage - Player({})", message->client_id);
+    if(!players.contains(message->client_id)) return;
+    players.erase(message->client_id);
+};
+
 
 void GameState::handleInputs(){
     sf::Event event;
@@ -145,12 +219,12 @@ void GameState::update(sf::Time dt){
         data->state_manager.switchToState(std::make_shared<LoginState>(data));
     }
 
-    if(data->network_manager.getRoundState() == RoundStateType::INGAME && !game_logic.isRunning()){
+    if(roundstate == RoundStateType::INGAME && !game_logic.isRunning()){
         game_logic.start();
         game_clock.restart();
     }
 
-    if(data->network_manager.getGameID() != -1 && data->network_manager.getRoundState() == RoundStateType::INGAME){
+    if(game_id != -1 && roundstate == RoundStateType::INGAME){
         handleKeyboard();
         handleNextTetramino();
         data->network_manager.update();
@@ -164,8 +238,8 @@ void GameState::update(sf::Time dt){
 void GameState::draw(){
     data->window->clear(BACKGROUND_COLOR);
     
-    drawGrid();
     drawOpponentGrids();
+    drawGrid();
 
     data->gui.draw();
      

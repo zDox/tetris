@@ -177,7 +177,7 @@ void GameServer::run(){
         if(next_cycle <= current_time){
             frame_time = current_time - last_frame_tick;
             last_frame_tick = current_time;
-            CORE_TRACE("PERFORMANCE - Last tick: {}us", frame_time.asMicroseconds());
+            //CORE_TRACE("PERFORMANCE - Last tick: {}us", frame_time.asMicroseconds());
             update(frame_time);
             next_cycle += fixed_dt;
         }

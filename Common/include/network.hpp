@@ -230,6 +230,24 @@ YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_INPUT, PlayerInputMessage)
 YOJIMBO_MESSAGE_FACTORY_FINISH();
 
 
+#define GENERATE_MESSAGE_TYPE_CASE(Type) \
+    case static_cast<int>(MessageType::Type): \
+        return MessageType::Type;
+
+inline MessageType convToMessageType(int message_type){
+    switch(message_type){
+        GENERATE_MESSAGE_TYPE_CASE(GRID)
+        GENERATE_MESSAGE_TYPE_CASE(ROUNDSTATECHANGE)
+        GENERATE_MESSAGE_TYPE_CASE(TETRAMINO_PLACEMENT)
+        GENERATE_MESSAGE_TYPE_CASE(PLAYER_SCORE)
+        GENERATE_MESSAGE_TYPE_CASE(PLAYER_JOIN)
+        GENERATE_MESSAGE_TYPE_CASE(PLAYER_LEAVE)
+        GENERATE_MESSAGE_TYPE_CASE(PLAYER_INPUT)
+        default:
+            return MessageType::COUNT;
+    }
+}
+
 // the adapter
 struct ClientAdapter : public yojimbo::Adapter {
     yojimbo::MessageFactory* CreateMessageFactory(yojimbo::Allocator& allocator) override {

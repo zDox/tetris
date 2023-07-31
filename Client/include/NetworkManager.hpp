@@ -9,6 +9,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <queue>
+#include <functional>
 
 
 #include "yojimbo.h"
@@ -31,26 +32,16 @@ private:
     std::shared_ptr<yojimbo::ClientServerConfig> connection_config;
     ClientAdapter adapter;
     uint64_t client_id;
+    std::unordered_map<MessageType, std::function<void(yojimbo::Message*)>> message_handlers;
+    int game_id;
 
     sf::Clock network_clock;
     sf::Time next_cycle;
 
     // Queues for Messages to be send
     std::shared_ptr<PlayerInput> player_input;
-
-    // Game Details
-    int game_id = -1;
-    std::unordered_map<uint64_t, Player> players;
-    RoundStateType roundstate;
-    std::queue<TetraminoType> tetramino_queue;
     
-    // Processing of Messages funcitons
-    void processGridMessage(GridMessage* message);
-    void processRoundStateChangeMessage(RoundStateChangeMessage* message);
-    void processTetraminoPlacementMessage(TetraminoPlacementMessage* message);
-    void processPlayerScoreMessage(PlayerScoreMessage* message);
-    void processPlayerJoinMessage(PlayerJoinMessage* message);
-    void processPlayerLeaveMessage(PlayerLeaveMessage* message);
+    void processMessage(yojimbo::Message* message);
     void processMessages();
     
     // Sending of Messages
@@ -61,9 +52,6 @@ public:
     
     // Getter and Setter
     ConnectionStatus getConnectionStatus();
-    int getGameID();
-    RoundStateType getRoundState();
-    TetraminoType getNextTetramino();
 
     void generateClientID();
     
@@ -73,8 +61,9 @@ public:
     void connect(std::string);
     void disconnect();
 
+    void registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func);
+
     void queuePlayerInput(PlayerInput t_player_input);
-    std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> getOpponentsGrid();
 
     void update();
 };

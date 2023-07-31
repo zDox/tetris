@@ -51,7 +51,7 @@ void Game::run(){
         if(next_cycle <= current_time){ 
             frame_time = current_time - last_frame_time; 
             last_frame_time = current_time;
-            CORE_TRACE("PERFORMANCE - Last tick: {}us next_cycle: {}", ((frame_time).asMicroseconds()), next_cycle.asMicroseconds());
+            // CORE_TRACE("PERFORMANCE - Last tick: {}us next_cycle: {}", ((frame_time).asMicroseconds()), next_cycle.asMicroseconds());
             data->state_manager.processStateChanges();
             data->state_manager.handleInputs();
             data->state_manager.updateState(frame_time);

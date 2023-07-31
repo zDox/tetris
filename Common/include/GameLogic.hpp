@@ -19,7 +19,7 @@ private:
     bool running = false;
 
     std::shared_ptr<Tetramino> tetra;
-    std::shared_ptr<TetraminoType> next_tetramino;
+    TetraminoType next_tetramino;
     std::vector<std::vector<sf::Color>> grid;
     std::vector<std::vector<sf::Color>> stationaries;
 
@@ -46,6 +46,7 @@ public:
     GameLogic();
 
     bool isRunning();
+    sf::Time getTime();
     void setNextTetramino(TetraminoType tetramino);
     bool isNeedingNextTetramino();
     void setPlayerInput(PlayerInput t_player_input);

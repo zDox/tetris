@@ -10,6 +10,7 @@
 
 #include "Utils.hpp"
 #include "TetraminoType.hpp"
+#include "Log.hpp"
 
 class Tetramino{
 private:

@@ -3,6 +3,8 @@
 
 
 #include <memory>
+#include <unordered_map>
+#include <functional>
 
 #include "State.hpp"
 #include "Game.hpp"
@@ -26,6 +28,11 @@ private:
     long frame_counter=0;
 
     // Game Logic                       
+    int game_id = -1;
+    uint64_t client_id;
+    std::unordered_map<uint64_t, Player> players;
+    RoundStateType roundstate;
+    std::queue<TetraminoType> tetramino_queue;
     GameLogic game_logic;
     bool hold_up = false;
     bool hold_left = false;
@@ -45,12 +52,21 @@ private:
     
     void initWindow();
     void initVariables();
+    void initHandlers();
     void initUI();
 
 public:
     GameState(std::shared_ptr<GameData> t_data);
     void init();
     void destroy();
+
+    // Functions to handle messages
+    void handleGridMessage(yojimbo::Message* t_message);
+    void handleRoundStateChangeMessage(yojimbo::Message* t_message);
+    void handleTetraminoPlacementMessage(yojimbo::Message* t_message);
+    void handlePlayerScoreMessage(yojimbo::Message* t_message);
+    void handlePlayerJoinMessage(yojimbo::Message* t_message);
+    void handlePlayerLeaveMessage(yojimbo::Message* t_message);
 
     void handleInputs();
     void update(sf::Time dt);

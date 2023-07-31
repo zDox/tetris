@@ -19,20 +19,6 @@ ConnectionStatus NetworkManager::getConnectionStatus(){
     return ConnectionStatus::ERROR;
 }
 
-int NetworkManager::getGameID(){
-    return game_id;
-}
-
-RoundStateType NetworkManager::getRoundState(){
-    return roundstate;
-}
-
-TetraminoType NetworkManager::getNextTetramino(){
-    if(tetramino_queue.empty()) throw std::out_of_range("Tetramino queue is empty not able to retrive element!");
-    TetraminoType next = tetramino_queue.front();
-    tetramino_queue.pop();
-    return next;
-}
 
 void NetworkManager::generateClientID(){
     std::random_device rd;
@@ -80,82 +66,31 @@ void NetworkManager::disconnect(){
     client->Disconnect();
 }
 
-void NetworkManager::processGridMessage(GridMessage* message){
-    NETWORK_TRACE("PROCESS_MESSAGE - GridMessage - Player({}", message->client_id);
-    if(!players.contains(message->client_id)) return;
-    if(message->client_id == client_id) return;
-    players[message->client_id].grid = message->grid;
-}
 
-void NetworkManager::processRoundStateChangeMessage(RoundStateChangeMessage* message){
-    NETWORK_TRACE("PROCESS_MESSAGE - RoundStateChangeMessage - RoundState: {}", (int)message->roundstate);
-    if(game_id == -1){
-        game_id = message->game_id;
-    }
-    else if(game_id != message->game_id){
+void NetworkManager::processMessage(yojimbo::Message* message){
+    MessageType message_type = convToMessageType(message->GetType());
+    if(message_type >= MessageType::COUNT){
+        CORE_WARN("NetworkManager - MessageType undefined id: {}", message->GetType());
         return;
     }
-    roundstate = message->roundstate;
-}
 
-void NetworkManager::processTetraminoPlacementMessage(TetraminoPlacementMessage* message){
-    NETWORK_TRACE("PROCESS_MESSAGE - TetraminoPlacementMessage - TetraminoTye: {}", (int)message->tetramino_type);
-    if(game_id != message->game_id) return;
-    tetramino_queue.push(message->tetramino_type);
-}
-
-void NetworkManager::processPlayerScoreMessage(PlayerScoreMessage* message){
-    NETWORK_TRACE("PROCESS_MESSAGE - PlayerScoreMessage - Player({}) Points: {} Position: {}", message->client_id, message->points, message->position);
-    if(!players.contains(message->client_id)) return;
-    if(game_id != message->game_id) return;
-    players[message->client_id].points = message->points;
-    players[message->client_id].position = message->position;
-}
-
-void NetworkManager::processPlayerJoinMessage(PlayerJoinMessage* message){
-    NETWORK_INFO("PROCESS_MESSAGE - PlayerJoinMessage - Player({})", message->client_id);
-    if(players.contains(message->client_id)) return;
-    Player player;
-    player.client_id = message->client_id;
-    players.emplace(message->client_id, player);
-
-}
-
-void NetworkManager::processPlayerLeaveMessage(PlayerLeaveMessage *message) {
-    NETWORK_INFO("PROCESS_MESSAGE - PlayerLeaveMessage - Player({})", message->client_id);
-    if(!players.contains(message->client_id)) return;
-    players.erase(message->client_id);
+    if(!message) {
+        CORE_ERROR("NetworkManager - processMessage - Message undefined");
+        return;
+    }
+    if(message_handlers.contains(message_type)){
+        message_handlers[message_type](message);
+    }
+    else{
+        CORE_WARN("NetworkManager - processMessage - handler for message with id({}) undefined", message->GetType());
+    }    
 }
 
 void NetworkManager::processMessages(){
     for (int i = 0; i < connection_config->numChannels; i++) {
         yojimbo::Message* message = client->ReceiveMessage(i);
         while (message != NULL) {
-            switch (message->GetType()){
-                case (int) MessageType::GRID:
-                    processGridMessage((GridMessage*)message);
-                    break;
-                    
-                case (int) MessageType::ROUNDSTATECHANGE:
-                    processRoundStateChangeMessage((RoundStateChangeMessage*) message);
-                    break;
-
-                case (int) MessageType::TETRAMINO_PLACEMENT:
-                    processTetraminoPlacementMessage((TetraminoPlacementMessage*) message);
-                    break;
-
-                case (int) MessageType::PLAYER_JOIN:
-                    processPlayerJoinMessage((PlayerJoinMessage*) message);
-                    break;
-
-                case (int) MessageType::PLAYER_LEAVE:
-                    processPlayerLeaveMessage((PlayerLeaveMessage*) message);
-                    break;
-
-                case (int) MessageType::PLAYER_SCORE:
-                    processPlayerScoreMessage((PlayerScoreMessage*) message);
-                    break;
-            }
+            processMessage(message);
             client->ReleaseMessage(message);
             message = client->ReceiveMessage(i);
         }
@@ -190,21 +125,20 @@ void NetworkManager::sendMessages(){
     sendPlayerInput();
 }
 
-std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> NetworkManager::getOpponentsGrid(){
-    std::unordered_map<uint64_t, std::vector<std::vector<uint32_t>>> opponents_grid;
-    for(auto [p_client_id, player] : players){
-        if(player.grid.size() == 0) continue;
-        opponents_grid[p_client_id] = player.grid;
-    }
-    return opponents_grid;
+void NetworkManager::registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func){
+   message_handlers.emplace(message_type, func); 
 }
+
 
 void NetworkManager::update(){
     client->AdvanceTime(network_clock.getElapsedTime().asSeconds());
     client->ReceivePackets();
 
     if(client->IsConnected()){
-        processMessages();
+        // No need to process messages if nobody can handle them
+        if(message_handlers.size() > 0){
+            processMessages();
+        }
 
         // Sending Messages
         sendMessages();

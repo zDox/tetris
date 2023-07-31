@@ -12,8 +12,7 @@ void Game::addPlayer(uint64_t client_id){
     
     players.emplace(client_id, new_player);
 
-    CORE_INFO("Matchmaking - Player({}) joined the game({})", client_id, game_id);
-    if(players.size() >= MIN_STARTING_PLAYERS && !lobby_clock_running){
+    CORE_INFO("Matchmaking - Player({}) joined the game({})", client_id, game_id); if(players.size() >= MIN_STARTING_PLAYERS && !lobby_clock_running){
         lobby_clock_running = true;
         lobby_clock.restart();
         CORE_DEBUG("State - Lobbycountdown in game({}) has started. Remaining {} seconds", game_id, LOBBY_WAIT_TIME);

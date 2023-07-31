@@ -14,14 +14,17 @@ void GameLogic::start(){
 bool GameLogic::isRunning(){
     return running;
 }
+
+sf::Time GameLogic::getTime(){
+    return game_time;
+}
+
 void GameLogic::setNextTetramino(TetraminoType tetramino){
-    CORE_TRACE("GameLogic - Next Tetramino: {}", (int)tetramino);
-    next_tetramino = std::make_shared<TetraminoType>();
-    *next_tetramino = tetramino;
+    next_tetramino = tetramino;
 }
 
 bool GameLogic::isNeedingNextTetramino(){
-    return next_tetramino == nullptr;
+    return next_tetramino == TetraminoType::AMOUNT;
 }
 
 void GameLogic::setPlayerInput(PlayerInput t_player_input){
@@ -46,18 +49,21 @@ void GameLogic::initVariables(){
             stationaries[i].push_back(GRID_COLOR);
         }
     }
+    tetra = nullptr;
+    next_tetramino = TetraminoType::AMOUNT;
+    std::cout << "tetramino_next: " << (int)next_tetramino << "\n";
 }
 
 void GameLogic::spawnTetramino(){
     CORE_TRACE("GameLogic - Spawning new Tetramino");
-    if(!next_tetramino.get()) {
+    if(next_tetramino == TetraminoType::AMOUNT) {
         CORE_WARN("GameLogic - No new TetraminoType available");
         return;
     }
-    tetra = std::make_shared<Tetramino>(*next_tetramino, sf::Color::Yellow);
+    tetra = std::make_shared<Tetramino>(next_tetramino, sf::Color::Yellow);
     tetra->setPosition(7-tetra->getForm().size(), 0);
 
-    next_tetramino = nullptr;
+    next_tetramino = TetraminoType::AMOUNT;
 
     if(checkLoss()){
         handleLoss();
@@ -66,7 +72,7 @@ void GameLogic::spawnTetramino(){
 
 void GameLogic::updateTime(sf::Time dt){
     game_time += dt;
-    CORE_TRACE("GameLogic - GameTime: {} us", game_time.asMicroseconds());
+    //CORE_TRACE("GameLogic - GameTime: {} us", game_time.asMicroseconds());
 }
 
 void GameLogic::resetGrid(){
@@ -85,11 +91,15 @@ void GameLogic::putTetraOnGrid(){
             if(!form[i][k]) continue;
             
             // Dont if out of grid in X Direction
-            if(!(0 <= tetra->getX() + k && tetra->getX() + k < COLUMNS)) 
+            if(!(0 <= tetra->getX() + k && tetra->getX() + k < COLUMNS)) {
+                CORE_WARN("GameLogic - Tetra out of grid in X direction");
                 continue;
+            }
             // Dont if out of grid in Y Direction
-            if(!(0 <= tetra->getY()+i && tetra->getY() + i < ROWS)) 
+            if(!(0 <= tetra->getY()+i && tetra->getY() + i < ROWS)) {
+                CORE_WARN("GameLogic - Tetra out of grid in Y direction");
                 continue;             
+            }
                                      
             grid[tetra->getY()+i][tetra->getX()+k] = tetra->getColor();
         }

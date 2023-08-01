@@ -46,7 +46,7 @@ public:
     GameLogic();
 
     bool isRunning();
-    sf::Time getTime();
+    bool isFinished();
     void setNextTetramino(TetraminoType tetramino);
     bool isNeedingNextTetramino();
     void setPlayerInput(PlayerInput t_player_input);

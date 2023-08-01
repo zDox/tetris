@@ -56,9 +56,9 @@ private:
     void initUI();
 
 public:
-    GameState(std::shared_ptr<GameData> t_data);
-    void init();
-    void destroy();
+    explicit GameState(std::shared_ptr<GameData> t_data);
+    void init() override;
+    void destroy() override;
 
     // Functions to handle messages
     void handleGridMessage(yojimbo::Message* t_message);
@@ -68,9 +68,9 @@ public:
     void handlePlayerJoinMessage(yojimbo::Message* t_message);
     void handlePlayerLeaveMessage(yojimbo::Message* t_message);
 
-    void handleInputs();
-    void update(sf::Time dt);
-    void draw();
+    void handleInputs() override;
+    void update(sf::Time dt) override;
+    void draw() override;
 
 };
 

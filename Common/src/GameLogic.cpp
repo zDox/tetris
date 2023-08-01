@@ -15,16 +15,20 @@ bool GameLogic::isRunning(){
     return running;
 }
 
-sf::Time GameLogic::getTime(){
-    return game_time;
+bool GameLogic::isFinished() {
+    return finished;
 }
 
 void GameLogic::setNextTetramino(TetraminoType tetramino){
+    if(!isValidTetraminoType(tetramino)){
+        CORE_WARN("GameLogic - Trying to set invalid next tetramino type: {}", (int) tetramino);
+        return;
+    }
     next_tetramino = tetramino;
 }
 
 bool GameLogic::isNeedingNextTetramino(){
-    return next_tetramino == TetraminoType::AMOUNT;
+    return TetraminoType::AMOUNT == next_tetramino;
 }
 
 void GameLogic::setPlayerInput(PlayerInput t_player_input){
@@ -57,7 +61,7 @@ void GameLogic::initVariables(){
 void GameLogic::spawnTetramino(){
     CORE_TRACE("GameLogic - Spawning new Tetramino");
     if(next_tetramino == TetraminoType::AMOUNT) {
-        CORE_WARN("GameLogic - No new TetraminoType available");
+        CORE_WARN("GameLogic - No new TetraminoType available. Current: {}", (int) next_tetramino);
         return;
     }
     tetra = std::make_shared<Tetramino>(next_tetramino, sf::Color::Yellow);
@@ -244,7 +248,7 @@ void GameLogic::updateTetra(){
 
 
 void GameLogic::update(sf::Time dt){
-    if(!running) return;
+    if(!running || finished) return;
     updateTime(dt);
     resetGrid();
     putStationariesOnGrid();

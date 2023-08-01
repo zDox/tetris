@@ -27,13 +27,13 @@ private:
     void initVariables();
 
 public:
-    LoginState(std::shared_ptr<GameData> t_data);
+    explicit LoginState(std::shared_ptr<GameData> t_data);
 
-    void init();
-    void destroy();
+    void init() override;
+    void destroy() override;
 
-    void handleInputs();
-    void update(sf::Time dt);
-    void draw();
+    void handleInputs() override;
+    void update(sf::Time dt) override;
+    void draw() override;
 };
 #endif

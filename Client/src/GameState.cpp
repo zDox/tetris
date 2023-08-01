@@ -30,7 +30,7 @@ void GameState::initVariables(){
             drawing_grid[i].push_back(rect);
         }
     }
-
+    tetramino_queue = {};
 }
 
 void GameState::initHandlers(){
@@ -101,7 +101,10 @@ void GameState::handleKeyboard(){
 
 void GameState::handleNextTetramino(){
     if(!game_logic.isNeedingNextTetramino()) return;
-    if(tetramino_queue.empty()) CORE_INFO("GameState - No next Tetramino available ");
+    if(tetramino_queue.empty()) {
+        CORE_INFO("GameState - No next Tetramino available ");
+        return;
+    }
     TetraminoType next = tetramino_queue.front();
     tetramino_queue.pop();
     game_logic.setNextTetramino(next);
@@ -170,7 +173,7 @@ void GameState::handleRoundStateChangeMessage(yojimbo::Message* t_message){
 
 void GameState::handleTetraminoPlacementMessage(yojimbo::Message* t_message){
     TetraminoPlacementMessage* message = (TetraminoPlacementMessage*) t_message;
-    NETWORK_TRACE("PROCESS_MESSAGE - TetraminoPlacementMessage - TetraminoTye: {}", (int)message->tetramino_type);
+    NETWORK_TRACE("PROCESS_MESSAGE - TetraminoPlacementMessage - TetraminoType: {}", (int)message->tetramino_type);
     if(game_id != message->game_id) return;
     tetramino_queue.push(message->tetramino_type);
 };
@@ -222,6 +225,10 @@ void GameState::update(sf::Time dt){
     if(roundstate == RoundStateType::INGAME && !game_logic.isRunning()){
         game_logic.start();
         game_clock.restart();
+    }
+
+    if(game_logic.isFinished()){
+        roundstate = RoundStateType::END;
     }
 
     if(game_id != -1 && roundstate == RoundStateType::INGAME){

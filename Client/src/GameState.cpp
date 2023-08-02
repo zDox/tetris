@@ -1,6 +1,7 @@
 #include "GameState.hpp"
 
 GameState::GameState(std::shared_ptr<GameData> t_data) : data(t_data) {
+    client_id = data->network_manager.getClientID();
 }
 
 void GameState::init(){
@@ -21,15 +22,13 @@ void GameState::initWindow(){
 }
 
 void GameState::initVariables(){
-    drawing_grid.resize(ROWS);
-    for(int i=0; i<ROWS; i++){
-        for(int k=0; k<COLUMNS; k++){
-            sf::RectangleShape rect(sf::Vector2f(SIDE_LENGTH, SIDE_LENGTH));
-            rect.setFillColor(GRID_COLOR);
-            rect.setPosition(k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT, i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP);
-            drawing_grid[i].push_back(rect);
-        }
-    }
+    std::shared_ptr<ClientPlayer> c_player = std::make_shared<ClientPlayer>();
+    c_player->drawing_grid.resize(ROWS);
+    c_player->player.client_id = client_id;
+    players.emplace(client_id, c_player);
+    
+    initDrawingGrid(client_id);
+
     tetramino_queue = {};
 }
 
@@ -59,7 +58,18 @@ void GameState::initUI(){
 }
 
 
- 
+void GameState::initDrawingGrid(uint64_t p_client_id){
+    if(!players.contains(p_client_id)) return;
+    std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
+    for(int i=0; i<ROWS; i++){
+        for(int k=0; k<COLUMNS; k++){
+            std::shared_ptr<sf::RectangleShape> rect = std::make_shared<sf::RectangleShape>(sf::Vector2f(SIDE_LENGTH, SIDE_LENGTH));
+            rect->setFillColor(GRID_COLOR);
+            rect->setPosition(k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT, i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP);
+            c_player->drawing_grid[i].push_back(rect);
+        }
+    }
+ }
 
 void GameState::updateUI(){
 }
@@ -110,41 +120,49 @@ void GameState::handleNextTetramino(){
     game_logic.setNextTetramino(next);
 }
 
-void GameState::drawGrid(){
-    auto grid = game_logic.getGrid();
-    for(int i=0; i < ROWS; i++){
-        for(int k=0; k<COLUMNS; k++){
-            drawing_grid[i][k].setFillColor(grid[i][k]);
-            data->window->draw(drawing_grid[i][k]);
+void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y){
+    std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
+    
+    for(int i = 0; i < ROWS; i++){
+        for(int k = 0; k < COLUMNS; k++){
+            int pos_x = k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT + offset_x;
+            int pos_y = i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP + offset_y;
+            uint32_t color_uint = c_player->player.grid[i][k];
+            uint8_t red = (color_uint >> 24) & 0xFF;
+            uint8_t green = (color_uint >> 16) & 0xFF;
+            uint8_t blue = (color_uint >> 8) & 0xFF;
+            uint8_t alpha = color_uint & 0xFF;
+            sf::Color color(red, green, blue, alpha);
+            std::shared_ptr<sf::RectangleShape> rect = players[p_client_id]->drawing_grid[i][k];
+            rect->setPosition(pos_x, pos_y);
+            rect->setFillColor(color);
+            data->window->draw(*rect);
         }
     }
 }
 
-void GameState::drawOpponentGrids(){
+void GameState::prepareLocalGrid(){
+    std::shared_ptr<ClientPlayer> local_player = players[client_id];
+    local_player->player.grid = convertGridToColors(game_logic.getGrid());
+}
+
+void GameState::drawPlayers(){
     int grid_pixel_width = ((SPACING_PER_RECT+SIDE_LENGTH)*COLUMNS);
     int max_grids_to_draw = std::min((int) players.size()+1, (int)std::floor(WIDTH/grid_pixel_width));
     int count = 1; // Count of how many grids have been drawn
-     
-    for(auto[p_client_id, player] : players){
+
+
+    prepareLocalGrid();
+    drawPlayer(client_id, 0, 0);
+    
+    for(auto[p_client_id, c_player] : players){
         if(p_client_id == client_id) continue;
-        if(player.grid.size() < ROWS-1)continue;
+        if(c_player->player.grid.size() < ROWS-1)continue;
         if(count >= max_grids_to_draw) break;
-        for(int i = 0; i < ROWS; i++){
-            for(int k = 0; k < COLUMNS; k++){
-                sf::RectangleShape rect(sf::Vector2(SIDE_LENGTH, SIDE_LENGTH));
-                int pos_x = k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT + count*grid_pixel_width + count*SPACING_BETWEEN_GRIDS;
-                int pos_y = i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP;
-                uint32_t color_uint = player.grid[i][k];
-                uint8_t red = (color_uint >> 24) & 0xFF;
-                uint8_t green = (color_uint >> 16) & 0xFF;
-                uint8_t blue = (color_uint >> 8) & 0xFF;
-                uint8_t alpha = color_uint & 0xFF;
-                sf::Color color(red, green, blue, alpha);
-                rect.setPosition(pos_x, pos_y);
-                rect.setFillColor(color);
-                data->window->draw(rect);
-            }
-        }
+        drawPlayer(
+                p_client_id, 
+                count*grid_pixel_width + count*SPACING_BETWEEN_GRIDS, 
+                0);
         count+=1;
     }
 }
@@ -156,7 +174,7 @@ void GameState::handleGridMessage(yojimbo::Message* t_message){
     NETWORK_TRACE("PROCESS_MESSAGE - GridMessage - Player({}", message->client_id);
     if(!players.contains(message->client_id)) return;
     if(message->client_id == client_id) return;
-    players[message->client_id].grid = message->grid;
+    players[message->client_id]->player.grid = message->grid;
 }
 
 void GameState::handleRoundStateChangeMessage(yojimbo::Message* t_message){
@@ -183,17 +201,21 @@ void GameState::handlePlayerScoreMessage(yojimbo::Message* t_message){
     NETWORK_TRACE("PROCESS_MESSAGE - PlayerScoreMessage - Player({}) Points: {} Position: {}", message->client_id, message->points, message->position);
     if(!players.contains(message->client_id)) return;
     if(game_id != message->game_id) return;
-    players[message->client_id].points = message->points;
-    players[message->client_id].position = message->position;
+    players[message->client_id]->player.points = message->points;
+    players[message->client_id]->player.position = message->position;
 };
 
 void GameState::handlePlayerJoinMessage(yojimbo::Message* t_message){
     PlayerJoinMessage* message = (PlayerJoinMessage*) t_message;
     NETWORK_INFO("PROCESS_MESSAGE - PlayerJoinMessage - Player({})", message->client_id);
     if(players.contains(message->client_id)) return;
-    Player player;
-    player.client_id = message->client_id;
-    players.emplace(message->client_id, player);
+
+    std::shared_ptr<ClientPlayer> c_player = std::make_shared<ClientPlayer>();
+    c_player->player.client_id = message->client_id;
+    
+    players.emplace(c_player->player.client_id, c_player);
+
+    initDrawingGrid(c_player->player.client_id);
 };
 
 void GameState::handlePlayerLeaveMessage(yojimbo::Message* t_message){
@@ -245,8 +267,7 @@ void GameState::update(sf::Time dt){
 void GameState::draw(){
     data->window->clear(BACKGROUND_COLOR);
     
-    drawOpponentGrids();
-    drawGrid();
+    drawPlayers();
 
     data->gui.draw();
      

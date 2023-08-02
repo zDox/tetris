@@ -14,23 +14,25 @@
 #include "GameLogic.hpp"
 #include "LoginState.hpp"
 
+struct ClientPlayer{
+    Player player;
+    std::vector<std::vector<std::shared_ptr<sf::RectangleShape>>> drawing_grid;
+    tgui::Label game_outcome_label;
+    tgui::Label stats_label;
+};
+
 class GameState : public State{
 private:
     std::shared_ptr<GameData> data;
 
     // SFML
-    // SFML -- initUI
-    tgui::Label::Ptr points_label;
-    tgui::Label::Ptr paused_label;
-
     // SFML -- Drawing data
-    std::vector<std::vector<sf::RectangleShape>> drawing_grid;
     long frame_counter=0;
 
     // Game Logic                       
     int game_id = -1;
     uint64_t client_id;
-    std::unordered_map<uint64_t, Player> players;
+    std::unordered_map<uint64_t, std::shared_ptr<ClientPlayer>> players;
     RoundStateType roundstate;
     std::queue<TetraminoType> tetramino_queue;
     GameLogic game_logic;
@@ -46,14 +48,17 @@ private:
     void updateUI();
 
     // Drawing
-    void drawGrid();
-    void drawOpponentGrids();
+    void drawPlayer(uint64_t p_client_id, int offset_x, int offset_y);
+    void prepareLocalGrid();
+    void drawPlayers();
     void drawUI();
     
     void initWindow();
     void initVariables();
     void initHandlers();
     void initUI();
+
+    void initDrawingGrid(uint64_t p_client_id);
 
 public:
     explicit GameState(std::shared_ptr<GameData> t_data);

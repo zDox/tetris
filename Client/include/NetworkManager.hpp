@@ -41,6 +41,8 @@ private:
     // Queues for Messages to be send
     std::shared_ptr<PlayerInput> player_input;
     
+    void generateClientID();
+
     void processMessage(yojimbo::Message* message);
     void processMessages();
     
@@ -52,8 +54,8 @@ public:
     
     // Getter and Setter
     ConnectionStatus getConnectionStatus();
+    uint64_t getClientID();
 
-    void generateClientID();
     
     bool init();
     void destroy();

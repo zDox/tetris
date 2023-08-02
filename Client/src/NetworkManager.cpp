@@ -66,6 +66,9 @@ void NetworkManager::disconnect(){
     client->Disconnect();
 }
 
+uint64_t NetworkManager::getClientID(){
+    return client_id;
+}
 
 void NetworkManager::processMessage(yojimbo::Message* message){
     MessageType message_type = convToMessageType(message->GetType());

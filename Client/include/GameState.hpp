@@ -17,8 +17,8 @@
 struct ClientPlayer{
     Player player;
     std::vector<std::vector<std::shared_ptr<sf::RectangleShape>>> drawing_grid;
-    tgui::Label game_outcome_label;
-    tgui::Label stats_label;
+    tgui::Label::Ptr game_outcome_label;
+    tgui::Label::Ptr stats_label;
 };
 
 class GameState : public State{
@@ -46,6 +46,8 @@ private:
     void handleNextTetramino();
     void handleKeyboard();
     void updateUI();
+    void updatePlayerUI(uint64_t p_client_id);
+    void updatePlayerUIs();
 
     // Drawing
     void drawPlayer(uint64_t p_client_id, int offset_x, int offset_y);
@@ -58,7 +60,8 @@ private:
     void initHandlers();
     void initUI();
 
-    void initDrawingGrid(uint64_t p_client_id);
+    void initPlayerDrawingGrid(uint64_t p_client_id);
+    void initPlayerUI(uint64_t p_client_id);
 
 public:
     explicit GameState(std::shared_ptr<GameData> t_data);

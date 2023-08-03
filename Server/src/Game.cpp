@@ -100,6 +100,7 @@ void Game::handleNextTetramino(uint64_t client_id){
 void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message){
     if(!players.contains(client_id)) return;
     if(game_id != message->game_id) return;
+    /*
     NETWORK_TRACE("PROCESS_MESSAGE - PlayerInputMessage - game_id: {}, client_id: {}, \nleft: {}, right: {}, up: {}, down: {}", 
             message->game_id,
             client_id,
@@ -107,7 +108,7 @@ void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* mes
             message->player_input.right, 
             message->player_input.up, 
             message->player_input.down);
-
+    */
     std::shared_ptr<ServerPlayer> player = players[client_id];
 
     if(player->playout_buffer.size() == 0){
@@ -244,6 +245,7 @@ void Game::updateIngameState(sf::Time dt){
         std::vector<std::vector<sf::Color>> new_grid = player->gamelogic.getGrid();
 
         if(old_points != new_points){
+            player->player.points = new_points;
             sendPlayerScore(client_id);
         }
 

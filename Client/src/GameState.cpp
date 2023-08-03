@@ -27,7 +27,8 @@ void GameState::initVariables(){
     c_player->player.client_id = client_id;
     players.emplace(client_id, c_player);
     
-    initDrawingGrid(client_id);
+    initPlayerDrawingGrid(client_id);
+    initPlayerUI(client_id);
 
     tetramino_queue = {};
 }
@@ -58,9 +59,10 @@ void GameState::initUI(){
 }
 
 
-void GameState::initDrawingGrid(uint64_t p_client_id){
+void GameState::initPlayerDrawingGrid(uint64_t p_client_id){
     if(!players.contains(p_client_id)) return;
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
+    c_player->drawing_grid.resize(ROWS);
     for(int i=0; i<ROWS; i++){
         for(int k=0; k<COLUMNS; k++){
             std::shared_ptr<sf::RectangleShape> rect = std::make_shared<sf::RectangleShape>(sf::Vector2f(SIDE_LENGTH, SIDE_LENGTH));
@@ -71,7 +73,34 @@ void GameState::initDrawingGrid(uint64_t p_client_id){
     }
  }
 
+void GameState::initPlayerUI(uint64_t p_client_id){
+    if(!players.contains(p_client_id)) return;
+    std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
+    c_player->game_outcome_label = tgui::Label::create();
+    c_player->stats_label = tgui::Label::create();
+    data->gui.add(c_player->game_outcome_label);
+    data->gui.add(c_player->stats_label);
+}
+
 void GameState::updateUI(){
+}
+
+void GameState::updatePlayerUI(uint64_t p_client_id){
+    if(!players.contains(p_client_id)) return;
+    std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
+
+    tgui::String stats_text = 
+        "points: " + std::to_string(c_player->player.points) + 
+        "\nposition: " + std::to_string(c_player->player.position);
+    c_player->stats_label->setText(stats_text);
+
+    tgui::String game_outcome_text;
+}
+
+void GameState::updatePlayerUIs(){
+    for(auto [p_client_id, player] : players){
+        updatePlayerUI(p_client_id);
+    }
 }
 
 void GameState::handleKeyboard(){
@@ -122,7 +151,8 @@ void GameState::handleNextTetramino(){
 
 void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y){
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
-    
+
+    // Draw the grid 
     for(int i = 0; i < ROWS; i++){
         for(int k = 0; k < COLUMNS; k++){
             int pos_x = k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT + offset_x;
@@ -139,6 +169,9 @@ void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y){
             data->window->draw(*rect);
         }
     }
+
+    // Draw UI Elements
+    c_player->stats_label->setPosition(offset_x, offset_y);
 }
 
 void GameState::prepareLocalGrid(){
@@ -165,6 +198,10 @@ void GameState::drawPlayers(){
                 0);
         count+=1;
     }
+}
+
+void GameState::drawUI(){
+    data->gui.draw();
 }
 
 // Functions to process messages
@@ -215,7 +252,8 @@ void GameState::handlePlayerJoinMessage(yojimbo::Message* t_message){
     
     players.emplace(c_player->player.client_id, c_player);
 
-    initDrawingGrid(c_player->player.client_id);
+    initPlayerDrawingGrid(c_player->player.client_id);
+    initPlayerUI(c_player->player.client_id);
 };
 
 void GameState::handlePlayerLeaveMessage(yojimbo::Message* t_message){
@@ -261,6 +299,7 @@ void GameState::update(sf::Time dt){
         frame_counter++;
     }
     updateUI();
+    updatePlayerUIs();
 };
 
 
@@ -269,7 +308,7 @@ void GameState::draw(){
     
     drawPlayers();
 
-    data->gui.draw();
+    drawUI();
      
     data->window->display();
 };

@@ -64,7 +64,8 @@ void GameLogic::spawnTetramino(){
         CORE_WARN("GameLogic - No new TetraminoType available. Current: {}", (int) next_tetramino);
         return;
     }
-    tetra = std::make_shared<Tetramino>(next_tetramino, sf::Color::Yellow);
+    sf::Color next_color = generateColor(next_tetramino);
+    tetra = std::make_shared<Tetramino>(next_tetramino, next_color);
     tetra->setPosition(7-tetra->getForm().size(), 0);
 
     next_tetramino = TetraminoType::AMOUNT;

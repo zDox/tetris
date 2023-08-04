@@ -111,7 +111,6 @@ void GameServer::processMessage(int client_index, yojimbo::Message* message){
         case (int)MessageType::PLAYER_INPUT:
         {
             PlayerInputMessage* player_input_message = reinterpret_cast<PlayerInputMessage*>(message);
-            NETWORK_TRACE("PROCESS_MESSAGE - PlayerInputMessage - Received one - game_id:{}", player_input_message->game_id);
             if(!games.contains(player_input_message->game_id)) return;
             games[player_input_message->game_id]->processPlayerInputMessage(client_id, reinterpret_cast<PlayerInputMessage*>(message));
             break;

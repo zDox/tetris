@@ -18,4 +18,6 @@ struct PlayerInput{
 
 bool comp(const PlayerInput &l, const long &frame);
 
+bool compPlayerByPoints(const Player &l, const Player &r);
+
 #endif

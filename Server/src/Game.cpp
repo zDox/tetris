@@ -58,12 +58,44 @@ RoundStateType Game::getRoundState(){
 }
 
 
+bool Game::isFinished(){
+    int finisher = 0;
+    // Count the finisher
+    for(auto [p_client_id, s_player] : players){
+        if(!s_player->gamelogic.isFinished()) continue;
+        finisher +=1;
+    }
+
+
+    if(players.size() < MIN_INGAME_PLAYERS) return true;
+    if((int) players.size() - finisher <= 1) return true;
+
+    return false;
+}
+
 bool Game::needTimeForPlayoutBuffer(){
     for(auto [client_id, player] : players){
         if(player->gamelogic.isRunning() && player->playout_buffer.size() == 0) return true;
         if(!player->gamelogic.isRunning() && player->playout_buffer.size() < MIN_PLAYOUT_BUFFER) return true;
     }
     return false;
+}
+
+bool Game::positionsHaveChanged(){
+    bool positions_have_changed = false;
+    std::vector<std::shared_ptr<ServerPlayer>> sorted;
+    // Copy values into vector
+    for (auto [p_client_id, player] : players){
+        sorted.push_back(player);
+    }
+    std::sort(sorted.begin(), sorted.end(), compServerPlayer);
+
+    for(std::vector<Player>::size_type i = 0; i < sorted.size(); i++){
+        if(players[sorted[i]->player.client_id]->player.position == (long) i+1) continue;
+        players[sorted[i]->player.client_id]->player.position = i+1;
+        positions_have_changed = true;
+    }
+    return positions_have_changed;
 }
 
 int Game::getPlayersClientIndex(uint64_t client_id){
@@ -95,6 +127,16 @@ void Game::handleNextTetramino(uint64_t client_id){
     message->game_id = game_id;
     message->tetramino_type = next_tetramino_type;
     server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
+}
+
+void Game::handleGameFinished(){
+    CORE_INFO("Game - Game({}) has finished", game_id);
+    // Send Player Scores
+    roundstate = RoundStateType::END;
+    for(auto [p_client_id, s_player] : players){
+        sendPlayerScore(p_client_id);
+    }
+    sendRoundStates();
 }
 
 void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message){
@@ -218,11 +260,18 @@ void Game::updateIngameState(sf::Time dt){
         }
     }
 
+    if(isFinished()){
+        handleGameFinished();
+        return;
+    }
+
     if(needTimeForPlayoutBuffer()) {
         NETWORK_DEBUG("PlayoutBuffer - Waiting for PlayoutBuffer");
         return; 
     }
 
+
+    // Start gamelogic if not already started
     if(!gamelogic_running){
         for(auto [client_id, player] : players){
             player->gamelogic.start();
@@ -230,6 +279,9 @@ void Game::updateIngameState(sf::Time dt){
         gamelogic_running = true;
     }
 
+
+
+    bool positions_changed = false;
     for(auto [client_id, player] : players){
         // Set next player_input from playout_buffer
         player->gamelogic.setPlayerInput(player->playout_buffer.front());
@@ -239,18 +291,34 @@ void Game::updateIngameState(sf::Time dt){
 
         std::vector<std::vector<sf::Color>> old_grid = player->gamelogic.getGrid();
         auto old_points = player->gamelogic.getPoints();
+        bool old_finished = player->gamelogic.isFinished();
         player->gamelogic.update(dt);
 
+        bool new_finished = player->gamelogic.isFinished();
         auto new_points = player->gamelogic.getPoints();
         std::vector<std::vector<sf::Color>> new_grid = player->gamelogic.getGrid();
 
-        if(old_points != new_points){
+        // handle points have changed
+        if(old_points != new_points || old_finished != new_finished){
             player->player.points = new_points;
-            sendPlayerScore(client_id);
+            if(positionsHaveChanged()){
+                positions_changed = true;
+            }
+            else {
+                sendPlayerScore(client_id);
+            }
         }
 
         if(!vecsAreEqual(old_grid, new_grid)){
             sendGrid(client_id, new_grid);
+        }
+    }
+
+    if(positions_changed){
+        NETWORK_TRACE("SEND_MESSAGE - PlayerScoreMessage - Positions have changed ");
+        // send to every player every player score
+        for(auto [p_client_id, player] : players){
+            sendPlayerScore(p_client_id);
         }
     }
 }

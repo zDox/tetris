@@ -78,6 +78,10 @@ void GameState::initPlayerUI(uint64_t p_client_id){
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
     c_player->game_outcome_label = tgui::Label::create();
     c_player->stats_label = tgui::Label::create();
+
+    c_player->game_outcome_label->setVisible(false);
+    c_player->game_outcome_label->setTextSize(20);
+
     data->gui.add(c_player->game_outcome_label);
     data->gui.add(c_player->stats_label);
 }
@@ -94,7 +98,13 @@ void GameState::updatePlayerUI(uint64_t p_client_id){
         "\nposition: " + std::to_string(c_player->player.position);
     c_player->stats_label->setText(stats_text);
 
-    tgui::String game_outcome_text;
+    if(roundstate != RoundStateType::END) return;
+
+    c_player->stats_label->setVisible(false);
+
+    tgui::String game_outcome_text = "Place " + std::to_string(c_player->player.position) + ".";
+    c_player->game_outcome_label->setText(game_outcome_text);
+    c_player->game_outcome_label->setVisible(true);
 }
 
 void GameState::updatePlayerUIs(){
@@ -141,7 +151,6 @@ void GameState::handleKeyboard(){
 void GameState::handleNextTetramino(){
     if(!game_logic.isNeedingNextTetramino()) return;
     if(tetramino_queue.empty()) {
-        CORE_INFO("GameState - No next Tetramino available ");
         return;
     }
     TetraminoType next = tetramino_queue.front();
@@ -172,6 +181,7 @@ void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y){
 
     // Draw UI Elements
     c_player->stats_label->setPosition(offset_x, offset_y);
+    c_player->game_outcome_label->setPosition(offset_x, offset_y + HEIGHT / 2);
 }
 
 void GameState::prepareLocalGrid(){

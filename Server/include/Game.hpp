@@ -26,6 +26,11 @@ struct ServerPlayer{
     std::list<PlayerInput> playout_buffer;
 };
 
+inline bool compServerPlayer(const std::shared_ptr<ServerPlayer> &l, const std::shared_ptr<ServerPlayer> &r){
+    if(l->player.points == r->player.points) return l->gamelogic.isFinished() < r->gamelogic.isFinished();
+    return l->player.points > r->player.points;
+}
+
 class Game{
 private:
     std::shared_ptr<yojimbo::Server> server;
@@ -41,9 +46,12 @@ private:
 
     void printGrid(std::vector<std::vector<sf::Color>> grid);
     
+    bool isFinished();
     bool needTimeForPlayoutBuffer();
+    bool positionsHaveChanged();
     int getPlayersClientIndex(uint64_t client_id);
     void handleNextTetramino(uint64_t client_id);
+    void handleGameFinished();
 
     void sendRoundState(uint64_t client_id);
     void sendRoundStates();

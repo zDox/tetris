@@ -55,7 +55,6 @@ void GameLogic::initVariables(){
     }
     tetra = nullptr;
     next_tetramino = TetraminoType::AMOUNT;
-    std::cout << "tetramino_next: " << (int)next_tetramino << "\n";
 }
 
 void GameLogic::spawnTetramino(){

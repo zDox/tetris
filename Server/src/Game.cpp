@@ -18,23 +18,32 @@ void Game::addPlayer(uint64_t client_id){
         CORE_DEBUG("State - Lobbycountdown in game({}) has started. Remaining {} seconds", game_id, LOBBY_WAIT_TIME);
     }
 
-    sendPlayerJoin(client_id);
-    sendRoundState(client_id);
+    broadcastPlayerJoin(client_id);
+    broadcastGrid(client_id, new_player->gamelogic.getGrid());
+
+    // Send to him all nescerray data
+    for(auto [p_client_id, s_player] : players){
+        if(p_client_id == client_id) continue;
+        sendPlayerJoin(p_client_id, client_id);
+        sendGrid(p_client_id, client_id, players[p_client_id]->gamelogic.getGrid());
+    }
+
+    broadcastRoundState(client_id);
 }
 
 
 void Game::removePlayer(uint64_t client_id){
     if(!players.contains(client_id)) return;
     players.erase(client_id);
-    sendPlayerLeave(client_id);
+    broadcastPlayerLeave(client_id);
     CORE_INFO("Matchmaking - Player({}) leaved the game({})", client_id, game_id);
     if(roundstate == RoundStateType::INGAME && players.size() < MIN_INGAME_PLAYERS){
         roundstate = RoundStateType::END;
-        sendRoundStates();
+        broadcastRoundStates();
     }
     else if(roundstate == RoundStateType::LOBBY && players.size() < MIN_STARTING_PLAYERS){
         lobby_clock_running = false;
-        sendRoundStates();
+        broadcastRoundStates();
     }
 }
 
@@ -134,9 +143,9 @@ void Game::handleGameFinished(){
     // Send Player Scores
     roundstate = RoundStateType::END;
     for(auto [p_client_id, s_player] : players){
-        sendPlayerScore(p_client_id);
+        broadcastPlayerScore(p_client_id);
     }
-    sendRoundStates();
+    broadcastRoundStates();
 }
 
 void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message){
@@ -170,7 +179,7 @@ void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* mes
     }
 }
 
-void Game::sendRoundState(uint64_t client_id){
+void Game::broadcastRoundState(uint64_t client_id){
     int client_index = getPlayersClientIndex(client_id);
     RoundStateChangeMessage* message = (RoundStateChangeMessage*) server->CreateMessage(client_index, (int)MessageType::ROUNDSTATECHANGE);
     message->game_id = game_id;
@@ -178,44 +187,43 @@ void Game::sendRoundState(uint64_t client_id){
     server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
 }
 
-void Game::sendRoundStates(){
+void Game::broadcastRoundStates(){
     for(auto [p_client_id, player] : players){
-        sendRoundState(p_client_id);
+        broadcastRoundState(p_client_id);
     }
 }
 
-void Game::sendGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid){
+void Game::sendGrid(uint64_t sender_id, uint64_t receiver_id, std::vector<std::vector<sf::Color>> grid){
+    int client_index = getPlayersClientIndex(receiver_id);
+    GridMessage* message = (GridMessage*) server->CreateMessage(client_index, (int)MessageType::GRID);
+    message->game_id = game_id;
+    message->client_id = sender_id;
+    message->grid = convertGridToColors(grid);
+    server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
+}
+
+void Game::broadcastGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid){
     for(auto [p_client_id, player] : players){
-        int client_index = getPlayersClientIndex(p_client_id);
-        GridMessage* message = (GridMessage*) server->CreateMessage(client_index, (int)MessageType::GRID);
-        message->game_id = game_id;
-        message->client_id = client_id;
-        message->grid = convertGridToColors(grid);
-        server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
+        sendGrid(client_id, p_client_id, grid);
     }
 }
 
-void Game::sendPlayerJoin(uint64_t client_id){
+void Game::sendPlayerJoin(uint64_t sender_id, uint64_t receiver_id){
+    int client_index = getPlayersClientIndex(receiver_id);
+    PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_JOIN);
+    message->game_id = game_id;
+    message->client_id = sender_id;
+    server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
+}
+
+void Game::broadcastPlayerJoin(uint64_t client_id){
     // Send all other player his join message
     for(auto [p_client_id, player] : players){
-        int client_index = getPlayersClientIndex(p_client_id);
-        PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_JOIN);
-        message->game_id = game_id;
-        message->client_id = client_id;
-        server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
-    }
-    // Send him all players that are already connected
-    int client_index = getPlayersClientIndex(client_id);
-    for(auto [p_client_id, player] : players){
-        if(p_client_id == client_id) continue;
-        PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_JOIN);
-        message->game_id = game_id;
-        message->client_id = p_client_id;
-        server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
-    }
+        sendPlayerJoin(client_id, p_client_id);
+    } 
 }
 
-void Game::sendPlayerLeave(uint64_t client_id){
+void Game::broadcastPlayerLeave(uint64_t client_id){
     for(auto [p_client_id, player] : players){
         int client_index = getPlayersClientIndex(p_client_id);
         PlayerLeaveMessage* message = (PlayerLeaveMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_LEAVE);
@@ -225,7 +233,7 @@ void Game::sendPlayerLeave(uint64_t client_id){
     }
 }
 
-void Game::sendPlayerScore(uint64_t client_id){
+void Game::broadcastPlayerScore(uint64_t client_id){
     std::shared_ptr<ServerPlayer> player = players[client_id];
     for(auto [p_client_id, p_player] : players){
         int client_index = getPlayersClientIndex(p_client_id);
@@ -246,7 +254,7 @@ void Game::updateLobbyState(sf::Time dt){
         }
         roundstate = RoundStateType::INGAME;
         CORE_TRACE("Game - Game ({}): Switched to Ingame State", game_id);
-        sendRoundStates();
+        broadcastRoundStates();
         return;
     }
 }
@@ -305,12 +313,12 @@ void Game::updateIngameState(sf::Time dt){
                 positions_changed = true;
             }
             else {
-                sendPlayerScore(client_id);
+                broadcastPlayerScore(client_id);
             }
         }
 
         if(!vecsAreEqual(old_grid, new_grid)){
-            sendGrid(client_id, new_grid);
+            broadcastGrid(client_id, new_grid);
         }
     }
 
@@ -318,7 +326,7 @@ void Game::updateIngameState(sf::Time dt){
         NETWORK_TRACE("SEND_MESSAGE - PlayerScoreMessage - Positions have changed ");
         // send to every player every player score
         for(auto [p_client_id, player] : players){
-            sendPlayerScore(p_client_id);
+            broadcastPlayerScore(p_client_id);
         }
     }
 }

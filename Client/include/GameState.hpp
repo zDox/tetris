@@ -17,7 +17,7 @@
 struct ClientPlayer{
     Player player;
     std::vector<std::vector<std::shared_ptr<sf::RectangleShape>>> drawing_grid;
-    tgui::Label::Ptr game_outcome_label;
+    tgui::Label::Ptr main_label;
     tgui::Label::Ptr stats_label;
 };
 

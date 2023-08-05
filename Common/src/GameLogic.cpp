@@ -225,6 +225,7 @@ void GameLogic::updateTetra(){
     if(player_input->down){
         if(checkCollisions(0, 1, false)){
             lockTetra();
+            return;
         }
         tetra->move(0, 1);
     }

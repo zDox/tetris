@@ -50,7 +50,7 @@ private:
     void updatePlayerUIs();
 
     // Drawing
-    void drawPlayer(uint64_t p_client_id, int offset_x, int offset_y);
+    void drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, float scale);
     void prepareLocalGrid();
     void drawPlayers();
     void drawUI();

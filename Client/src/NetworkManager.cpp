@@ -14,9 +14,9 @@ ConnectionStatus NetworkManager::getConnectionStatus(){
         case yojimbo::ClientState::CLIENT_STATE_DISCONNECTED:
             return ConnectionStatus::DISCONNECTED;
         case yojimbo::ClientState::CLIENT_STATE_ERROR:
-            return ConnectionStatus::ERROR;
+            return ConnectionStatus::ERROR_CONNECTION;
     }
-    return ConnectionStatus::ERROR;
+    return ConnectionStatus::ERROR_CONNECTION;
 }
 
 

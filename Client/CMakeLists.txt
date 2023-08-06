@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
 
-set(CMAKE_TOOLCHAIN_FILE WindowsToolchain.cmake)
-
 project(TetrisClient)
 
 add_compile_options(-Wall -Werror)
@@ -15,10 +13,6 @@ set(CMAKE_BUILD_PARALLEL_LEVEL 8)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 set(CMAKE_CXX_STANDARD 20)
 
-if(NOT TARGET spdlog)
-    # Stand-alone build
-    find_package(spdlog REQUIRED)
-endif()
 
 # Libs Header dirs
 set(YOJIMBO_DIR ../External/yojimbo)
@@ -39,8 +33,8 @@ target_include_directories(TetrisClient PUBLIC include)
 target_include_directories(TetrisClient PUBLIC ${YOJIMBO_DIR})
 target_include_directories(TetrisClient PUBLIC ${ZPP_BITS_DIR})
 target_include_directories(TetrisClient PUBLIC ${COMMON_DIR}/include)
+target_include_directories(TetrisClient PUBLIC ${SPDLOG_DIR}/include)
 
 # Link any necessary libraries (e.g., SDL or SFML)
 target_link_libraries(TetrisClient -lyojimbo -lsodium -lmbedtls -lmbedx509 -lmbedcrypto) # yojimbo and dependencies
 target_link_libraries(TetrisClient -ltgui -lsfml-graphics -lsfml-window -lsfml-system) # SFML
-target_link_libraries(TetrisClient spdlog::spdlog)

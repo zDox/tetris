@@ -26,6 +26,7 @@ enum class MessageType {
     PLAYER_JOIN,
     PLAYER_LEAVE,
     PLAYER_INPUT,
+    GAMEINFO,
     COUNT
 };
 

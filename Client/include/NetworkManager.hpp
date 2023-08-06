@@ -19,11 +19,11 @@
 #include "Definitions.hpp"
 #include "Player.hpp"
 
-enum ConnectionStatus {
+enum class ConnectionStatus {
     CONNECTED,
     CONNECTING,
     DISCONNECTED,
-    ERROR,
+    ERROR_CONNECTION
 };
 
 class NetworkManager{

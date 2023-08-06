@@ -176,14 +176,15 @@ void GameState::handleNextTetramino(){
     game_logic.setNextTetramino(next);
 }
 
-void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y){
+void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, float scale){
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
+    CORE_DEBUG("GameState - drawPlayer - off_x: {}, off_y: {}", offset_x, offset_y);
 
     // Draw the grid 
     for(int i = 0; i < ROWS; i++){
         for(int k = 0; k < COLUMNS; k++){
-            int pos_x = k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT + offset_x;
-            int pos_y = i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP + offset_y;
+            int pos_x = k*SIDE_LENGTH*scale + k*SPACING_PER_RECT*scale + offset_x;
+            int pos_y = i*SIDE_LENGTH*scale + i*SPACING_PER_RECT*scale + offset_y;
             uint32_t color_uint = c_player->player.grid[i][k];
             uint8_t red = (color_uint >> 24) & 0xFF;
             uint8_t green = (color_uint >> 16) & 0xFF;
@@ -199,7 +200,7 @@ void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y){
 
     // Draw UI Elements
     c_player->stats_label->setPosition(offset_x, offset_y);
-    c_player->main_label->setPosition(offset_x, offset_y + HEIGHT / 2);
+    c_player->main_label->setPosition(offset_x, offset_y + HEIGHT*scale / 2);
 }
 
 void GameState::prepareLocalGrid(){
@@ -209,21 +210,46 @@ void GameState::prepareLocalGrid(){
 
 void GameState::drawPlayers(){
     int grid_pixel_width = ((SPACING_PER_RECT+SIDE_LENGTH)*COLUMNS);
-    int max_grids_to_draw = std::min((int) players.size()+1, (int)std::floor(WIDTH/grid_pixel_width));
-    int count = 1; // Count of how many grids have been drawn
-
+    int grid_pixel_height = ((SPACING_PER_RECT+SIDE_LENGTH)*ROWS);
+    int free_pixel_x = (WIDTH - grid_pixel_width);
+    int free_pixel_y = (HEIGHT);
+    
 
     prepareLocalGrid();
-    drawPlayer(client_id, 0, 0);
-    
+    drawPlayer(client_id, 0, 0, 1.f);
+
+    // Draw Opponent players
+    // Calculate the scale
+    float scale = 1;
+    int a, b, c;
+
+    while(true){
+        a = static_cast<int>(std::floor((float)free_pixel_x / (scale * (float)grid_pixel_width)));
+        b = static_cast<int>(std::floor((float)free_pixel_y / (scale * (float)grid_pixel_height)));
+        c = a * b;
+
+        if(c >= (int)players.size() - 1) break;
+        scale /= 2;
+    }
+
+
+    CORE_DEBUG("GameState - drawPlayers - scale: {}, a:{}, b: {}, c:{}", scale, a, b, c);
+    int count = 0; // Count of how many grids have been drawn
+
+   
     for(auto[p_client_id, c_player] : players){
         if(p_client_id == client_id) continue;
         if(c_player->player.grid.size() < ROWS-1)continue;
-        if(count >= max_grids_to_draw) break;
+
+        int row = static_cast<int>((std::floor(count / a)));
+        int col = static_cast<int>((std::floor(count % a)));
+        CORE_DEBUG("GameState - drawPlayers - Count: {}, Row: {}, Col: {}", count, row, col);
+
         drawPlayer(
                 p_client_id, 
-                count*grid_pixel_width + count*SPACING_BETWEEN_GRIDS, 
-                0);
+                grid_pixel_width + SPACING_LEFT + static_cast<int>(row * scale * grid_pixel_width), 
+                SPACING_TOP + static_cast<int>(col * scale * grid_pixel_height),
+                scale);
         count+=1;
     }
 }
@@ -306,7 +332,7 @@ void GameState::handleInputs(){
 void GameState::update(sf::Time dt){ 
     data->network_manager.update();
     if(data->network_manager.getConnectionStatus() == ConnectionStatus::DISCONNECTED or
-       data->network_manager.getConnectionStatus() == ConnectionStatus::ERROR){
+       data->network_manager.getConnectionStatus() == ConnectionStatus::ERROR_CONNECTION){
         data->state_manager.switchToState(std::make_shared<LoginState>(data));
     }
 

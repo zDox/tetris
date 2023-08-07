@@ -192,6 +192,7 @@ void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, flo
             uint8_t alpha = color_uint & 0xFF;
             sf::Color color(red, green, blue, alpha);
             std::shared_ptr<sf::RectangleShape> rect = players[p_client_id]->drawing_grid[i][k];
+            rect->setSize(sf::Vector2(SIDE_LENGTH*scale, SIDE_LENGTH*scale));
             rect->setPosition(pos_x, pos_y);
             rect->setFillColor(color);
             data->window->draw(*rect);
@@ -211,12 +212,12 @@ void GameState::prepareLocalGrid(){
 void GameState::drawPlayers(){
     int grid_pixel_width = ((SPACING_PER_RECT+SIDE_LENGTH)*COLUMNS);
     int grid_pixel_height = ((SPACING_PER_RECT+SIDE_LENGTH)*ROWS);
-    int free_pixel_x = (WIDTH - grid_pixel_width);
-    int free_pixel_y = (HEIGHT);
+    int free_pixel_x = (WIDTH - SPACING_LEFT - grid_pixel_width);
+    int free_pixel_y = (HEIGHT - SPACING_TOP);
     
 
     prepareLocalGrid();
-    drawPlayer(client_id, 0, 0, 1.f);
+    drawPlayer(client_id, SPACING_LEFT, SPACING_TOP, 1.f);
 
     // Draw Opponent players
     // Calculate the scale
@@ -224,12 +225,12 @@ void GameState::drawPlayers(){
     int a, b, c;
 
     while(true){
-        a = static_cast<int>(std::floor((float)free_pixel_x / (scale * (float)grid_pixel_width)));
-        b = static_cast<int>(std::floor((float)free_pixel_y / (scale * (float)grid_pixel_height)));
+        a = static_cast<int>(std::floor((float)free_pixel_x / (scale * (float)(grid_pixel_width + SPACING_BETWEEN_GRIDS))));
+        b = static_cast<int>(std::floor((float)free_pixel_y / (scale * (float)(grid_pixel_height + SPACING_BETWEEN_GRIDS))));
         c = a * b;
 
         if(c >= (int)players.size() - 1) break;
-        scale /= 2;
+        scale = scale - 0.05;
     }
 
 
@@ -241,14 +242,14 @@ void GameState::drawPlayers(){
         if(p_client_id == client_id) continue;
         if(c_player->player.grid.size() < ROWS-1)continue;
 
-        int row = static_cast<int>((std::floor(count / a)));
-        int col = static_cast<int>((std::floor(count % a)));
+        int row = static_cast<int>((std::floor(count % a)));
+        int col = static_cast<int>((std::floor(count / a)));
         CORE_DEBUG("GameState - drawPlayers - Count: {}, Row: {}, Col: {}", count, row, col);
 
         drawPlayer(
                 p_client_id, 
-                grid_pixel_width + SPACING_LEFT + static_cast<int>(row * scale * grid_pixel_width), 
-                SPACING_TOP + static_cast<int>(col * scale * grid_pixel_height),
+                grid_pixel_width + SPACING_LEFT + static_cast<int>((row+1) * SPACING_BETWEEN_GRIDS * scale + row * scale * grid_pixel_width), 
+                SPACING_TOP + static_cast<int>(col * SPACING_BETWEEN_GRIDS * scale + col * scale * grid_pixel_height),
                 scale);
         count+=1;
     }

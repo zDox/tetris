@@ -20,6 +20,10 @@ set(ZPP_BITS_DIR ../External/zpp_bits)
 set(COMMON_DIR ../Common)
 set(SPDLOG_DIR ../External/spdlog)
 
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
 
 aux_source_directory(src SOURCES)
 aux_source_directory(include HEADERS)
@@ -38,3 +42,4 @@ target_include_directories(TetrisClient PUBLIC ${SPDLOG_DIR}/include)
 # Link any necessary libraries (e.g., SDL or SFML)
 target_link_libraries(TetrisClient -lyojimbo -lsodium -lmbedtls -lmbedx509 -lmbedcrypto) # yojimbo and dependencies
 target_link_libraries(TetrisClient -ltgui -lsfml-graphics -lsfml-window -lsfml-system) # SFML
+target_link_libraries(TetrisClient spdlog::spdlog_header_only) # spdlog

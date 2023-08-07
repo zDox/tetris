@@ -106,6 +106,10 @@ void NetworkManager::queuePlayerInput(PlayerInput t_player_input){
     *player_input = t_player_input;
 }
 
+void NetworkManager::queueLoginRequest(std::string username){
+    requested_username = username;
+}
+
 void NetworkManager::sendPlayerInput(){
     if(!player_input) return;
 
@@ -126,8 +130,18 @@ void NetworkManager::sendPlayerInput(){
     */
 }
 
+void NetworkManager::sendLoginRequest(){
+    if(requested_username == "")return;
+    
+    LoginRequestMessage* message = (LoginRequestMessage*) client->CreateMessage((int)MessageType::LOGIN_REQUEST);
+    message->name = requested_username;
+    client->SendMessage((int)GameChannel::RELIABLE, message);
+    requested_username = "";
+}
+
 void NetworkManager::sendMessages(){
     sendPlayerInput();
+    sendLoginRequest();
 }
 
 void NetworkManager::registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func){

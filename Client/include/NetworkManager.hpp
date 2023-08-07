@@ -40,6 +40,7 @@ private:
 
     // Queues for Messages to be send
     std::shared_ptr<PlayerInput> player_input;
+    std::string requested_username = "";
     
     void generateClientID();
 
@@ -48,6 +49,7 @@ private:
     
     // Sending of Messages
     void sendPlayerInput();
+    void sendLoginRequest();
     void sendMessages(); 
 public:
     NetworkManager();
@@ -66,6 +68,7 @@ public:
     void registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func);
 
     void queuePlayerInput(PlayerInput t_player_input);
+    void queueLoginRequest(std::string username);
 
     void update();
 };

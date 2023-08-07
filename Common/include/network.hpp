@@ -22,8 +22,8 @@ enum class MessageType {
     GRID,
     GAME_DATA,
     TETRAMINO_PLACEMENT,
-    PLAYER_CONNECT_REQUEST, // Player Message when trying connecting to GameServer
-    PLAYER_CONNECT_RESPONSE, // Response Message to Connection attempt from client
+    LOGIN_REQUEST, // Player Message when trying connecting to GameServer
+    LOGIN_RESPONSE, // Response Message to Connection attempt from client
     PLAYER_DATA,
     PLAYER_JOIN, // Message when connecting to Game
     PLAYER_LEAVE, // Message when disconnecting from Game 
@@ -46,6 +46,7 @@ struct GameConnectionConfig : yojimbo::ClientServerConfig {
         protocolId = 4;
     }
 };
+
 
 struct GridMessage : public yojimbo::Message
 {
@@ -101,6 +102,7 @@ struct GridMessage : public yojimbo::Message
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
 };
+
 
 struct GameDataMessage : public yojimbo::Message
 {
@@ -181,12 +183,12 @@ struct TetraminoPlacementMessage : public yojimbo::Message
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
 };
 
-struct PlayerConnectRequestMessage : public yojimbo::Message
+struct LoginRequestMessage : public yojimbo::Message
 {
     std::uint64_t bytes;
-    std::string name;
+    std::string username;
 
-    PlayerConnectRequestMessage(){}; 
+    LoginRequestMessage(){}; 
 
     template <typename Stream> 
     bool Serialize( Stream & stream )
@@ -197,7 +199,7 @@ struct PlayerConnectRequestMessage : public yojimbo::Message
                 serialize_uint64(stream, bytes);
                 data.resize(bytes);
                 serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-                in(name).or_throw();
+                in(username).or_throw();
             }
             catch (const std::exception & error) {
                 std::cout << "Failed reading with error: " << error.what() << '\n';
@@ -209,7 +211,7 @@ struct PlayerConnectRequestMessage : public yojimbo::Message
         }
         else {
             try{
-                out(name).or_throw();
+                out(username).or_throw();
                 bytes = data.size();
                 serialize_uint64(stream, bytes);
                 serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
@@ -228,22 +230,56 @@ struct PlayerConnectRequestMessage : public yojimbo::Message
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
 };
 
-struct PlayerConnectResponseMessage : public yojimbo::Message
+struct LoginResponseMessage : public yojimbo::Message
 {
-    PlayerConnectResult result;
-    
-    PlayerConnectResponseMessage(){}; 
+    std::uint64_t bytes;
+    LoginResult result;
+    std::string username;
+
+    LoginResponseMessage(){}; 
 
     template <typename Stream> 
-    bool Serialize( Stream & stream ){        
-        int result_value = static_cast<int>(result);
-        serialize_int(stream, result_value, 0, 64);
-        result = static_cast<PlayerConnectResult>(result_value);  
+    bool Serialize( Stream & stream )
+    {        
+        auto [data, in, out] = zpp::bits::data_in_out();
+        if(Stream::IsReading){
+            try{
+                serialize_uint64(stream, bytes);
+                data.resize(bytes);
+                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
+                in(result).or_throw();
+                in(username).or_throw();
+            }
+            catch (const std::exception & error) {
+                std::cout << "Failed reading with error: " << error.what() << '\n';
+                return false;
+            } catch (...) {
+                std::cout << "Unknown error\n";
+                return false;
+            };
+        }
+        else {
+            try{
+                out(result).or_throw();
+                out(username).or_throw();
+                bytes = data.size();
+                serialize_uint64(stream, bytes);
+                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
+            }
+            catch (const std::exception & error) {
+                std::cout << "Failed writing with error: " << error.what() << '\n';
+                return false;
+            } catch (...) {
+                std::cout << "Unknown error\n";
+                return false;
+            };
+        } 
         return true;
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
 };
+
 
 struct PlayerDataMessage : public yojimbo::Message
 {
@@ -353,8 +389,8 @@ YOJIMBO_MESSAGE_FACTORY_START(GameMessageFactory, (int)MessageType::COUNT);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GRID, GridMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_DATA, GameDataMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::TETRAMINO_PLACEMENT, TetraminoPlacementMessage);
-YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_CONNECT_REQUEST, PlayerConnectRequestMessage);
-YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_CONNECT_RESPONSE, PlayerConnectResponseMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::LOGIN_REQUEST, LoginRequestMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::LOGIN_RESPONSE, LoginResponseMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_DATA, PlayerDataMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_JOIN, PlayerJoinMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::PLAYER_LEAVE, PlayerLeaveMessage);
@@ -371,8 +407,8 @@ inline MessageType convToMessageType(int message_type){
         GENERATE_MESSAGE_TYPE_CASE(GRID)
         GENERATE_MESSAGE_TYPE_CASE(GAME_DATA)
         GENERATE_MESSAGE_TYPE_CASE(TETRAMINO_PLACEMENT)
-        GENERATE_MESSAGE_TYPE_CASE(PLAYER_CONNECT_REQUEST)
-        GENERATE_MESSAGE_TYPE_CASE(PLAYER_CONNECT_RESPONSE)
+        GENERATE_MESSAGE_TYPE_CASE(LOGIN_REQUEST)
+        GENERATE_MESSAGE_TYPE_CASE(LOGIN_RESPONSE)
         GENERATE_MESSAGE_TYPE_CASE(PLAYER_DATA)
         GENERATE_MESSAGE_TYPE_CASE(PLAYER_JOIN)
         GENERATE_MESSAGE_TYPE_CASE(PLAYER_LEAVE)

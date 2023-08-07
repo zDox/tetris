@@ -38,14 +38,14 @@ void GameState::initHandlers(){
             MessageType::GRID, 
             std::bind(&GameState::handleGridMessage, this, std::placeholders::_1));
     data->network_manager.registerMessageHandler(
-            MessageType::ROUNDSTATECHANGE, 
-            std::bind(&GameState::handleRoundStateChangeMessage, this, std::placeholders::_1));
+            MessageType::GAME_DATA, 
+            std::bind(&GameState::handleGameDataMessage, this, std::placeholders::_1));
     data->network_manager.registerMessageHandler(
             MessageType::TETRAMINO_PLACEMENT,
             std::bind(&GameState::handleTetraminoPlacementMessage, this, std::placeholders::_1));
     data->network_manager.registerMessageHandler(
-            MessageType::PLAYER_SCORE, 
-            std::bind(&GameState::handlePlayerScoreMessage, this, std::placeholders::_1));
+            MessageType::PLAYER_DATA, 
+            std::bind(&GameState::handlePlayerDataMessage, this, std::placeholders::_1));
     data->network_manager.registerMessageHandler(
             MessageType::PLAYER_JOIN, 
             std::bind(&GameState::handlePlayerJoinMessage, this, std::placeholders::_1));
@@ -269,9 +269,9 @@ void GameState::handleGridMessage(yojimbo::Message* t_message){
     players[message->client_id]->player.grid = message->grid;
 }
 
-void GameState::handleRoundStateChangeMessage(yojimbo::Message* t_message){
-    RoundStateChangeMessage* message = (RoundStateChangeMessage*) t_message;
-    NETWORK_TRACE("PROCESS_MESSAGE - RoundStateChangeMessage - RoundState: {}", (int)message->roundstate);
+void GameState::handleGameDataMessage(yojimbo::Message* t_message){
+    GameDataMessage* message = (GameDataMessage*) t_message;
+    NETWORK_TRACE("PROCESS_MESSAGE - GameDataMessage - RoundState: {}", (int)message->roundstate);
     if(game_id == -1){
         game_id = message->game_id;
     }
@@ -288,8 +288,8 @@ void GameState::handleTetraminoPlacementMessage(yojimbo::Message* t_message){
     tetramino_queue.push(message->tetramino_type);
 };
 
-void GameState::handlePlayerScoreMessage(yojimbo::Message* t_message){
-    PlayerScoreMessage* message = (PlayerScoreMessage*) t_message;
+void GameState::handlePlayerDataMessage(yojimbo::Message* t_message){
+    PlayerDataMessage* message = (PlayerDataMessage*) t_message;
     NETWORK_TRACE("PROCESS_MESSAGE - PlayerScoreMessage - Player({}) Points: {} Position: {}", message->client_id, message->points, message->position);
     if(!players.contains(message->client_id)) return;
     if(game_id != message->game_id) return;
@@ -366,4 +366,4 @@ void GameState::draw(){
     drawUI();
      
     data->window->display();
-};
+}

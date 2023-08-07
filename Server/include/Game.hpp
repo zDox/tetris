@@ -53,14 +53,14 @@ private:
     void handleNextTetramino(uint64_t client_id);
     void handleGameFinished();
 
-    void broadcastRoundState(uint64_t client_id);
-    void broadcastRoundStates();
+    void sendGameData(uint64_t client_id);
+    void broadcastGameData();
     void sendGrid(uint64_t sender_id, uint64_t receiver_id, std::vector<std::vector<sf::Color>> grid);
     void broadcastGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid);
     void sendPlayerJoin(uint64_t sender_id, uint64_t receiver_id);
     void broadcastPlayerJoin(uint64_t client_id);
     void broadcastPlayerLeave(uint64_t client_id);
-    void broadcastPlayerScore(uint64_t client_id);
+    void broadcastPlayerData(uint64_t client_id);
 
 
     void updateLobbyState(sf::Time dt);

@@ -51,7 +51,6 @@ void GameServer::init(){
     if(!server) {
         CORE_ERROR("Failed creating server");
     }
-    server->SetLatency(100);
 }
 
 std::shared_ptr<GameServer> GameServer::getPtr(){
@@ -104,6 +103,9 @@ int GameServer::createGame(){ // Returns the game_id of the game it created
     return next_game_id-1;
 }
 
+void GameServer::processLoginRequest(uint64_t client_id, LoginRequestMessage* message){
+    LoginResponseMessage* answer = server->CreateMessage(getPlayersClientIndex(client_id));
+}
 
 void GameServer::processMessage(int client_index, yojimbo::Message* message){
     uint64_t client_id = server->GetClientId(client_index);
@@ -113,6 +115,11 @@ void GameServer::processMessage(int client_index, yojimbo::Message* message){
             PlayerInputMessage* player_input_message = reinterpret_cast<PlayerInputMessage*>(message);
             if(!games.contains(player_input_message->game_id)) return;
             games[player_input_message->game_id]->processPlayerInputMessage(client_id, reinterpret_cast<PlayerInputMessage*>(message));
+            break;
+        }
+        case (int)MessageType::LOGIN_REQUEST:
+        {
+            processLoginRequest(client_id, (LoginRequestMessage*) message);
             break;
         }
         default:

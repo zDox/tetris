@@ -28,7 +28,7 @@ void Game::addPlayer(uint64_t client_id){
         sendGrid(p_client_id, client_id, players[p_client_id]->gamelogic.getGrid());
     }
 
-    broadcastRoundState(client_id);
+    sendGameData(client_id);
 }
 
 
@@ -39,11 +39,11 @@ void Game::removePlayer(uint64_t client_id){
     CORE_INFO("Matchmaking - Player({}) leaved the game({})", client_id, game_id);
     if(roundstate == RoundStateType::INGAME && players.size() < MIN_INGAME_PLAYERS){
         roundstate = RoundStateType::END;
-        broadcastRoundStates();
+        broadcastGameData();
     }
     else if(roundstate == RoundStateType::LOBBY && players.size() < MIN_STARTING_PLAYERS){
         lobby_clock_running = false;
-        broadcastRoundStates();
+        broadcastGameData();
     }
 }
 
@@ -143,9 +143,9 @@ void Game::handleGameFinished(){
     // Send Player Scores
     roundstate = RoundStateType::END;
     for(auto [p_client_id, s_player] : players){
-        broadcastPlayerScore(p_client_id);
+        broadcastPlayerData(p_client_id);
     }
-    broadcastRoundStates();
+    broadcastGameData();
 }
 
 void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message){
@@ -179,17 +179,17 @@ void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* mes
     }
 }
 
-void Game::broadcastRoundState(uint64_t client_id){
-    int client_index = getPlayersClientIndex(client_id);
-    RoundStateChangeMessage* message = (RoundStateChangeMessage*) server->CreateMessage(client_index, (int)MessageType::ROUNDSTATECHANGE);
+void Game::sendGameData(uint64_t p_client_id){
+    int client_index = getPlayersClientIndex(p_client_id);
+    GameDataMessage* message = (GameDataMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_DATA);
     message->game_id = game_id;
     message->roundstate = roundstate;
     server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
 }
 
-void Game::broadcastRoundStates(){
+void Game::broadcastGameData(){
     for(auto [p_client_id, player] : players){
-        broadcastRoundState(p_client_id);
+        sendGameData(p_client_id);
     }
 }
 
@@ -233,15 +233,13 @@ void Game::broadcastPlayerLeave(uint64_t client_id){
     }
 }
 
-void Game::broadcastPlayerScore(uint64_t client_id){
-    std::shared_ptr<ServerPlayer> player = players[client_id];
+void Game::broadcastPlayerData(uint64_t client_id){
+    std::shared_ptr<ServerPlayer> s_player = players[client_id];
+    Player player = s_player->player;
     for(auto [p_client_id, p_player] : players){
         int client_index = getPlayersClientIndex(p_client_id);
-        PlayerScoreMessage* message = (PlayerScoreMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_SCORE);
-        message->game_id = game_id;
-        message->client_id = client_id;
-        message->points = player->player.points;
-        message->position = player->player.position;
+        PlayerDataMessage* message = (PlayerDataMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_DATA);
+        message->player = player;
         server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
     }
 }
@@ -254,7 +252,7 @@ void Game::updateLobbyState(sf::Time dt){
         }
         roundstate = RoundStateType::INGAME;
         CORE_TRACE("Game - Game ({}): Switched to Ingame State", game_id);
-        broadcastRoundStates();
+        broadcastGameData();
         return;
     }
 }
@@ -313,7 +311,7 @@ void Game::updateIngameState(sf::Time dt){
                 positions_changed = true;
             }
             else {
-                broadcastPlayerScore(client_id);
+                broadcastPlayerData(client_id);
             }
         }
 
@@ -326,7 +324,7 @@ void Game::updateIngameState(sf::Time dt){
         NETWORK_TRACE("SEND_MESSAGE - PlayerScoreMessage - Positions have changed ");
         // send to every player every player score
         for(auto [p_client_id, player] : players){
-            broadcastPlayerScore(p_client_id);
+            broadcastPlayerData(p_client_id);
         }
     }
 }

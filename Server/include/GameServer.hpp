@@ -41,6 +41,8 @@ private:
 
     void updateGames(sf::Time dt);
 
+    void processLoginRequest(LoginRequestMessage* message);
+
     void processMessage(int client_index, yojimbo::Message* message);
     void processMessages();
     void sendMessages();

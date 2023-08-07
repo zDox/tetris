@@ -70,9 +70,9 @@ public:
 
     // Functions to handle messages
     void handleGridMessage(yojimbo::Message* t_message);
-    void handleRoundStateChangeMessage(yojimbo::Message* t_message);
+    void handleGameDataMessage(yojimbo::Message* t_message);
     void handleTetraminoPlacementMessage(yojimbo::Message* t_message);
-    void handlePlayerScoreMessage(yojimbo::Message* t_message);
+    void handlePlayerDataMessage(yojimbo::Message* t_message);
     void handlePlayerJoinMessage(yojimbo::Message* t_message);
     void handlePlayerLeaveMessage(yojimbo::Message* t_message);
 

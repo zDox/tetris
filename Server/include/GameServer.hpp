@@ -17,6 +17,13 @@
 
 struct ServerAdapter;
 
+struct ServerPlayer{
+    Player player;
+    std::shared_ptr<Game> current_game;
+    LoginStatus login_status = LoginStatus::LOGOUT;
+};
+
+
 
 class GameServer : public std::enable_shared_from_this<GameServer>{
 private:
@@ -31,12 +38,13 @@ private:
     sf::Clock game_clock;
     sf::Time next_cycle = sf::seconds(0);
     std::unordered_map<int, std::shared_ptr<Game>> games;
+    std::unordered_map<uint64_t, std::shared_ptr<ServerPlayer>> players;
     int next_game_id = 0;
     
     int getPlayersClientIndex(uint64_t client_id);
     std::shared_ptr<Game> getPlayersGame(uint64_t client_id);
-    void addPlayer(uint64_t client_id);
-    void removePlayer(uint64_t client_id);
+    void loginPlayer(uint64_t client_id, std::string username);
+    void logoutPlayer(uint64_t client_id);
 
     int createGame();
 
@@ -46,6 +54,10 @@ private:
 
     void processMessage(int client_index, yojimbo::Message* message);
     void processMessages();
+
+    void sendGameData(uint64_t receiver_id, int game_id);
+    void broadcastGameData(int game_id);
+
     void sendMessages();
     void update(sf::Time dt);
     

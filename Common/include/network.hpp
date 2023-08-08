@@ -38,6 +38,26 @@ enum class GameChannel {
     COUNT
 };
 
+enum class LoginStatus {
+    LOGOUT,
+    LOGIN,
+};
+
+enum class LoginResult{
+    NONE,
+    SUCCESS,
+    TAKEN_NAME,
+    INVALID_NAME,
+};
+
+struct GameData{
+    int game_id = -1;
+    RoundStateType roundstate;
+    int min_players;
+    int max_players;
+    std::vector<uint64_t> players;
+};
+
 // the client and server config
 struct GameConnectionConfig : yojimbo::ClientServerConfig {
     GameConnectionConfig()  {
@@ -117,11 +137,7 @@ struct GridMessage : public yojimbo::Message
 struct GameDataMessage : public yojimbo::Message
 {
     std::uint64_t bytes;
-    int game_id;
-    RoundStateType roundstate;
-    int min_players;
-    int max_players;
-    std::vector<uint64_t> players;
+    GameData game_data; 
 
     GameDataMessage(){}; 
 
@@ -130,18 +146,10 @@ struct GameDataMessage : public yojimbo::Message
     {
       IMPL_SERIALIZER(
               (
-               in(game_id).or_throw(),
-               in(roundstate).or_throw(),
-               in(min_players).or_throw(),
-               in(max_players).or_throw(),
-               in(players).or_throw()
+               in(game_data).or_throw()
               ),
               (
-               out(game_id).or_throw(),
-		       out(roundstate).or_throw(),
-		       out(min_players).or_throw(),
-		       out(max_players).or_throw(),
-		       out(players).or_throw()
+               out(game_data).or_throw()
               ));    
     }
 
@@ -214,15 +222,22 @@ struct LoginResponseMessage : public yojimbo::Message
 struct PlayerDataMessage : public yojimbo::Message
 {
     std::uint64_t bytes;
+    int game_id;
     Player player;
 
     PlayerDataMessage(){}; 
 
     template <typename Stream> 
     bool Serialize( Stream & stream )
-    {        
-        IMPL_SERIALIZER((in(player).or_throw()),
-                         out(player).or_throw());
+    {
+        IMPL_SERIALIZER(
+                (
+                 in(game_id).or_throw(),
+                 in(player).or_throw()),
+                (
+                 out(game_id).or_throw(),
+                 out(player).or_throw()
+                ));
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();

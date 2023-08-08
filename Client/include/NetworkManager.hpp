@@ -66,6 +66,7 @@ public:
     void disconnect();
 
     void registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func);
+    void unregisterMessageHandlers();
 
     void queuePlayerInput(PlayerInput t_player_input);
     void queueLoginRequest(std::string username);

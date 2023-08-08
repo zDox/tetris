@@ -13,9 +13,6 @@ private:
 
     // TGui elements
 
-
-
-    
     void initWindow();
     void initUi();
     void initVariables();

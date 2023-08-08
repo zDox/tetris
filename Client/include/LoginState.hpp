@@ -10,11 +10,6 @@
 #include "GameDefinitions.hpp"
 
 
-enum class LoginStatus {
-    LOGOUT,
-    LOGIN,
-};
-
 class LoginState : public State{
 private:
     std::shared_ptr<GameData> data;

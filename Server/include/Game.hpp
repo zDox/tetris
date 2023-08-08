@@ -17,16 +17,16 @@
 #include "yojimbo.h"
 
 
-typedef std::vector<std::vector<uint32_t>> Grid;
+using Grid = std::vector<std::vector<uint32_t>>;
 
-struct ServerPlayer{
+struct GamePlayer{
     Player player;
     GameLogic gamelogic;
     int tetramino_cursor = -1;
     std::list<PlayerInput> playout_buffer;
 };
 
-inline bool compServerPlayer(const std::shared_ptr<ServerPlayer> &l, const std::shared_ptr<ServerPlayer> &r){
+inline bool compServerPlayer(const std::shared_ptr<GamePlayer> &l, const std::shared_ptr<GamePlayer> &r){
     if(l->player.points == r->player.points) return l->gamelogic.isFinished() < r->gamelogic.isFinished();
     return l->player.points > r->player.points;
 }
@@ -36,8 +36,10 @@ private:
     std::shared_ptr<yojimbo::Server> server;
 
     int game_id;
+    int min_players;
+    int max_players;
     std::vector<TetraminoType> tetramino_sequenz;
-    std::unordered_map<uint64_t, std::shared_ptr<ServerPlayer>> players;
+    std::unordered_map<uint64_t, std::shared_ptr<GamePlayer>> players;
     RoundStateType roundstate;
 
     sf::Clock lobby_clock;
@@ -71,12 +73,13 @@ public:
     Game(std::shared_ptr<yojimbo::Server> t_server, int t_game_id);
 
     int getGameID();
+    GameData getGameData();
 
     void addPlayer(uint64_t client_id);
     void removePlayer(uint64_t client_id);
-    std::shared_ptr<ServerPlayer> getPlayer(uint64_t client_id);
+    std::shared_ptr<GamePlayer> getPlayer(uint64_t client_id);
     bool hasPlayer(uint64_t client_id);
-    std::unordered_map<uint64_t, std::shared_ptr<ServerPlayer>> getPlayers();
+    std::unordered_map<uint64_t, std::shared_ptr<GamePlayer>> getPlayers();
 
     RoundStateType getRoundState();
     

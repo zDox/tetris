@@ -20,6 +20,7 @@ void GameSelectState::init(){
 
 void GameSelectState::destroy(){
     data->gui.removeAllWidgets();
+    data->network_manager.unregisterMessageHandlers();
 }
 
 void GameSelectState::handleInputs(){

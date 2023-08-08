@@ -132,9 +132,10 @@ void NetworkManager::sendPlayerInput(){
 
 void NetworkManager::sendLoginRequest(){
     if(requested_username == "")return;
-    
+
+    CORE_TRACE("NetworkManager - Sending LoginRequest - requested username: {}", requested_username); 
     LoginRequestMessage* message = (LoginRequestMessage*) client->CreateMessage((int)MessageType::LOGIN_REQUEST);
-    message->name = requested_username;
+    message->username = requested_username;
     client->SendMessage((int)GameChannel::RELIABLE, message);
     requested_username = "";
 }
@@ -148,6 +149,9 @@ void NetworkManager::registerMessageHandler(MessageType message_type, std::funct
    message_handlers.emplace(message_type, func); 
 }
 
+void NetworkManager::unregisterMessageHandlers(){
+    message_handlers.clear();
+}
 
 void NetworkManager::update(){
     client->AdvanceTime(network_clock.getElapsedTime().asSeconds());

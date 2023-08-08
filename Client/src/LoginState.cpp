@@ -1,5 +1,5 @@
-#include "LoginState.hpp"
 #include "GameSelectState.hpp"
+#include "LoginState.hpp"
 
 LoginState::LoginState(std::shared_ptr<GameData> t_data):data(t_data){};
 
@@ -65,11 +65,13 @@ void LoginState::initHandlers(){
 void LoginState::init(){
     initWindow();
     initVariables();
+    initHandlers();
     initUi();
 }
 
 void LoginState::destroy(){
     data->gui.removeAllWidgets();
+    data->network_manager.unregisterMessageHandlers();
 }
 
 void LoginState::login(){
@@ -84,15 +86,17 @@ void LoginState::handleLoginResponseMessage(yojimbo::Message* t_message){
     LoginResponseMessage* message = (LoginResponseMessage*) t_message;
     switch (message->result){
         case LoginResult::SUCCESS:
+            CORE_INFO("LoginState - Authentifaction - Success logged username: {}", message->username);
             data->state_manager.switchToState(std::make_shared<GameSelectState>(data));
             break;
         case LoginResult::TAKEN_NAME:
-            CORE_INFO("LoginState - Username '{}' was already taken.", message->username);
+            CORE_INFO("LoginState - Authentifaction - Username '{}' was already taken.", message->username);
             break;
         case LoginResult::INVALID_NAME:
-            CORE_INFO("LoginState - Username '{}' is invalid.", message->username);
+            CORE_INFO("LoginState - Authentifaction - Username '{}' is invalid.", message->username);
             break;
         default:
+            CORE_INFO("LoginState - Authentifaction - Result: {} is undefined", (int) message->result);
             break;
     }
 }

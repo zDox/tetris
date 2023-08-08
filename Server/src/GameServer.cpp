@@ -50,7 +50,9 @@ void GameServer::init(){
             0.0);
     if(!server) {
         CORE_ERROR("Failed creating server");
+        return;
     }
+    createGame();
 }
 
 std::shared_ptr<GameServer> GameServer::getPtr(){
@@ -73,32 +75,25 @@ std::shared_ptr<Game> GameServer::getPlayersGame(uint64_t client_id){
     }
     return nullptr;
 }
-void GameServer::addPlayer(u_int64_t client_id){
-    std::shared_ptr<Game> current_game = getPlayersGame(client_id);
-    if(current_game){
-        CORE_WARN("Matchmaking - Player({}) is already ingame", client_id);
-        return;
-    }
 
-    std::shared_ptr<Game> latest_game = nullptr;
-    if(next_game_id > 0 && games.contains(next_game_id-1)){
-        latest_game = games[next_game_id-1];
-    }
+void GameServer::loginPlayer(u_int64_t client_id, std::string username){
+    if(players.contains(client_id)) return;
+    CORE_DEBUG("GameServer - Authentification - Player({}) {} logged in", client_id, username);
+    Player player;
+    player.client_id = client_id;
+    player.name = username;
+    std::shared_ptr<ServerPlayer> s_player = std::make_shared<ServerPlayer>();
+    s_player->player = player;
 
-    // Check if new game should be created
-    if(!latest_game){
-        createGame();
-    }
-    else if (latest_game->getRoundState() != RoundStateType::LOBBY &&
-       latest_game->getPlayers().size() >= MAX_PLAYERS){
-        createGame();
-    }
-    latest_game = games[next_game_id-1];
-    // Add player to latest game
-    latest_game->addPlayer(client_id);
+    players.emplace(client_id, s_player);
 }
 
-void GameServer::removePlayer(u_int64_t client_id){
+void GameServer::logoutPlayer(u_int64_t client_id){
+    // Remove player from GameServer
+    if(!(players.contains(client_id))) return;
+    CORE_DEBUG("GameServer - Authentification - Player({}) {} logged out", client_id, players[client_id]->player.name);
+    players.erase(client_id);
+    // Remove player from Game
     std::shared_ptr<Game> current_game = getPlayersGame(client_id);
     if(!current_game) return;
     current_game->removePlayer(client_id);
@@ -112,11 +107,27 @@ int GameServer::createGame(){ // Returns the game_id of the game it created
 }
 
 void GameServer::processLoginRequest(uint64_t client_id, LoginRequestMessage* message){
-    LoginResponseMessage* answer = (LoginResponseMessage*) server->CreateMessage(getPlayersClientIndex(client_id), (int)MessageType::LOGIN_RESPONSE);
-    LoginResult resut;
+    LoginResult result = LoginResult::SUCCESS;
     std::string username = message->username;
+
+    CORE_TRACE("GameServer - Authentification - Received LoginRequestMessage - username: {}", username);
     for(auto [p_client_id, s_player] : players){
-        if(s_player->player.
+        if(s_player->player.name == username){
+            result = LoginResult::TAKEN_NAME;
+        }
+    }
+
+    if(!((2 <= username.size()) && username.size() <= 20)) result = LoginResult::INVALID_NAME;
+
+    if(result == LoginResult::SUCCESS) {
+        loginPlayer(client_id, username);
+    }
+
+    int client_index = getPlayersClientIndex(client_id);
+    LoginResponseMessage* answer_msg = (LoginResponseMessage*) server->CreateMessage(client_index, (int)MessageType::LOGIN_RESPONSE);
+    answer_msg->result = result;
+    answer_msg->username = username;
+    server->SendMessage(client_index, (int) GameChannel::RELIABLE, answer_msg);
 }
 
 void GameServer::processMessage(int client_index, yojimbo::Message* message){
@@ -160,6 +171,27 @@ void GameServer::updateGames(sf::Time dt){
     }
 }
 
+void GameServer::sendGameData(uint64_t receiver_id, int game_id){
+    if(!games.contains(game_id)) return;
+    if(!players.contains(receiver_id)) return;
+
+    int client_index = getPlayersClientIndex(receiver_id);
+
+    GameDataMessage* message = (GameDataMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_DATA);
+    message->game_data = games[game_id]->getGameData();
+    server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
+}
+
+void GameServer::broadcastGameData(int game_id){
+    for(auto [s_client_id, s_player] : players){
+        sendGameData(s_client_id, game_id);
+    }
+}
+
+
+void GameServer::sendMessages(){ 
+}
+
 void GameServer::update(sf::Time dt){
     if(!server->IsRunning()){
         running = false;
@@ -171,17 +203,17 @@ void GameServer::update(sf::Time dt){
     processMessages();
     updateGames(dt);
 
+    sendMessages();
+
     server->SendPackets();
 }
 
 void GameServer::clientConnected(int client_index){
-    uint64_t client_id = server->GetClientId(client_index);
-    addPlayer(client_id);
 }
 
 void GameServer::clientDisconnected(int client_index){
     uint64_t client_id = server->GetClientId(client_index);
-    removePlayer(client_id);
+    logoutPlayer(client_id);
 }
 
 void GameServer::run(){

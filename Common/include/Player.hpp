@@ -18,12 +18,6 @@ struct PlayerInput{
     long frame;
 };
 
-enum class LoginResult{
-    NONE,
-    SUCCESS,
-    TAKEN_NAME,
-    INVALID_NAME,
-};
 
 bool comp(const PlayerInput &l, const long &frame);
 

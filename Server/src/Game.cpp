@@ -2,11 +2,32 @@
 
 Game::Game(std::shared_ptr<yojimbo::Server> t_server, int t_game_id) : server(t_server), game_id(t_game_id){
     roundstate = RoundStateType::LOBBY;
+    min_players = MIN_STARTING_PLAYERS;
+    max_players = MAX_PLAYERS;
 }
+
+int Game::getGameID(){
+    return game_id;
+}
+
+
+GameData Game::getGameData(){
+    GameData game_data;
+    game_data.game_id = game_id;
+    game_data.roundstate = roundstate;
+    game_data.min_players = min_players;
+    game_data.max_players = max_players;
+    for(auto [p_client_id, player] : players){
+        game_data.players.push_back(p_client_id);
+    }
+
+    return game_data;
+}
+
 
 void Game::addPlayer(uint64_t client_id){
     if(players.contains(client_id)) return;
-    std::shared_ptr<ServerPlayer> new_player = std::make_shared<ServerPlayer>();
+    std::shared_ptr<GamePlayer> new_player = std::make_shared<GamePlayer>();
     new_player->player.client_id = client_id;
     new_player->gamelogic.init();
     
@@ -51,14 +72,14 @@ bool Game::hasPlayer(uint64_t client_id){
     return players.contains(client_id);
 }
 
-std::shared_ptr<ServerPlayer> Game::getPlayer(uint64_t client_id){
+std::shared_ptr<GamePlayer> Game::getPlayer(uint64_t client_id){
     if(players.contains(client_id)){
         return players[client_id];
     }
     return nullptr;
 }
 
-std::unordered_map<uint64_t, std::shared_ptr<ServerPlayer>> Game::getPlayers(){
+std::unordered_map<uint64_t, std::shared_ptr<GamePlayer>> Game::getPlayers(){
     return players;
 }
 
@@ -92,7 +113,7 @@ bool Game::needTimeForPlayoutBuffer(){
 
 bool Game::positionsHaveChanged(){
     bool positions_have_changed = false;
-    std::vector<std::shared_ptr<ServerPlayer>> sorted;
+    std::vector<std::shared_ptr<GamePlayer>> sorted;
     // Copy values into vector
     for (auto [p_client_id, player] : players){
         sorted.push_back(player);
@@ -160,7 +181,7 @@ void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* mes
             message->player_input.up, 
             message->player_input.down);
     */
-    std::shared_ptr<ServerPlayer> player = players[client_id];
+    std::shared_ptr<GamePlayer> player = players[client_id];
 
     if(player->playout_buffer.size() == 0){
         player->playout_buffer.push_back(message->player_input);
@@ -234,7 +255,7 @@ void Game::broadcastPlayerLeave(uint64_t client_id){
 }
 
 void Game::broadcastPlayerData(uint64_t client_id){
-    std::shared_ptr<ServerPlayer> s_player = players[client_id];
+    std::shared_ptr<GamePlayer> s_player = players[client_id];
     Player player = s_player->player;
     for(auto [p_client_id, p_player] : players){
         int client_index = getPlayersClientIndex(p_client_id);

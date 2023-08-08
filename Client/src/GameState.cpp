@@ -14,6 +14,7 @@ void GameState::init(){
 
 void GameState::destroy(){
     data->gui.removeAllWidgets();
+    data->network_manager.unregisterMessageHandlers();
 };
 
 
@@ -290,11 +291,11 @@ void GameState::handleTetraminoPlacementMessage(yojimbo::Message* t_message){
 
 void GameState::handlePlayerDataMessage(yojimbo::Message* t_message){
     PlayerDataMessage* message = (PlayerDataMessage*) t_message;
-    NETWORK_TRACE("PROCESS_MESSAGE - PlayerScoreMessage - Player({}) Points: {} Position: {}", message->client_id, message->points, message->position);
-    if(!players.contains(message->client_id)) return;
+    Player p = message->player;
+    NETWORK_TRACE("PROCESS_MESSAGE - PlayerDataMessage - Player({}) Points: {} Position: {}", p.client_id, p.points, p.position);
+    if(!players.contains(p.client_id)) return;
     if(game_id != message->game_id) return;
-    players[message->client_id]->player.points = message->points;
-    players[message->client_id]->player.position = message->position;
+    players[p.client_id]->player = p;
 };
 
 void GameState::handlePlayerJoinMessage(yojimbo::Message* t_message){

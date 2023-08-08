@@ -57,6 +57,14 @@ std::shared_ptr<GameServer> GameServer::getPtr(){
     return shared_from_this();
 }
 
+int GameServer::getPlayersClientIndex(uint64_t client_id){
+    int i;
+    for(i = 0; i < server->GetNumConnectedClients(); i++){
+        if(server->GetClientId(i) == client_id) break;
+    }
+    return i;
+}
+
 std::shared_ptr<Game> GameServer::getPlayersGame(uint64_t client_id){
     for(auto [game_id, game] : games){
         if(game->hasPlayer(client_id)){
@@ -104,7 +112,11 @@ int GameServer::createGame(){ // Returns the game_id of the game it created
 }
 
 void GameServer::processLoginRequest(uint64_t client_id, LoginRequestMessage* message){
-    LoginResponseMessage* answer = server->CreateMessage(getPlayersClientIndex(client_id));
+    LoginResponseMessage* answer = (LoginResponseMessage*) server->CreateMessage(getPlayersClientIndex(client_id), (int)MessageType::LOGIN_RESPONSE);
+    LoginResult resut;
+    std::string username = message->username;
+    for(auto [p_client_id, s_player] : players){
+        if(s_player->player.
 }
 
 void GameServer::processMessage(int client_index, yojimbo::Message* message){

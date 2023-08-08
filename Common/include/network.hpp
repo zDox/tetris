@@ -97,12 +97,12 @@ struct GridMessage : public yojimbo::Message
     template <typename Stream> 
     bool Serialize( Stream & stream )
     {
-      IMPL_SERIALIZER((in(game_id).or_throw()),
-		      (in(client_id).or_throw(),
-		       in(grid).to_throw()),
+      IMPL_SERIALIZER((in(game_id).or_throw(),
+		      in(client_id).or_throw(),
+		       in(grid).or_throw()),
 		      (out(game_id).or_throw(),
 		       out(client_id).or_throw(),
-		       out(grid).to_throw()));
+		       out(grid).or_throw()));
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();

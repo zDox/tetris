@@ -97,12 +97,17 @@ struct GridMessage : public yojimbo::Message
     template <typename Stream> 
     bool Serialize( Stream & stream )
     {
-      IMPL_SERIALIZER((in(game_id).or_throw(),
-		      in(client_id).or_throw(),
-		       in(grid).or_throw()),
-		      (out(game_id).or_throw(),
+      IMPL_SERIALIZER(
+              (
+               in(game_id).or_throw(),
+               in(client_id).or_throw(),
+               in(grid).or_throw()
+              ),
+              (
+               out(game_id).or_throw(),
 		       out(client_id).or_throw(),
-		       out(grid).or_throw()));
+		       out(grid).or_throw()
+              ));
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
@@ -123,16 +128,21 @@ struct GameDataMessage : public yojimbo::Message
     template <typename Stream> 
     bool Serialize( Stream & stream )
     {
-      IMPL_SERIALIZER((in(game_id).or_throw(),
-		       in(roundstate).or_throw(),
-		       in(min_players).or_throw(),
-		       in(max_players).or_throw(),
-		       in(players).or_throw()),
-		      (out(game_id).or_throw(),
+      IMPL_SERIALIZER(
+              (
+               in(game_id).or_throw(),
+               in(roundstate).or_throw(),
+               in(min_players).or_throw(),
+               in(max_players).or_throw(),
+               in(players).or_throw()
+              ),
+              (
+               out(game_id).or_throw(),
 		       out(roundstate).or_throw(),
 		       out(min_players).or_throw(),
 		       out(max_players).or_throw(),
-		       out(players).or_throw()));
+		       out(players).or_throw()
+              ));    
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
@@ -168,38 +178,8 @@ struct LoginRequestMessage : public yojimbo::Message
     template <typename Stream> 
     bool Serialize( Stream & stream )
     {        
-        auto [data, in, out] = zpp::bits::data_in_out();
-        if(Stream::IsReading){
-            try{
-                serialize_uint64(stream, bytes);
-                data.resize(bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-                in(username).or_throw();
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed reading with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        }
-        else {
-            try{
-                out(username).or_throw();
-                bytes = data.size();
-                serialize_uint64(stream, bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed writing with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        } 
-        return true;
+        IMPL_SERIALIZER((in(username).or_throw()),
+                        (out(username).or_throw()));
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
@@ -216,40 +196,15 @@ struct LoginResponseMessage : public yojimbo::Message
     template <typename Stream> 
     bool Serialize( Stream & stream )
     {        
-        auto [data, in, out] = zpp::bits::data_in_out();
-        if(Stream::IsReading){
-            try{
-                serialize_uint64(stream, bytes);
-                data.resize(bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-                in(result).or_throw();
-                in(username).or_throw();
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed reading with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        }
-        else {
-            try{
-                out(result).or_throw();
-                out(username).or_throw();
-                bytes = data.size();
-                serialize_uint64(stream, bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed writing with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        } 
-        return true;
+      IMPL_SERIALIZER(
+              (
+               in(result).or_throw(), 
+               in(username).or_throw() 
+              ),
+              (
+               out(result).or_throw(),
+		       out(username).or_throw()
+              ));    
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
@@ -266,38 +221,8 @@ struct PlayerDataMessage : public yojimbo::Message
     template <typename Stream> 
     bool Serialize( Stream & stream )
     {        
-        auto [data, in, out] = zpp::bits::data_in_out();
-        if(Stream::IsReading){
-            try{
-                serialize_uint64(stream, bytes);
-                data.resize(bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-                in(player).or_throw();
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed reading with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        }
-        else {
-            try{
-                out(player).or_throw();
-                bytes = data.size();
-                serialize_uint64(stream, bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed writing with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        } 
-        return true;
+        IMPL_SERIALIZER((in(player).or_throw()),
+                         out(player).or_throw());
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();

@@ -47,57 +47,62 @@ struct GameConnectionConfig : yojimbo::ClientServerConfig {
     }
 };
 
+// Implement the `Serialize` method for `yojimbo::Message`s. `in_members` and
+// `out_members` are lists of comma-separated expressions enclosed in parenthesis
+// (e.g. see `GridMessage` or `GameDataMessage`). Both of them specify how the
+// custom struct members should be serialized.
+#define IMPL_SERIALIZER(in_members, out_members)			\
+  auto [data, in, out] = zpp::bits::data_in_out();			\
+  if(Stream::IsReading){						\
+  try{									\
+    serialize_uint64(stream, bytes);					\
+    data.resize(bytes);							\
+    serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes); \
+    in_members;								\
+  }									\
+  catch (const std::exception & error) {				\
+    std::cout << "Failed reading with error: " << error.what() << '\n';	\
+    return false;							\
+  } catch (...) {							\
+    std::cout << "Unknown error\n";					\
+    return false;							\
+  };									\
+  }									\
+  else {								\
+    try{								\
+      out_members;							\
+      bytes = data.size();						\
+      serialize_uint64(stream, bytes);					\
+      serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes); \
+    }									\
+    catch (const std::exception & error) {				\
+      std::cout << "Failed writing with error: " << error.what() << '\n'; \
+      return false;							\
+    } catch (...) {							\
+      std::cout << "Unknown error\n";					\
+      return false;							\
+    };									\
+  }									\
+  return true
 
 struct GridMessage : public yojimbo::Message
 {
+    std::uint64_t bytes;
     int game_id;
     std::vector<std::vector<std::uint32_t>> grid;
     std::uint64_t client_id;
-    std::uint64_t bytes;
 
     GridMessage(){}; 
 
     template <typename Stream> 
     bool Serialize( Stream & stream )
-    {        
-        auto [data, in, out] = zpp::bits::data_in_out();
-        if(Stream::IsReading){
-            try{
-                serialize_uint64(stream, bytes);
-                data.resize(bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-                in(game_id).or_throw();
-                in(client_id).or_throw();
-                in(grid).or_throw();
-
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed reading with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        }
-        else {
-            try{
-                out(game_id).or_throw();
-                out(client_id).or_throw();
-                out(grid).or_throw();
-                bytes = data.size();
-                serialize_uint64(stream, bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed writing with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        } 
-        return true;
+    {
+      IMPL_SERIALIZER((in(game_id).or_throw()),
+		      (in(client_id).or_throw(),
+		       in(grid).to_throw()),
+		      (out(game_id).or_throw(),
+		       out(client_id).or_throw(),
+		       out(grid).to_throw()));
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
@@ -117,47 +122,17 @@ struct GameDataMessage : public yojimbo::Message
 
     template <typename Stream> 
     bool Serialize( Stream & stream )
-    {        
-        auto [data, in, out] = zpp::bits::data_in_out();
-        if(Stream::IsReading){
-            try{
-                serialize_uint64(stream, bytes);
-                data.resize(bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-                in(game_id).or_throw();
-                in(roundstate).or_throw();
-                in(min_players).or_throw();
-                in(max_players).or_throw();
-                in(players).or_throw();
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed reading with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        }
-        else {
-            try{
-                out(game_id).or_throw();
-                out(roundstate).or_throw();
-                out(min_players).or_throw();
-                out(max_players).or_throw();
-                out(players).or_throw();
-                bytes = data.size();
-                serialize_uint64(stream, bytes);
-                serialize_bytes(stream, reinterpret_cast<uint8_t*>(data.data()), bytes);
-            }
-            catch (const std::exception & error) {
-                std::cout << "Failed writing with error: " << error.what() << '\n';
-                return false;
-            } catch (...) {
-                std::cout << "Unknown error\n";
-                return false;
-            };
-        } 
-        return true;
+    {
+      IMPL_SERIALIZER((in(game_id).or_throw(),
+		       in(roundstate).or_throw(),
+		       in(min_players).or_throw(),
+		       in(max_players).or_throw(),
+		       in(players).or_throw()),
+		      (out(game_id).or_throw(),
+		       out(roundstate).or_throw(),
+		       out(min_players).or_throw(),
+		       out(max_players).or_throw(),
+		       out(players).or_throw()));
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();

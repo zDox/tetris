@@ -180,7 +180,7 @@ void GameState::handleNextTetramino(){
 
 void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, float scale){
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
-    CORE_DEBUG("GameState - drawPlayer - off_x: {}, off_y: {}", offset_x, offset_y);
+    // CORE_TRACE("GameState - drawPlayer - off_x: {}, off_y: {}", offset_x, offset_y);
 
     // Draw the grid 
     for(int i = 0; i < ROWS; i++){
@@ -236,7 +236,7 @@ void GameState::drawPlayers(){
     }
 
 
-    CORE_DEBUG("GameState - drawPlayers - scale: {}, a:{}, b: {}, c:{}", scale, a, b, c);
+    // CORE_TRACE("GameState - drawPlayers - scale: {}, a:{}, b: {}, c:{}", scale, a, b, c);
     int count = 0; // Count of how many grids have been drawn
 
    
@@ -246,7 +246,7 @@ void GameState::drawPlayers(){
 
         int row = static_cast<int>((std::floor(count % a)));
         int col = static_cast<int>((std::floor(count / a)));
-        CORE_DEBUG("GameState - drawPlayers - Count: {}, Row: {}, Col: {}", count, row, col);
+        // CORE_TRACE("GameState - drawPlayers - Count: {}, Row: {}, Col: {}", count, row, col);
 
         drawPlayer(
                 p_client_id, 

@@ -41,9 +41,8 @@ void GameSelectState::destroy(){
 }
 
 
-void GameSelectState::joinGame(){
+void GameSelectState::joinGame(int game_id){
     // TODO: get Game_id from real ui element
-    int game_id = 1;
 
     if(!(games.contains(game_id))) return;
 
@@ -58,19 +57,50 @@ void GameSelectState::handleGameDataMessage(yojimbo::Message* t_message){
         SelectableGame game;
         game.game_data = message->game_data;
         game.game_panel = tgui::Panel::create();
+        game.heading = tgui::Label::create();
+        game.players_label = tgui::Label::create();
+        game.players_text = tgui::Label::create();
+        game.status_label = tgui::Label::create();
+        game.status_text = tgui::Label::create();
         game.join_button = tgui::Button::create();
-        game.game_id_label = tgui::Label::create();
 
         // Setup ui elements
-        game.game_panel->setSize(tgui::Layout2d(100, 50));
+        game.game_panel->setSize(tgui::Layout2d(GAME_PANEL_WIDTH, GAME_PANEL_HEIGHT));
+        game.game_panel->getRenderer()->setBackgroundColor(tgui::Color::Blue);
+        game.game_panel->getRenderer()->setBorderColor(tgui::Color::Black);
 
-        game.game_id_label->setText(std::to_string(message->game_data.game_id)); 
+        game.heading->setText("Game - " + std::to_string(message->game_data.game_id)); 
+        game.heading->setOrigin(0.5f, 0);
+        game.heading->setPosition("50%", 5);
+
+        // Display of how connected players and max players
+        game.players_label->setText("Players:");
+        game.players_label->setPosition(7, 10);
+
+        game.players_text->setText("0/0");
+        game.players_text->setOrigin(1.f,0);
+        game.players_text->setPosition(GAME_PANEL_WIDTH-5, tgui::bindTop(game.players_label));
+
+        // Display of game status e.g. Lobby
+        game.status_label->setText("Status:");
+        game.status_label->setPosition(tgui::bindLeft(game.players_label), tgui::bindBottom(game.players_label)+5);
+
+        game.status_text->setText("Unknown");
+        game.status_text->setOrigin(1.f,0);
+        game.status_text->setPosition(GAME_PANEL_WIDTH-5, tgui::bindTop(game.status_label));
 
         game.join_button->setText("Join");
+        game.join_button->setUserData(game.game_data.game_id);
+        game.join_button->onPress(&GameSelectState::joinGame, this, game.game_data.game_id);
+        game.join_button->setOrigin(0.5f, 1.f);
+        game.join_button->setPosition("50%", GAME_PANEL_HEIGHT - 5);
 
-
+        game.game_panel->add(game.heading);
+        game.game_panel->add(game.players_label);
+        game.game_panel->add(game.players_text);
+        game.game_panel->add(game.status_label);
+        game.game_panel->add(game.status_text);
         game.game_panel->add(game.join_button);
-        game.game_panel->add(game.game_id_label);
         main_panel->add(game.game_panel);
 
         games.emplace(message->game_data.game_id, game);
@@ -112,7 +142,27 @@ void GameSelectState::handleInputs(){
     }
 }
 
+void GameSelectState::updateGameUIs(){
+    int count = 0;
+    int elements_per_row = static_cast<int>(std::floor((WIDTH - GAME_PANEL_SPACING_ROW) / (GAME_PANEL_WIDTH + GAME_PANEL_SPACING_ROW)));
+    for(auto [game_id, game] : games){
+        game.players_text->setText(std::to_string(game.game_data.players.size()) + "/" + std::to_string(game.game_data.max_players));
+        game.status_text->setText(std::to_string(game.game_data.roundstate));
+        game.game_panel->setPosition(
+                (count % elements_per_row) * (GAME_PANEL_WIDTH + GAME_PANEL_SPACING_ROW) + GAME_PANEL_SPACING_ROW,
+                (count / elements_per_row) * (GAME_PANEL_HEIGHT + GAME_PANEL_SPACING_COLUMN) + GAME_PANEL_SPACING_COLUMN 
+        );
+        count++;
+    }
+
+}
+
+void GameSelectState::updateUI(){
+    updateGameUIs();
+}
+
 void GameSelectState::update(sf::Time dt){
+    updateUI();
 }
 
 void GameSelectState::draw(){

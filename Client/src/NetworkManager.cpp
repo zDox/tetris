@@ -180,6 +180,7 @@ void NetworkManager::registerMessageHandler(MessageType message_type, std::funct
 
 void NetworkManager::unregisterMessageHandlers(){
     message_handlers.clear();
+    CORE_TRACE("NetworkManager - Size of message handlers: {}", message_handlers.size());
 }
 
 void NetworkManager::update(){

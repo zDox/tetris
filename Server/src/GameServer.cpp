@@ -52,7 +52,9 @@ void GameServer::init(){
         CORE_ERROR("Failed creating server");
         return;
     }
-    createGame();
+    for(int i=0; i < 10; i++){
+        createGame();
+    }
 }
 
 std::shared_ptr<GameServer> GameServer::getPtr(){
@@ -97,6 +99,7 @@ void GameServer::logoutPlayer(u_int64_t client_id){
     std::shared_ptr<Game> current_game = getPlayersGame(client_id);
     if(!current_game) return;
     current_game->removePlayer(client_id);
+    broadcastGameData(current_game->getGameID());
 }
 
 int GameServer::createGame(){ // Returns the game_id of the game it created
@@ -150,9 +153,10 @@ void GameServer::processGameJoinRequest(uint64_t client_id, GameJoinRequestMessa
         // GameJoin would be succesfull so add Player to the game
         CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was succesfull", client_id);
         games[wanted_game_id]->addPlayer(client_id);
+        broadcastGameData(wanted_game_id);
     }
     int client_index = getPlayersClientIndex(client_id);
-    GameJoinResponseMessage* answer = (GameJoinResponseMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_JOIN_REQUEST);
+    GameJoinResponseMessage* answer = (GameJoinResponseMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_JOIN_RESPONSE);
     answer->result = result;
     answer->game_id = wanted_game_id;
     server->SendMessage(client_index, (int)GameChannel::RELIABLE, answer);
@@ -208,7 +212,12 @@ void GameServer::processMessages(){
 
 void GameServer::updateGames(sf::Time dt){
     for(auto [game_id, game] : games){
+        RoundStateType before_roundstate = game->getRoundState();
         game->update(dt);
+        RoundStateType after_roundstate = game->getRoundState();
+        if(before_roundstate != after_roundstate){
+            broadcastGameData(game_id);
+        }
     }
 }
 

@@ -9,8 +9,15 @@
 struct SelectableGame{
     GameData game_data;
     tgui::Panel::Ptr game_panel;
+    tgui::Label::Ptr heading;
+
+    tgui::Label::Ptr status_label;
+    tgui::Label::Ptr status_text;
+
+    tgui::Label::Ptr players_label;
+    tgui::Label::Ptr players_text;
+
     tgui::Button::Ptr join_button;
-    tgui::Label::Ptr game_id_label;
 };
 
 class GameSelectState : public State{
@@ -27,7 +34,7 @@ private:
     void initVariables();
     void initHandlers();
 
-    void joinGame();
+    void joinGame(int game_id);
 public:
     explicit GameSelectState(std::shared_ptr<ApplicationData> t_data);
 
@@ -36,6 +43,10 @@ public:
 
     void handleGameJoinResponseMessage(yojimbo::Message* t_message);
     void handleGameDataMessage(yojimbo::Message* t_message);
+
+    void updateGameUIs();
+
+    void updateUI();
 
     void handleInputs() override;
     void update(sf::Time dt) override;

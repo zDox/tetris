@@ -103,6 +103,7 @@ int GameServer::createGame(){ // Returns the game_id of the game it created
     games.emplace(next_game_id, std::make_shared<Game>(server, next_game_id));
     next_game_id++;
     CORE_INFO("Created Game with game_id = {}", next_game_id-1);
+    broadcastGameData(next_game_id-1);
     return next_game_id-1;
 }
 
@@ -130,6 +131,39 @@ void GameServer::processLoginRequest(uint64_t client_id, LoginRequestMessage* me
     server->SendMessage(client_index, (int) GameChannel::RELIABLE, answer_msg);
 }
 
+void GameServer::processGameJoinRequest(uint64_t client_id, GameJoinRequestMessage* message){
+    GameJoinResult result = GameJoinResult::SUCCESS;
+    int wanted_game_id = message->game_id;
+    if(!(games.contains(wanted_game_id))){
+        CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was unsuccessful. Game ID is invalid", client_id);
+        result = GameJoinResult::INVALID_GAME_ID;
+    }
+    else if(games[wanted_game_id]->isFull()){
+        CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was unsuccessful. Game is Full", client_id);
+        result = GameJoinResult::FULL;
+    }
+    else if(games[wanted_game_id]->getRoundState() != RoundStateType::LOBBY){
+        CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was unsuccessful. Game is not in LobbyState", client_id);
+        result = GameJoinResult::ALREADY_STARTED;
+    }
+    else {
+        // GameJoin would be succesfull so add Player to the game
+        CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was succesfull", client_id);
+        games[wanted_game_id]->addPlayer(client_id);
+    }
+    int client_index = getPlayersClientIndex(client_id);
+    GameJoinResponseMessage* answer = (GameJoinResponseMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_JOIN_REQUEST);
+    answer->result = result;
+    answer->game_id = wanted_game_id;
+    server->SendMessage(client_index, (int)GameChannel::RELIABLE, answer);
+}
+
+void GameServer::processGameListRequest(uint64_t client_id, GameListRequestMessage* message){
+    for(auto [game_id, game] : games){
+        sendGameData(client_id, game_id);
+    }
+}
+
 void GameServer::processMessage(int client_index, yojimbo::Message* message){
     uint64_t client_id = server->GetClientId(client_index);
     switch(message->GetType()){
@@ -141,10 +175,17 @@ void GameServer::processMessage(int client_index, yojimbo::Message* message){
             break;
         }
         case (int)MessageType::LOGIN_REQUEST:
-        {
             processLoginRequest(client_id, (LoginRequestMessage*) message);
             break;
-        }
+
+        case (int)MessageType::GAME_LIST_REQUEST:
+            processGameListRequest(client_id, (GameListRequestMessage*) message);
+            break;
+
+        case (int)MessageType::GAME_JOIN_REQUEST:
+            processGameJoinRequest(client_id, (GameJoinRequestMessage*) message);
+            break;
+
         default:
             break;
     }
@@ -176,6 +217,8 @@ void GameServer::sendGameData(uint64_t receiver_id, int game_id){
     if(!players.contains(receiver_id)) return;
 
     int client_index = getPlayersClientIndex(receiver_id);
+
+    CORE_TRACE("GameServer - Sending GameData(game_id:{}) to Player({})", game_id, receiver_id);
 
     GameDataMessage* message = (GameDataMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_DATA);
     message->game_data = games[game_id]->getGameData();

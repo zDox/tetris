@@ -41,6 +41,8 @@ private:
     // Queues for Messages to be send
     std::shared_ptr<PlayerInput> player_input;
     std::string requested_username = "";
+    int wanted_game_id = -1;
+    bool should_send_gamelist_request = false;
     
     void generateClientID();
 
@@ -50,6 +52,8 @@ private:
     // Sending of Messages
     void sendPlayerInput();
     void sendLoginRequest();
+    void sendGameListRequest();
+    void sendGameJoinRequest();
     void sendMessages(); 
 public:
     NetworkManager();
@@ -70,6 +74,8 @@ public:
 
     void queuePlayerInput(PlayerInput t_player_input);
     void queueLoginRequest(std::string username);
+    void queueGameListRequest();
+    void queueGameJoinRequest(int t_game_id);
 
     void update();
 };

@@ -80,6 +80,7 @@ public:
     std::shared_ptr<GamePlayer> getPlayer(uint64_t client_id);
     bool hasPlayer(uint64_t client_id);
     std::unordered_map<uint64_t, std::shared_ptr<GamePlayer>> getPlayers();
+    bool isFull();
 
     RoundStateType getRoundState();
     

@@ -23,7 +23,7 @@ struct ClientPlayer{
 
 class GameState : public State{
 private:
-    std::shared_ptr<GameData> data;
+    std::shared_ptr<ApplicationData> data;
 
     // SFML
     // SFML -- Drawing data
@@ -64,7 +64,7 @@ private:
     void initPlayerUI(uint64_t p_client_id);
 
 public:
-    explicit GameState(std::shared_ptr<GameData> t_data);
+    explicit GameState(std::shared_ptr<ApplicationData> t_data);
     void init() override;
     void destroy() override;
 

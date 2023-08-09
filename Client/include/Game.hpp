@@ -21,7 +21,7 @@ enum CollisionType{
     BOTTOM
 };
 
-struct GameData{
+struct ApplicationData{
     StateManager state_manager;
     NetworkManager network_manager;
     std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>();
@@ -33,7 +33,7 @@ class Game{
     sf::Time dt = sf::seconds(1.0f / 60.0f);
     sf::Clock clock;
 
-    std::shared_ptr<GameData> data = std::make_shared<GameData>();
+    std::shared_ptr<ApplicationData> data = std::make_shared<ApplicationData>();
 public:
     Game();
 

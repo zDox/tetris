@@ -21,6 +21,9 @@ static const uint8_t DEFAULT_PRIVATE_KEY[yojimbo::KeyBytes] = { 0 };
 enum class MessageType {
     GRID,
     GAME_DATA,
+    GAME_JOIN_REQUEST,
+    GAME_JOIN_RESPONSE,
+    GAME_LIST_REQUEST,
     TETRAMINO_PLACEMENT,
     LOGIN_REQUEST, // Player Message when trying connecting to GameServer
     LOGIN_RESPONSE, // Response Message to Connection attempt from client
@@ -56,6 +59,14 @@ struct GameData{
     int min_players;
     int max_players;
     std::vector<uint64_t> players;
+};
+
+enum class GameJoinResult{
+    NONE,
+    SUCCESS,
+    FULL,
+    ALREADY_STARTED,
+    INVALID_GAME_ID,
 };
 
 // the client and server config
@@ -151,6 +162,54 @@ struct GameDataMessage : public yojimbo::Message
               (
                out(game_data).or_throw()
               ));    
+    }
+
+    YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
+};
+
+struct GameJoinRequestMessage : public yojimbo::Message
+{
+    int game_id;
+
+
+    GameJoinRequestMessage(){}; 
+
+    template <typename Stream> 
+    bool Serialize( Stream & stream ){        
+        serialize_int(stream, game_id, 0, std::numeric_limits<int>::max());
+        return true;
+    }
+
+    YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
+};
+
+struct GameJoinResponseMessage : public yojimbo::Message
+{
+    int game_id;
+    GameJoinResult result;
+
+
+    GameJoinResponseMessage(){}; 
+
+    template <typename Stream> 
+    bool Serialize( Stream & stream ){        
+        serialize_int(stream, game_id, 0, std::numeric_limits<int>::max());
+        int result_value = static_cast<int>(result);
+        serialize_int(stream, result_value, 0, 32);
+        result = static_cast<GameJoinResult>(result_value);
+        return true;
+    }
+
+    YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
+};
+
+struct GameListRequestMessage : public yojimbo::Message
+{
+    GameListRequestMessage(){}; 
+
+    template <typename Stream> 
+    bool Serialize( Stream & stream ){        
+        return true;
     }
 
     YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
@@ -303,6 +362,9 @@ struct PlayerInputMessage : public yojimbo::Message
 YOJIMBO_MESSAGE_FACTORY_START(GameMessageFactory, (int)MessageType::COUNT);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GRID, GridMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_DATA, GameDataMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_JOIN_REQUEST, GameJoinRequestMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_JOIN_RESPONSE, GameJoinResponseMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_LIST_REQUEST, GameListRequestMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::TETRAMINO_PLACEMENT, TetraminoPlacementMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::LOGIN_REQUEST, LoginRequestMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::LOGIN_RESPONSE, LoginResponseMessage);
@@ -321,6 +383,9 @@ inline MessageType convToMessageType(int message_type){
     switch(message_type){
         GENERATE_MESSAGE_TYPE_CASE(GRID)
         GENERATE_MESSAGE_TYPE_CASE(GAME_DATA)
+        GENERATE_MESSAGE_TYPE_CASE(GAME_JOIN_REQUEST)
+        GENERATE_MESSAGE_TYPE_CASE(GAME_JOIN_RESPONSE)
+        GENERATE_MESSAGE_TYPE_CASE(GAME_LIST_REQUEST)
         GENERATE_MESSAGE_TYPE_CASE(TETRAMINO_PLACEMENT)
         GENERATE_MESSAGE_TYPE_CASE(LOGIN_REQUEST)
         GENERATE_MESSAGE_TYPE_CASE(LOGIN_RESPONSE)

@@ -1,6 +1,7 @@
+#include "GameSelectState.hpp"
 #include "GameState.hpp"
 
-GameState::GameState(std::shared_ptr<GameData> t_data) : data(t_data) {
+GameState::GameState(std::shared_ptr<ApplicationData> t_data) : data(t_data) {
     client_id = data->network_manager.getClientID();
 }
 
@@ -272,14 +273,15 @@ void GameState::handleGridMessage(yojimbo::Message* t_message){
 
 void GameState::handleGameDataMessage(yojimbo::Message* t_message){
     GameDataMessage* message = (GameDataMessage*) t_message;
-    NETWORK_TRACE("PROCESS_MESSAGE - GameDataMessage - RoundState: {}", (int)message->roundstate);
+    GameData game_data = message->game_data;
+    NETWORK_TRACE("PROCESS_MESSAGE - GameDataMessage - RoundState: {}", (int)game_data.roundstate);
     if(game_id == -1){
-        game_id = message->game_id;
+        game_id = game_data.game_id;
     }
-    else if(game_id != message->game_id){
+    else if(game_id != game_data.game_id){
         return;
     }
-    roundstate = message->roundstate;
+    roundstate = game_data.roundstate;
 };
 
 void GameState::handleTetraminoPlacementMessage(yojimbo::Message* t_message){
@@ -343,8 +345,8 @@ void GameState::update(sf::Time dt){
         game_clock.restart();
     }
 
-    if(game_logic.isFinished()){
-        roundstate = RoundStateType::END;
+    if(roundstate == RoundStateType::DEAD){
+        data->state_manager.switchToState(std::make_shared<GameSelectState>(data));
     }
 
     if(game_id != -1 && roundstate == RoundStateType::INGAME){

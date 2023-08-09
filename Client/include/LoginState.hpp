@@ -12,7 +12,7 @@
 
 class LoginState : public State{
 private:
-    std::shared_ptr<GameData> data;
+    std::shared_ptr<ApplicationData> data;
 
     // TGui elements
     tgui::Panel::Ptr panel;
@@ -32,7 +32,7 @@ private:
     void initVariables();
     void initHandlers();
 public:
-    explicit LoginState(std::shared_ptr<GameData> t_data);
+    explicit LoginState(std::shared_ptr<ApplicationData> t_data);
 
     void init() override;
     void destroy() override;

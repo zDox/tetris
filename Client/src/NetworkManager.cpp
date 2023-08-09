@@ -110,6 +110,14 @@ void NetworkManager::queueLoginRequest(std::string username){
     requested_username = username;
 }
 
+void NetworkManager::queueGameListRequest(){
+    should_send_gamelist_request = true;
+}
+
+void NetworkManager::queueGameJoinRequest(int t_game_id){
+    wanted_game_id = t_game_id;
+}
+
 void NetworkManager::sendPlayerInput(){
     if(!player_input) return;
 
@@ -140,9 +148,30 @@ void NetworkManager::sendLoginRequest(){
     requested_username = "";
 }
 
+void NetworkManager::sendGameListRequest(){
+    if(!should_send_gamelist_request) return;
+
+    CORE_TRACE("NetworkManager - Sending GameListRequest");
+    GameListRequestMessage* message = (GameListRequestMessage*) client->CreateMessage((int)MessageType::GAME_LIST_REQUEST);
+    client->SendMessage((int)GameChannel::RELIABLE, message);
+    should_send_gamelist_request = false;
+}
+
+void NetworkManager::sendGameJoinRequest(){
+    if(wanted_game_id == -1) return;
+
+    CORE_TRACE("NetworkManager - Sending GameJoinRequest - wanted_game_id: {}", wanted_game_id);
+    GameJoinRequestMessage* message = (GameJoinRequestMessage*) client->CreateMessage((int)MessageType::GAME_JOIN_REQUEST);
+    message->game_id = wanted_game_id;
+    client->SendMessage((int)GameChannel::RELIABLE, message);
+    wanted_game_id = -1;
+}
+
 void NetworkManager::sendMessages(){
     sendPlayerInput();
     sendLoginRequest();
+    sendGameListRequest();
+    sendGameJoinRequest();
 }
 
 void NetworkManager::registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func){

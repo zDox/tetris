@@ -83,6 +83,10 @@ std::unordered_map<uint64_t, std::shared_ptr<GamePlayer>> Game::getPlayers(){
     return players;
 }
 
+bool Game::isFull(){
+    return (players.size() >= static_cast<std::vector<GamePlayer>::size_type>(max_players));
+}
+
 RoundStateType Game::getRoundState(){
     return roundstate;
 }
@@ -203,8 +207,7 @@ void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* mes
 void Game::sendGameData(uint64_t p_client_id){
     int client_index = getPlayersClientIndex(p_client_id);
     GameDataMessage* message = (GameDataMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_DATA);
-    message->game_id = game_id;
-    message->roundstate = roundstate;
+    message->game_data = getGameData(); 
     server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
 }
 

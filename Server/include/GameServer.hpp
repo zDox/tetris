@@ -50,11 +50,15 @@ private:
 
     void updateGames(sf::Time dt);
 
+    // Processing Messages
     void processLoginRequest(uint64_t client_id, LoginRequestMessage* message);
+    void processGameJoinRequest(uint64_t client_id, GameJoinRequestMessage* message);
+    void processGameListRequest(uint64_t client_id, GameListRequestMessage* message);
 
     void processMessage(int client_index, yojimbo::Message* message);
     void processMessages();
 
+    // sending messages
     void sendGameData(uint64_t receiver_id, int game_id);
     void broadcastGameData(int game_id);
 

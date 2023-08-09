@@ -1,7 +1,7 @@
 #include "GameSelectState.hpp"
 #include "LoginState.hpp"
 
-LoginState::LoginState(std::shared_ptr<GameData> t_data):data(t_data){};
+LoginState::LoginState(std::shared_ptr<ApplicationData> t_data):data(t_data){};
 
 void LoginState::initWindow(){
     data->window->setFramerateLimit(MENU_FPS);

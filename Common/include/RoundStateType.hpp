@@ -4,6 +4,7 @@ enum class RoundStateType {
     LOBBY,
     INGAME,
     END,
+    DEAD,
     COUNT
 };
 #endif

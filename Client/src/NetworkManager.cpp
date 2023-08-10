@@ -66,6 +66,18 @@ void NetworkManager::disconnect(){
     client->Disconnect();
 }
 
+void NetworkManager::start(){
+    running = true;
+}
+
+void NetworkManager::stop(){
+    running = false;
+}
+
+void NetworkManager::setGameID(int t_game_id){
+    game_id = t_game_id;
+}
+
 uint64_t NetworkManager::getClientID(){
     return client_id;
 }
@@ -93,13 +105,13 @@ void NetworkManager::processMessages(){
     for (int i = 0; i < connection_config->numChannels; i++) {
         yojimbo::Message* message = client->ReceiveMessage(i);
         while (message != NULL) {
+            if(!running) return;
             processMessage(message);
             client->ReleaseMessage(message);
             message = client->ReceiveMessage(i);
         }
     }
 }
-
 
 void NetworkManager::queuePlayerInput(PlayerInput t_player_input){
     player_input = std::make_shared<PlayerInput>();
@@ -197,4 +209,5 @@ void NetworkManager::update(){
         sendMessages();
     }
     client->SendPackets();
+    cycle_count++;
 };

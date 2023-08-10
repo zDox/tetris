@@ -16,6 +16,7 @@ public:
     // Puts state in newState to later be switchted to 
     void switchToState(std::shared_ptr<State> state);
     void processStateChanges();
+    bool isSwitching();
 
     void handleInputs();
     void updateState(sf::Time dt);

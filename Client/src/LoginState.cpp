@@ -8,6 +8,7 @@ void LoginState::initWindow(){
 }
 
 void LoginState::initVariables(){
+    data->network_manager.start();
 }
 
 void LoginState::initUi(){
@@ -88,6 +89,7 @@ void LoginState::handleLoginResponseMessage(yojimbo::Message* t_message){
         case LoginResult::SUCCESS:
             CORE_INFO("LoginState - Authentifaction - Success logged username: {}", message->username);
             data->state_manager.switchToState(std::make_shared<GameSelectState>(data));
+            data->network_manager.stop();
             break;
         case LoginResult::TAKEN_NAME:
             CORE_INFO("LoginState - Authentifaction - Username '{}' was already taken.", message->username);

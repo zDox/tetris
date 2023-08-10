@@ -7,6 +7,7 @@
 
 // Game Settings
 #define LOBBY_WAIT_TIME 10 // in seconds
+#define END_WAIT_TIME 30 // in seconds
 #define MIN_STARTING_PLAYERS 2
 #define MIN_INGAME_PLAYERS 2
 #define MAX_PLAYERS 4

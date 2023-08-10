@@ -167,6 +167,8 @@ void Game::handleGameFinished(){
     CORE_INFO("Game - Game({}) has finished", game_id);
     // Send Player Scores
     roundstate = RoundStateType::END;
+    end_clock.restart();
+    end_clock_running = true;
     for(auto [p_client_id, s_player] : players){
         broadcastPlayerData(p_client_id);
     }
@@ -263,6 +265,7 @@ void Game::broadcastPlayerData(uint64_t client_id){
     for(auto [p_client_id, p_player] : players){
         int client_index = getPlayersClientIndex(p_client_id);
         PlayerDataMessage* message = (PlayerDataMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_DATA);
+        message->game_id = game_id;
         message->player = player;
         server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
     }
@@ -296,7 +299,7 @@ void Game::updateIngameState(sf::Time dt){
     }
 
     if(needTimeForPlayoutBuffer()) {
-        NETWORK_DEBUG("PlayoutBuffer - Waiting for PlayoutBuffer");
+        NETWORK_DEBUG("Game - PlayoutBuffer for Game({}) - Waiting for PlayoutBuffer", game_id);
         return; 
     }
 
@@ -345,7 +348,7 @@ void Game::updateIngameState(sf::Time dt){
     }
 
     if(positions_changed){
-        NETWORK_TRACE("SEND_MESSAGE - PlayerScoreMessage - Positions have changed ");
+        NETWORK_TRACE("SEND_MESSAGE - PlayerDataMessage - Positions have changed ");
         // send to every player every player score
         for(auto [p_client_id, player] : players){
             broadcastPlayerData(p_client_id);
@@ -354,6 +357,12 @@ void Game::updateIngameState(sf::Time dt){
 }
 
 void Game::updateEndState(sf::Time dt){
+    if(end_clock.getElapsedTime() >= sf::seconds(END_WAIT_TIME) && end_clock_running){
+        roundstate = RoundStateType::DEAD;
+        CORE_TRACE("Game - Game ({}): Switched to Dead State", game_id);
+        broadcastGameData();
+        return;
+    }
 }
 
 void Game::update(sf::Time dt){

@@ -26,6 +26,7 @@ struct ApplicationData{
     NetworkManager network_manager;
     std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>();
     tgui::Gui gui;
+    int game_id = -1;
 };
 
 class Game{

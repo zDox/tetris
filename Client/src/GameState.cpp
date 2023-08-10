@@ -3,6 +3,7 @@
 
 GameState::GameState(std::shared_ptr<ApplicationData> t_data) : data(t_data) {
     client_id = data->network_manager.getClientID();
+    game_id = data->game_id;
 }
 
 void GameState::init(){
@@ -15,6 +16,8 @@ void GameState::init(){
 
 void GameState::destroy(){
     data->gui.removeAllWidgets();
+    data->network_manager.setGameID(-1);
+    data->network_manager.stop();
     data->network_manager.unregisterMessageHandlers();
 };
 
@@ -24,6 +27,8 @@ void GameState::initWindow(){
 }
 
 void GameState::initVariables(){
+    data->network_manager.start();
+
     std::shared_ptr<ClientPlayer> c_player = std::make_shared<ClientPlayer>();
     c_player->drawing_grid.resize(ROWS);
     c_player->player.client_id = client_id;
@@ -275,10 +280,7 @@ void GameState::handleGameDataMessage(yojimbo::Message* t_message){
     GameDataMessage* message = (GameDataMessage*) t_message;
     GameData game_data = message->game_data;
     NETWORK_TRACE("PROCESS_MESSAGE - GameDataMessage - RoundState: {}", (int)game_data.roundstate);
-    if(game_id == -1){
-        game_id = game_data.game_id;
-    }
-    else if(game_id != game_data.game_id){
+    if(game_id != game_data.game_id){
         return;
     }
     roundstate = game_data.roundstate;
@@ -340,7 +342,7 @@ void GameState::update(sf::Time dt){
         data->state_manager.switchToState(std::make_shared<LoginState>(data));
     }
 
-    if(roundstate == RoundStateType::INGAME && !game_logic.isRunning()){
+    if(roundstate == RoundStateType::INGAME && !game_logic.isFinished() && !game_logic.isRunning()){
         game_logic.start();
         game_clock.restart();
     }
@@ -349,7 +351,7 @@ void GameState::update(sf::Time dt){
         data->state_manager.switchToState(std::make_shared<GameSelectState>(data));
     }
 
-    if(game_id != -1 && roundstate == RoundStateType::INGAME){
+    if(roundstate == RoundStateType::INGAME){
         handleKeyboard();
         handleNextTetramino();
         data->network_manager.update();

@@ -33,12 +33,14 @@ private:
     ClientAdapter adapter;
     uint64_t client_id;
     std::unordered_map<MessageType, std::function<void(yojimbo::Message*)>> message_handlers;
-    int game_id;
+    bool running;
 
     sf::Clock network_clock;
     sf::Time next_cycle;
+    unsigned long cycle_count = 0;
 
     // Queues for Messages to be send
+    int game_id;
     std::shared_ptr<PlayerInput> player_input;
     std::string requested_username = "";
     int wanted_game_id = -1;
@@ -68,6 +70,11 @@ public:
 
     void connect(std::string);
     void disconnect();
+
+    void start();
+    void stop();
+
+    void setGameID(int t_game_id);
 
     void registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func);
     void unregisterMessageHandlers();

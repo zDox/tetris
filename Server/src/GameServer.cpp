@@ -135,30 +135,32 @@ void GameServer::processLoginRequest(uint64_t client_id, LoginRequestMessage* me
 }
 
 void GameServer::processGameJoinRequest(uint64_t client_id, GameJoinRequestMessage* message){
-    GameJoinResult result = GameJoinResult::SUCCESS;
     int wanted_game_id = message->game_id;
+    int client_index = getPlayersClientIndex(client_id);
+    GameJoinResponseMessage* answer = (GameJoinResponseMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_JOIN_RESPONSE);
+    answer->result = GameJoinResult::SUCCESS;
+    answer->game_id = wanted_game_id;
+
     if(!(games.contains(wanted_game_id))){
         CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was unsuccessful. Game ID is invalid", client_id);
-        result = GameJoinResult::INVALID_GAME_ID;
+        answer->result = GameJoinResult::INVALID_GAME_ID;
     }
     else if(games[wanted_game_id]->isFull()){
         CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was unsuccessful. Game is Full", client_id);
-        result = GameJoinResult::FULL;
+        answer->result = GameJoinResult::FULL;
     }
     else if(games[wanted_game_id]->getRoundState() != RoundStateType::LOBBY){
         CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was unsuccessful. Game is not in LobbyState", client_id);
-        result = GameJoinResult::ALREADY_STARTED;
+        answer->result = GameJoinResult::ALREADY_STARTED;
     }
     else {
         // GameJoin would be succesfull so add Player to the game
         CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was succesfull", client_id);
+        server->SendMessage(client_index, (int)GameChannel::RELIABLE, answer);
         games[wanted_game_id]->addPlayer(client_id);
         broadcastGameData(wanted_game_id);
+        return;
     }
-    int client_index = getPlayersClientIndex(client_id);
-    GameJoinResponseMessage* answer = (GameJoinResponseMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_JOIN_RESPONSE);
-    answer->result = result;
-    answer->game_id = wanted_game_id;
     server->SendMessage(client_index, (int)GameChannel::RELIABLE, answer);
 }
 
@@ -211,12 +213,20 @@ void GameServer::processMessages(){
 }
 
 void GameServer::updateGames(sf::Time dt){
-    for(auto [game_id, game] : games){
+    for(auto it = games.begin(); it!= games.end();){
+        auto& [game_id, game] = *it;
+
         RoundStateType before_roundstate = game->getRoundState();
         game->update(dt);
         RoundStateType after_roundstate = game->getRoundState();
         if(before_roundstate != after_roundstate){
             broadcastGameData(game_id);
+        }
+        if(after_roundstate == RoundStateType::DEAD){
+            it = games.erase(it);
+        }
+        else {
+            ++it;
         }
     }
 }

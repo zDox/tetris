@@ -18,6 +18,7 @@ void GameSelectState::initHandlers(){
 
 }
 void GameSelectState::initVariables(){
+    data->network_manager.start();
     data->network_manager.queueGameListRequest();
 }
 
@@ -42,8 +43,6 @@ void GameSelectState::destroy(){
 
 
 void GameSelectState::joinGame(int game_id){
-    // TODO: get Game_id from real ui element
-
     if(!(games.contains(game_id))) return;
 
     data->network_manager.queueGameJoinRequest(game_id);
@@ -107,6 +106,12 @@ void GameSelectState::handleGameDataMessage(yojimbo::Message* t_message){
     }
     else {
         games[message->game_data.game_id].game_data = message->game_data;
+        if(message->game_data.roundstate == RoundStateType::DEAD){
+            games[message->game_data.game_id].game_panel->removeAllWidgets();
+            main_panel->remove(games[message->game_data.game_id].game_panel);
+
+            games.erase(message->game_data.game_id);
+        }
     }
 }
 
@@ -116,6 +121,9 @@ void GameSelectState::handleGameJoinResponseMessage(yojimbo::Message* t_message)
     switch (message->result){
         case GameJoinResult::SUCCESS:
             CORE_DEBUG("GameSelectState - MatchMaking - Joined game({}) succesfully", game_id);
+            data->game_id = game_id;
+            data->network_manager.setGameID(game_id);
+            data->network_manager.stop();
             data->state_manager.switchToState(std::make_shared<GameState>(data));
             break;
         case GameJoinResult::FULL:

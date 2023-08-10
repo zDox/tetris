@@ -17,6 +17,10 @@ void StateManager::processStateChanges(){
     newState = nullptr;
 }
 
+bool StateManager::isSwitching(){
+    return (newState == nullptr);
+}
+
 void StateManager::handleInputs(){
     current_state->handleInputs();
 }

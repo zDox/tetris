@@ -44,6 +44,9 @@ private:
 
     sf::Clock lobby_clock;
     bool lobby_clock_running = false;
+    sf::Clock end_clock;
+    bool end_clock_running = false;
+
     bool gamelogic_running = false;
 
     void printGrid(std::vector<std::vector<sf::Color>> grid);

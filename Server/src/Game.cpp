@@ -1,9 +1,9 @@
 #include "Game.hpp"
 
-Game::Game(std::shared_ptr<yojimbo::Server> t_server, int t_game_id) : server(t_server), game_id(t_game_id){
+Game::Game(std::shared_ptr<yojimbo::Server> t_server, int t_game_id, int t_min_players, int t_max_players) : server(t_server), game_id(t_game_id){
     roundstate = RoundStateType::LOBBY;
-    min_players = MIN_STARTING_PLAYERS;
-    max_players = MAX_PLAYERS;
+    min_players = t_min_players;
+    max_players = t_min_players;
 }
 
 int Game::getGameID(){
@@ -22,6 +22,14 @@ GameData Game::getGameData(){
     }
 
     return game_data;
+}
+
+int Game::getMinPlayers(){
+    return min_players;
+}
+
+int Game::getMaxPlayers(){
+    return max_players;
 }
 
 

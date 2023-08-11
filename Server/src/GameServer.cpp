@@ -52,8 +52,8 @@ void GameServer::init(){
         CORE_ERROR("Failed creating server");
         return;
     }
-    for(int i=0; i < 10; i++){
-        createGame();
+    for(int i=1; i <= 32; i=i+i){
+        createGame(i, i*2);
     }
 }
 
@@ -102,8 +102,8 @@ void GameServer::logoutPlayer(u_int64_t client_id){
     broadcastGameData(current_game->getGameID());
 }
 
-int GameServer::createGame(){ // Returns the game_id of the game it created
-    games.emplace(next_game_id, std::make_shared<Game>(server, next_game_id));
+int GameServer::createGame(int min_players, int max_players){ // Returns the game_id of the game it created
+    games.emplace(next_game_id, std::make_shared<Game>(server, next_game_id, min_players, max_players));
     next_game_id++;
     CORE_INFO("Created Game with game_id = {}", next_game_id-1);
     broadcastGameData(next_game_id-1);
@@ -222,7 +222,9 @@ void GameServer::updateGames(sf::Time dt){
         if(before_roundstate != after_roundstate){
             broadcastGameData(game_id);
         }
+
         if(after_roundstate == RoundStateType::DEAD){
+            createGame(game->getMinPlayers(), game->getMaxPlayers());
             it = games.erase(it);
         }
         else {
@@ -283,6 +285,9 @@ void GameServer::run(){
     sf::Time last_frame_tick = sf::seconds(0), frame_time, current_time;
 
     server->Start(MAX_CLIENTS);
+    if (!server->IsRunning()){
+        CORE_ERROR("GameServer - Couldn't start yojimbo server");
+    }
  
     while (running){
         current_time = game_clock.getElapsedTime();

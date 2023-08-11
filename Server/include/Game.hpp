@@ -73,11 +73,13 @@ private:
     void updateEndState(sf::Time dt);
     
 public:
-    Game(std::shared_ptr<yojimbo::Server> t_server, int t_game_id);
+    Game(std::shared_ptr<yojimbo::Server> t_server, int t_game_id, int t_min_players, int t_max_players);
 
     int getGameID();
     GameData getGameData();
 
+    int getMinPlayers();
+    int getMaxPlayers();
     void addPlayer(uint64_t client_id);
     void removePlayer(uint64_t client_id);
     std::shared_ptr<GamePlayer> getPlayer(uint64_t client_id);

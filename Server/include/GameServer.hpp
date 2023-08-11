@@ -46,7 +46,7 @@ private:
     void loginPlayer(uint64_t client_id, std::string username);
     void logoutPlayer(uint64_t client_id);
 
-    int createGame();
+    int createGame(int min_players, int max_players);
 
     void updateGames(sf::Time dt);
 

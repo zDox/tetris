@@ -3,7 +3,6 @@
 
 int main()
 {
-    Log::init();
     CORE_INFO("Starting Client");
     Game game;
     if(!game.init()) return EXIT_FAILURE;

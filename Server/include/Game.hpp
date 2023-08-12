@@ -65,6 +65,7 @@ private:
     void sendPlayerJoin(uint64_t sender_id, uint64_t receiver_id);
     void broadcastPlayerJoin(uint64_t client_id);
     void broadcastPlayerLeave(uint64_t client_id);
+    void sendPlayerData(uint64_t sender_id, uint64_t receiver_id);
     void broadcastPlayerData(uint64_t client_id);
 
 
@@ -80,7 +81,7 @@ public:
 
     int getMinPlayers();
     int getMaxPlayers();
-    void addPlayer(uint64_t client_id);
+    void addPlayer(Player t_player);
     void removePlayer(uint64_t client_id);
     std::shared_ptr<GamePlayer> getPlayer(uint64_t client_id);
     bool hasPlayer(uint64_t client_id);

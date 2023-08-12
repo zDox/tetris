@@ -104,7 +104,8 @@ void GameState::updatePlayerUI(uint64_t p_client_id){
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
 
     tgui::String stats_text = 
-        "points: " + std::to_string(c_player->player.points) + 
+        "Username: " + c_player->player.name+
+        "\npoints: " + std::to_string(c_player->player.points) + 
         "\nposition: " + std::to_string(c_player->player.position);
     c_player->stats_label->setText(stats_text);
 

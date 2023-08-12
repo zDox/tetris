@@ -33,31 +33,33 @@ int Game::getMaxPlayers(){
 }
 
 
-void Game::addPlayer(uint64_t client_id){
-    if(players.contains(client_id)) return;
+void Game::addPlayer(Player t_player){
+    if(players.contains(t_player.client_id)) return;
     std::shared_ptr<GamePlayer> new_player = std::make_shared<GamePlayer>();
-    new_player->player.client_id = client_id;
+    new_player->player = t_player;
     new_player->gamelogic.init();
     
-    players.emplace(client_id, new_player);
+    players.emplace(t_player.client_id, new_player);
 
-    CORE_INFO("Matchmaking - Player({}) joined the game({})", client_id, game_id); if(players.size() >= MIN_STARTING_PLAYERS && !lobby_clock_running){
+    CORE_INFO("Matchmaking - Player({}) joined the game({})", t_player.name, game_id); if(players.size() >= MIN_STARTING_PLAYERS && !lobby_clock_running){
         lobby_clock_running = true;
         lobby_clock.restart();
         CORE_DEBUG("State - Lobbycountdown in game({}) has started. Remaining {} seconds", game_id, LOBBY_WAIT_TIME);
     }
 
-    broadcastPlayerJoin(client_id);
-    broadcastGrid(client_id, new_player->gamelogic.getGrid());
+    broadcastPlayerJoin(t_player.client_id);
+    broadcastGrid(t_player.client_id, new_player->gamelogic.getGrid());
+    broadcastPlayerData(t_player.client_id);
 
     // Send to him all nescerray data
     for(auto [p_client_id, s_player] : players){
-        if(p_client_id == client_id) continue;
-        sendPlayerJoin(p_client_id, client_id);
-        sendGrid(p_client_id, client_id, players[p_client_id]->gamelogic.getGrid());
+        if(p_client_id == t_player.client_id) continue;
+        sendPlayerJoin(p_client_id, t_player.client_id);
+        sendPlayerData(p_client_id, t_player.client_id);
+        sendGrid(p_client_id, t_player.client_id, players[p_client_id]->gamelogic.getGrid());
     }
 
-    sendGameData(client_id);
+    sendGameData(t_player.client_id);
 }
 
 
@@ -101,18 +103,20 @@ RoundStateType Game::getRoundState(){
 
 
 bool Game::isFinished(){
+    bool finished = false;
     int finisher = 0;
     // Count the finisher
     for(auto [p_client_id, s_player] : players){
-        if(!s_player->gamelogic.isFinished()) continue;
-        finisher +=1;
+        if(s_player->gamelogic.isFinished()) finisher++;
+        if(s_player->gamelogic.getPoints() <= NEEDED_WIN_POINTS) continue;
+        finished = true;
     }
 
 
-    if(players.size() < MIN_INGAME_PLAYERS) return true;
-    if((int) players.size() - finisher <= 1) return true;
+    // If only one Player is playing -> Game is finished
+    if((int)players.size() - finisher < MIN_INGAME_PLAYERS) finished = true;
 
-    return false;
+    return finished;
 }
 
 bool Game::needTimeForPlayoutBuffer(){
@@ -267,15 +271,21 @@ void Game::broadcastPlayerLeave(uint64_t client_id){
     }
 }
 
-void Game::broadcastPlayerData(uint64_t client_id){
-    std::shared_ptr<GamePlayer> s_player = players[client_id];
+
+void Game::sendPlayerData(uint64_t sender_id, uint64_t receiver_id){
+    std::shared_ptr<GamePlayer> s_player = players[sender_id];
     Player player = s_player->player;
+    int client_index = getPlayersClientIndex(receiver_id);
+    PlayerDataMessage* message = (PlayerDataMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_DATA);
+    message->game_id = game_id;
+    message->player = player;
+    server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
+}
+
+
+void Game::broadcastPlayerData(uint64_t client_id){
     for(auto [p_client_id, p_player] : players){
-        int client_index = getPlayersClientIndex(p_client_id);
-        PlayerDataMessage* message = (PlayerDataMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_DATA);
-        message->game_id = game_id;
-        message->player = player;
-        server->SendMessage(client_index, (int)GameChannel::RELIABLE, message);
+        sendPlayerData(client_id, p_client_id);
     }
 }
 

@@ -9,6 +9,7 @@
 #define MAX_AMOUNT_GAMES 30
 
 // Game Settings
+#define NEEDED_WIN_POINTS 10 // How many points are needed to win
 #define LOBBY_WAIT_TIME 10 // in seconds
 #define END_WAIT_TIME 30 // in seconds
 #define MIN_STARTING_PLAYERS 2

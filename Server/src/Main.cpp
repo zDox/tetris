@@ -2,7 +2,6 @@
 #include "GameServer.hpp"
 
 int main(int argc, char* argv[]){
-    Log::init();
     if(!InitializeYojimbo()){
         CORE_ERROR("Libs -  Failed to Initialize yojimbo");
         return EXIT_FAILURE;

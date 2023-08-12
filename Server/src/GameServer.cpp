@@ -135,6 +135,7 @@ void GameServer::processLoginRequest(uint64_t client_id, LoginRequestMessage* me
 }
 
 void GameServer::processGameJoinRequest(uint64_t client_id, GameJoinRequestMessage* message){
+    if(!players.contains(client_id)) return;
     int wanted_game_id = message->game_id;
     int client_index = getPlayersClientIndex(client_id);
     GameJoinResponseMessage* answer = (GameJoinResponseMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_JOIN_RESPONSE);
@@ -157,7 +158,7 @@ void GameServer::processGameJoinRequest(uint64_t client_id, GameJoinRequestMessa
         // GameJoin would be succesfull so add Player to the game
         CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was succesfull", client_id);
         server->SendMessage(client_index, (int)GameChannel::RELIABLE, answer);
-        games[wanted_game_id]->addPlayer(client_id);
+        games[wanted_game_id]->addPlayer(players[client_id]->player);
         broadcastGameData(wanted_game_id);
         return;
     }

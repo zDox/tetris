@@ -33,6 +33,7 @@ private:
     ClientAdapter adapter;
     uint64_t client_id;
     std::unordered_map<MessageType, std::function<void(yojimbo::Message*)>> message_handlers;
+    std::function<void(ConnectionStatus)> connection_status_handler;
     bool running;
 
     sf::Clock network_clock;
@@ -76,8 +77,10 @@ public:
 
     void setGameID(int t_game_id);
 
+    void registerConnectionStatusHandler(std::function<void(ConnectionStatus)> func);
     void registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func);
     void unregisterMessageHandlers();
+    void unregisterConnectionStatusHandler();
 
     void queuePlayerInput(PlayerInput t_player_input);
     void queueLoginRequest(std::string username);

@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 
-#include "GameState.hpp"
 #include "State.hpp"
 #include "Game.hpp"
 #include "GameDefinitions.hpp"
@@ -21,11 +20,13 @@ private:
     tgui::EditBox::Ptr box_ipaddress;
     tgui::Label::Ptr label_username;
     tgui::EditBox::Ptr box_username;
+    tgui::Label::Ptr status_text;
 
     tgui::Button::Ptr button_connect;
 
     void login();
     void handleLoginResponseMessage(yojimbo::Message* t_message);
+    void handleConnectionStatusChange(ConnectionStatus status);
 
     void initWindow();
     void initUi();

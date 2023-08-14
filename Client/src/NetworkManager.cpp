@@ -186,6 +186,10 @@ void NetworkManager::sendMessages(){
     sendGameJoinRequest();
 }
 
+void NetworkManager::registerConnectionStatusHandler(std::function<void(ConnectionStatus)> func){
+    connection_status_handler = func;
+}
+
 void NetworkManager::registerMessageHandler(MessageType message_type, std::function<void(yojimbo::Message*)> func){
    message_handlers.emplace(message_type, func); 
 }
@@ -195,7 +199,12 @@ void NetworkManager::unregisterMessageHandlers(){
     CORE_TRACE("NetworkManager - Size of message handlers: {}", message_handlers.size());
 }
 
+void NetworkManager::unregisterConnectionStatusHandler(){
+    connection_status_handler = nullptr;
+}
+
 void NetworkManager::update(){
+    ConnectionStatus before_state = getConnectionStatus();
     client->AdvanceTime(network_clock.getElapsedTime().asSeconds());
     client->ReceivePackets();
 
@@ -210,4 +219,8 @@ void NetworkManager::update(){
     }
     client->SendPackets();
     cycle_count++;
+
+    // handle Client state change
+    ConnectionStatus after_state = getConnectionStatus();
+    if(after_state != before_state && connection_status_handler) connection_status_handler(after_state);
 };

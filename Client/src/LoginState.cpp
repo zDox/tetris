@@ -42,12 +42,16 @@ void LoginState::initUi(){
     panel->add(label_username);
    
     box_username = tgui::EditBox::create();
-    box_username->setDefaultText("Mustermann");
     box_username->setText("Mustermann");
     box_username->setPosition(tgui::bindRight(label_username) + 10.f, tgui::bindTop(label_username));
     box_username->setTextSize(20);
     panel->add(box_username);
 
+    status_text = tgui::Label::create();
+    status_text->setOrigin(0.5f, 0);
+    status_text->setPosition("50%", tgui::bindBottom(label_username) + 10.f);
+    status_text->setTextSize(20);
+    panel->add(status_text);
 
     button_connect = tgui::Button::create("CONNECT");
     button_connect->setTextSize(30);
@@ -61,6 +65,8 @@ void LoginState::initHandlers(){
     data->network_manager.registerMessageHandler(
             MessageType::LOGIN_RESPONSE, 
             std::bind(&LoginState::handleLoginResponseMessage, this, std::placeholders::_1));
+    data->network_manager.registerConnectionStatusHandler(
+            std::bind(&LoginState::handleConnectionStatusChange, this, std::placeholders::_1));
 }
 
 void LoginState::init(){
@@ -73,18 +79,24 @@ void LoginState::init(){
 void LoginState::destroy(){
     data->gui.removeAllWidgets();
     data->network_manager.unregisterMessageHandlers();
+    data->network_manager.unregisterConnectionStatusHandler();
 }
 
 void LoginState::login(){
-    data->network_manager.connect(box_ipaddress->getText().toStdString());
     std::string username = box_username->getText().toStdString();
-    if(!(0 < username.size() && username.size() <=128)) return;
+    if(!(0 < username.length() && username.length() <=128)) {
+        status_text->getRenderer()->setTextColor(tgui::Color::Red);
+        status_text->setText("Username '" + username +"' is invalid!");
+        return;
+    };
+    data->network_manager.connect(box_ipaddress->getText().toStdString());
 
     data->network_manager.queueLoginRequest(username);
 };
 
 void LoginState::handleLoginResponseMessage(yojimbo::Message* t_message){
     LoginResponseMessage* message = (LoginResponseMessage*) t_message;
+    status_text->getRenderer()->setTextColor(tgui::Color::Red);
     switch (message->result){
         case LoginResult::SUCCESS:
             CORE_INFO("LoginState - Authentifaction - Success logged username: {}", message->username);
@@ -93,13 +105,27 @@ void LoginState::handleLoginResponseMessage(yojimbo::Message* t_message){
             break;
         case LoginResult::TAKEN_NAME:
             CORE_INFO("LoginState - Authentifaction - Username '{}' was already taken.", message->username);
+            status_text->setText("Username " + message->username +" was already taken!");
             break;
         case LoginResult::INVALID_NAME:
             CORE_INFO("LoginState - Authentifaction - Username '{}' is invalid.", message->username);
+            status_text->setText("Username " + message->username +" is invalid!");
             break;
         default:
             CORE_INFO("LoginState - Authentifaction - Result: {} is undefined", (int) message->result);
+            status_text->setText("Unkown error occurred!");
             break;
+    }
+}
+
+void LoginState::handleConnectionStatusChange(ConnectionStatus status){
+    if(status == ConnectionStatus::ERROR_CONNECTION){
+        status_text->setText("Server not found");
+        status_text->getRenderer()->setTextColor(tgui::Color::Red);
+    }
+    else if(status == ConnectionStatus::CONNECTING){
+        status_text->setText("Connecting to server ...");
+        status_text->getRenderer()->setTextColor(tgui::Color::Green);
     }
 }
 

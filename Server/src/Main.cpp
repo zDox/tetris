@@ -6,7 +6,7 @@ int main(int argc, char* argv[]){
         CORE_ERROR("Libs -  Failed to Initialize yojimbo");
         return EXIT_FAILURE;
     }
-    yojimbo_log_level(YOJIMBO_LOG_LEVEL_DEBUG);
+    yojimbo_log_level(YOJIMBO_LOG_LEVEL_INFO);
     std::srand((unsigned int) time(NULL));
 
     std::shared_ptr<GameServer> game_server = GameServer::create();

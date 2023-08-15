@@ -53,8 +53,6 @@ void NetworkManager::destroy(){
 
 
 void NetworkManager::connect(std::string text_address){
-    if(client->IsConnecting()) return;
-
     yojimbo::Address server_address(text_address.c_str());
     if(!server_address.IsValid()) return;
     if(server_address.GetPort() == 0) server_address.SetPort(SERVER_PORT);

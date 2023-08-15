@@ -8,64 +8,9 @@
 #include <variant>
 
 #include "Log.hpp"
+#include "Setting.hpp"
+#include "DefaultConfig.hpp"
 
-enum class SettingTag{
-    GRAPHICS,
-    GAMEPLAY,
-};
-
-class Setting{
-public:
-    enum class Type {Bool, Int, Double};
-
-    template <typename T>
-    Setting(SettingTag t_tag, T t_value, T t_min_value, T t_max_value) : 
-        tag(t_tag),
-        value(t_value), 
-        min_value(t_min_value), 
-        max_value(t_max_value)
-        {};
-    SettingTag getTag(){
-        return tag;
-    }
-
-    Type getType() const {
-        return static_cast<Type>(value.index());
-    }
-
-    template <typename T>
-    T getValue() const {
-        return std::get<T>(value);
-    }
-
-    template <typename T> 
-    void setValue(T t_value){
-        if(t_value >= std::get<T>(min_value) && t_value <= std::get<T>(max_value)){
-            value = t_value;
-        }
-        else {
-            CORE_WARN("ConfigurationManager - out_of_range value: {}, min: {}, max:{}", t_value, std::get<T>(min_value), std::get<T>(max_value));
-            value = std::max(std::get<T>(min_value), std::min(t_value, std::get<T>(max_value)));
-        }
-    }
-
-    
-private:
-    SettingTag tag;
-    std::variant<bool, std::int64_t, double> value;
-    std::variant<bool, std::int64_t, double> min_value;
-    std::variant<bool, std::int64_t, double> max_value;
-};
-
-std::unordered_map<std::string, Setting> DEFAULT_CONFIG{
-    // Graphics
-    {"WIDTH", Setting(SettingTag::GRAPHICS, 1920, 600, 3840*3)},
-    {"HEIGHT", Setting(SettingTag::GRAPHICS, 1080, 200, 2160*3)},
-    {"VSYNC", Setting(SettingTag::GRAPHICS, false, false, true)},
-    {"FRAME_LIMIT", Setting(SettingTag::GRAPHICS, 144, 30, 480)},
-    // Gameplay
-    {"FORCED_FALLING_SPEED", Setting(SettingTag::GRAPHICS, 40, 1, 100)}, // Tetramino falls x times per 10 seconds
-};
 
 class ConfigurationManager{
 private:

@@ -7,6 +7,7 @@ Game::Game(){
 };
 
 bool Game::init(){
+    data->config.loadSettings();
     
     if(!data->network_manager.init()) return false;
 
@@ -66,5 +67,6 @@ void Game::run(){
 };
 
 void Game::close(){
+    data->config.saveSettings();
     data->network_manager.destroy();
 }

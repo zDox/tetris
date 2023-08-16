@@ -2,7 +2,7 @@
 #define DEFINITIONS_HPP
 
 // Application
-#define CONFIG_FILE_PATH "config.json"
+#define CONFIG_FILE_NAME "config.json"
 // Window 
 #define WINDOW_TITLE "Tetris"
 #define MENU_FPS 60

@@ -3,7 +3,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <cstdint>
 #include <functional>
 #include <variant>
 
@@ -20,30 +19,32 @@ private:
     void resetSetting(std::string key);
 
     template <typename T>
-    void setSetting(std::string key, T value){
-        if(!DEFAULT_CONFIG.contains(key)){
-            CORE_WARN("ConfigurationManager - setSetting - Setting '{}' is not a default setting", key);
-            settings.emplace(key, value);
+    void setValue(std::string key, T value){
+        if(DEFAULT_CONFIG.contains(key)){
+            if(!settings.contains(key)) {
+                CORE_WARN("ConfigurationManager - setValue - Setting: {} is not set. Fallback to default value.", key);
+                settings.emplace(std::make_pair(key, DEFAULT_CONFIG[key]));
+                return;
+            }
+            settings[key].setValue(value);
         }
         else{
-            settings[key].setValue(value);
+            throw std::runtime_error("ConfigurationManager - setValue - Setting '" + key + "' is not valid.");
         }
     }
 
     template <typename T>
-    T getSetting(std::string key){
+    T getValue(std::string key){
         if(!settings.contains(key)){
             if(DEFAULT_CONFIG.contains(key)){
-                CORE_WARN("ConfigurationManager - Setting: {} is not set. Fallback to default value: {}", key, DEFAULT_CONFIG[key].getValue<T>());
-                setInt(key, DEFAULT_CONFIG[key].getValue<T>());
-                return DEFAULT_CONFIG[key].getValue<T>();
+                CORE_WARN("ConfigurationManager - getValue - Setting: {} is not set. Fallback to default value.", key);
+                settings.emplace(key, DEFAULT_CONFIG[key]);
+                return std::get<T>(DEFAULT_CONFIG[key].getValue());
             }
-            else {
-                throw std::runtime_error("ConfigurationManager - getSetting - Setting '" + key + "' is not valid");
-            }
+            throw std::runtime_error("ConfigurationManager - getValue - Setting '" + key + "' is not valid"); 
         }
         else {
-            return settings[key].getValue<T>();
+            return std::get<T>(settings[key].getValue());
         }
     }
 

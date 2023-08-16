@@ -14,6 +14,7 @@
 #include "Definitions.hpp"
 #include "StateManager.hpp"
 #include "NetworkManager.hpp"
+#include "ConfigurationManager.hpp"
 
 enum CollisionType{
     NONE,
@@ -25,6 +26,7 @@ struct ApplicationData{
     StateManager state_manager;
     NetworkManager network_manager;
     std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>();
+    ConfigurationManager config;
     tgui::Gui gui;
     int game_id = -1;
 };

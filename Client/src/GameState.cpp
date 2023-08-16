@@ -23,7 +23,7 @@ void GameState::destroy(){
 
 
 void GameState::initWindow(){  
-    data->window->setFramerateLimit(GAME_FPS);
+    data->window->setFramerateLimit(data->config.getInt("FRAME_LIMIT"));
 }
 
 void GameState::initVariables(){

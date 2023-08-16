@@ -43,3 +43,4 @@ target_include_directories(TetrisClient PUBLIC ${SPDLOG_DIR}/include)
 target_link_libraries(TetrisClient -lyojimbo -lsodium -lmbedtls -lmbedx509 -lmbedcrypto) # yojimbo and dependencies
 target_link_libraries(TetrisClient -ltgui -lsfml-graphics -lsfml-window -lsfml-system) # SFML
 target_link_libraries(TetrisClient spdlog::spdlog_header_only) # spdlog
+target_link_libraries(TetrisClient  jsoncpp)

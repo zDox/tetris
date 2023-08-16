@@ -6,33 +6,54 @@
 #include <cstdint>
 #include <cmath>
 
+#include "Log.hpp"
+
 enum class SettingTag{
     GRAPHICS,
     GAMEPLAY,
 };
 
 class Setting{
+using Value = std::variant<bool, int, double>;
 public:
     enum class Type {Bool, Int, Double};
 
-    template <typename T>
-    Setting(SettingTag t_tag, T t_value, T t_min_value, T t_max_value) : 
+    Setting(SettingTag t_tag, Value t_value, Value t_min_value, Value t_max_value) : 
         tag(t_tag),
         min_value(t_min_value), 
         max_value(t_max_value)
         {
+            if(!(t_value.index() == t_min_value.index() && t_min_value.index() == t_max_value.index())) {
+                throw std::runtime_error("Setting - Constructor - Tried setting wrong type");
+            }
+            value = t_value;
             setValue(t_value);
         };
+    Setting(): tag(SettingTag::GRAPHICS),  value(false), min_value(false), max_value(true) {};
 
+    std::string valueToString(Value value){
+        switch (static_cast<Type>(value.index())){
+            case Type::Bool:
+                return std::to_string(std::get<bool>(value));
+            case Type::Int:
+                return std::to_string(std::get<int>(value));
+            case Type::Double:
+                return std::to_string(std::get<double>(value));
+        }
+        return "";
+    }
 
-    template <typename T> 
-    void setValue(T t_value){
-        if(t_value >= std::get<T>(min_value) && t_value <= std::get<T>(max_value)){
+    void setValue(Value t_value){
+        if(static_cast<Type>(t_value.index()) != getType()) {
+            throw std::runtime_error("Setting - setValue - Tried setting wrong type. Previous value: " + std::to_string(value.index()) + " new type: " + std::to_string(t_value.index()));
+        }
+
+        if(t_value >= min_value && t_value <= max_value){
             value = t_value;
         }
         else {
-            CORE_INFO("ConfigurationManager - out_of_range value: {}, min: {}, max:{}", t_value, std::get<T>(min_value), std::get<T>(max_value));
-            value = std::max(std::get<T>(min_value), std::min(t_value, std::get<T>(max_value)));
+            CORE_INFO("ConfigurationManager - out_of_range value: {}, min: {}, max:{}", valueToString(t_value), valueToString(min_value), valueToString(max_value));
+            value = std::max(min_value, std::min(t_value, max_value));
         }
     }
 
@@ -44,25 +65,22 @@ public:
         return static_cast<Type>(value.index());
     }
 
-    template <typename T>
-    T getValue() const {
-        return std::get<T>(value);
+    Value getValue() const {
+        return value;
     }
 
-    template <typename T>
-    T getMin() const {
-        return std::get<T>(min_value);
+    Value getMin() const {
+        return min_value;
     }
 
-    template <typename T>
-    T getMax() const {
-        return std::get<T>(max_value);
+    Value getMax() const {
+        return max_value;
     }   
 private:
     SettingTag tag;
-    std::variant<bool, std::int64_t, double> value;
-    std::variant<bool, std::int64_t, double> min_value;
-    std::variant<bool, std::int64_t, double> max_value;
+    Value value;
+    Value min_value;
+    Value max_value;
 };
 
 #endif

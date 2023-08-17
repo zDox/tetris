@@ -12,7 +12,7 @@ bool Game::init(){
     if(!data->network_manager.init()) return false;
 
     sf::VideoMode desktop_mode = sf::VideoMode::getDesktopMode();
-    data->window->create(sf::VideoMode(WIDTH, HEIGHT, desktop_mode.bitsPerPixel), WINDOW_TITLE, sf::Style::Close | sf::Style::Titlebar);
+    data->window->create(sf::VideoMode(data->config.getInt("WIDTH"), data->config.getInt("HEIGHT"), desktop_mode.bitsPerPixel), WINDOW_TITLE, sf::Style::Close | sf::Style::Titlebar);
     data->gui.setWindow(*data->window);
 
 

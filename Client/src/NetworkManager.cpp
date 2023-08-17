@@ -34,7 +34,7 @@ bool NetworkManager::init(){
         // NETWORK_ERROR("ERROR: Failed to Initialize yojimbo\n");
         return false;
     }
-    yojimbo_log_level( YOJIMBO_LOG_LEVEL_INFO );
+    yojimbo_log_level( YOJIMBO_LOG_LEVEL_DEBUG );
     std::srand((unsigned int) time(NULL));
     connection_config = std::make_shared<yojimbo::ClientServerConfig>();
     *(connection_config) = GameConnectionConfig();
@@ -48,6 +48,9 @@ bool NetworkManager::init(){
 }
 
 void NetworkManager::destroy(){
+    if(client->IsConnected()){
+        client->Disconnect();
+    }
     ShutdownYojimbo();
 }
 

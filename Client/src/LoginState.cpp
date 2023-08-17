@@ -12,20 +12,22 @@ void LoginState::initVariables(){
 }
 
 void LoginState::initUi(){
+    int width = data->config.getInt("WIDTH");
+    int height = data->config.getInt("HEIGHT");
     panel = tgui::Panel::create();
-    panel->setOrigin(0.5, 0);
-    panel->setPosition(WIDTH/2, 0);
-    panel->setSize(WIDTH/2 < 600 ? WIDTH : WIDTH/2, HEIGHT); 
+    panel->setOrigin(0, 0);
+    panel->setPosition(0, 0);
+    panel->setSize(width/2/2 < 600 ? width : width/2, height); 
     data->gui.add(panel);
 
     heading = tgui::Label::create("Connect to Server");
     heading->setOrigin(0.5f, 0);
-    heading->setPosition(WIDTH/2, "1%");
+    heading->setPosition("50%", "1%");
     heading->setTextSize(40);
     panel->add(heading);
 
     label_ipaddress = tgui::Label::create("Server Address:");
-    label_ipaddress->setPosition(WIDTH/4, "50%");
+    label_ipaddress->setPosition("25%", "50%");
     label_ipaddress->setTextSize(20);
     panel->add(label_ipaddress);
    
@@ -37,7 +39,7 @@ void LoginState::initUi(){
     panel->add(box_ipaddress);
 
     label_username = tgui::Label::create("Username:");
-    label_username->setPosition(WIDTH/4, tgui::bindBottom(label_ipaddress) + 10.f);
+    label_username->setPosition("25%", tgui::bindBottom(label_ipaddress) + 10.f);
     label_username->setTextSize(20);
     panel->add(label_username);
    
@@ -56,7 +58,7 @@ void LoginState::initUi(){
     button_connect = tgui::Button::create("CONNECT");
     button_connect->setTextSize(30);
     button_connect->setOrigin(0.5f, 0);
-    button_connect->setPosition(WIDTH/2, "80%");
+    button_connect->setPosition("50%", "80%");
     button_connect->onPress(&LoginState::login, this);
     panel->add(button_connect);
 }

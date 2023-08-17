@@ -121,5 +121,6 @@ void ConfigurationManager::saveSettings(){
     }
 
     file << root;
+    CORE_DEBUG("ConfigurationManager - writing - Saved config file");
     file.close();
 }

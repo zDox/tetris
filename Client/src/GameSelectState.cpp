@@ -24,7 +24,7 @@ void GameSelectState::initVariables(){
 
 void GameSelectState::initUi(){
     main_panel = tgui::ScrollablePanel::create();
-    main_panel->setSize(tgui::Layout2d(WIDTH, HEIGHT));
+    main_panel->setSize(tgui::Layout2d(data->config.getInt("WIDTH"), data->config.getInt("HEIGHT")));
 
     data->gui.add(main_panel);
 }
@@ -152,7 +152,7 @@ void GameSelectState::handleInputs(){
 
 void GameSelectState::updateGameUIs(){
     int count = 0;
-    int elements_per_row = static_cast<int>(std::floor((WIDTH - GAME_PANEL_SPACING_ROW) / (GAME_PANEL_WIDTH + GAME_PANEL_SPACING_ROW)));
+    int elements_per_row = static_cast<int>(std::floor((data->config.getInt("WIDTH") - GAME_PANEL_SPACING_ROW) / (GAME_PANEL_WIDTH + GAME_PANEL_SPACING_ROW)));
     for(auto [game_id, game] : games){
         game.players_text->setText(std::to_string(game.game_data.players.size()) + "/" + std::to_string(game.game_data.max_players));
         game.status_text->setText(std::to_string(game.game_data.roundstate));

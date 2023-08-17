@@ -18,4 +18,3 @@ for ((i=1; i<=$num_clients; i++)); do
 done
 
 # Wait for all background processes to finish
-read -p "Press Enter to close the script..."

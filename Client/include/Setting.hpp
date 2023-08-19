@@ -2,85 +2,99 @@
 #define SETTING_HPP
 
 // Includes
+#include <TGUI/extlibs/Aurora/SmartPtr/ClonersAndDeleters.hpp>
 #include <variant>
 #include <cstdint>
 #include <cmath>
+#include <vector>
+#include <memory>
 
 #include "Log.hpp"
+#include "SettingValidator.hpp"
 
-enum class SettingTag{
-    GRAPHICS,
-    GAMEPLAY,
-};
 
 class Setting{
 using Value = std::variant<bool, int, double>;
 public:
     enum class Type {Bool, Int, Double};
+    enum class Tag {GRAPHICS, GAMEPLAY};
 
-    Setting(SettingTag t_tag, Value t_value, Value t_min_value, Value t_max_value) : 
-        tag(t_tag),
-        min_value(t_min_value), 
-        max_value(t_max_value)
-        {
-            if(!(t_value.index() == t_min_value.index() && t_min_value.index() == t_max_value.index())) {
-                throw std::runtime_error("Setting - Constructor - Tried setting wrong type");
-            }
-            value = t_value;
-            setValue(t_value);
+    class ValueValidator{
+    public:
+        virtual bool isValid(const Value& value) const = 0;
+        virtual bool isType(const Type& type) const = 0;
+        virtual Value getClosestValidValue(const Value& value) = 0;
+    };
+
+    class RangeValueValidator : public ValueValidator{
+    public:
+        struct Range{
+            enum class BoundType{
+                CLOSED,
+                OPEN,
+            };
+
+            Value lower;
+            Value upper;
+            BoundType lower_bound_type;
+            BoundType upper_bound_type;
+
+            Range(Value t_lower, Value t_upper, BoundType t_lower_bound_type, BoundType t_upper_bound_type);
+            Range(Value t_lower, Value t_upper);
+            
+            bool contains(const Value& value) const;
         };
-    Setting(): tag(SettingTag::GRAPHICS),  value(false), min_value(false), max_value(true) {};
 
-    std::string valueToString(Value value){
-        switch (static_cast<Type>(value.index())){
-            case Type::Bool:
-                return std::to_string(std::get<bool>(value));
-            case Type::Int:
-                return std::to_string(std::get<int>(value));
-            case Type::Double:
-                return std::to_string(std::get<double>(value));
-        }
-        return "";
-    }
+        RangeValueValidator(const std::vector<Range>& t_ranges);
+        bool isValid(const Value& value) const override;
+        bool isType(const Type& type) const override;
+        std::vector<Range> getRanges();
+    private:
+        std::vector<Range> ranges;
 
-    void setValue(Value t_value){
+    };
+
+    class DiscreteValueValidator : public ValueValidator{
+    private:
+        std::vector<Value> valid_values;
+    public:
+        DiscreteValueValidator(const std::vector<Value>& t_valid_values);
+        bool isValid(const Value& value) const override;
+        bool isType(const Type& type) const override;
+        std::vector<Value> getValidValues();
+    };
+    Setting(Tag t_tag, Value t_value, std::unique_ptr<ValueValidator> t_validator);
+    std::string valueToString(Value value);
+
+    inline void setValue(Value t_value){
         if(static_cast<Type>(t_value.index()) != getType()) {
             throw std::runtime_error("Setting - setValue - Tried setting wrong type. Previous value: " + std::to_string(value.index()) + " new type: " + std::to_string(t_value.index()));
         }
 
-        if(t_value >= min_value && t_value <= max_value){
+        if(validator->isValid(t_value)){
             value = t_value;
         }
         else {
-            CORE_INFO("ConfigurationManager - out_of_range value: {}, min: {}, max:{}", valueToString(t_value), valueToString(min_value), valueToString(max_value));
-            value = std::max(min_value, std::min(t_value, max_value));
+            CORE_INFO("ConfigurationManager - setValue - value: {} is not valid", valueToString(t_value));
+            value = validator->getClosestValidValue(t_value);
         }
     }
 
-    SettingTag getTag(){
+    inline Tag getTag(){
         return tag;
     }
 
-    Type getType() const {
+    inline Type getType() const {
         return static_cast<Type>(value.index());
     }
 
-    Value getValue() const {
+    inline Value getValue() const {
         return value;
-    }
-
-    Value getMin() const {
-        return min_value;
-    }
-
-    Value getMax() const {
-        return max_value;
     }   
 private:
-    SettingTag tag;
+    Tag tag;
     Value value;
-    Value min_value;
-    Value max_value;
+    std::unique_ptr<ValueValidator> validator;
 };
 
 #endif

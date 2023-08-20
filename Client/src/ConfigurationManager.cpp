@@ -4,9 +4,11 @@
 
 #include "Definitions.hpp"
 
-void ConfigurationManager::resetSetting(std::string key){
+void Config::resetSetting(std::string key){
     if(settings.contains(key)){
-        settings[key] = DEFAULT_CONFIG[key];
+        std::visit([](auto&& setting){
+            setting.reset();
+        }, settings[key]);
     }
     else {
         throw std::runtime_error("ConfigurationManager - resetSetting - Setting '" + key + "' is not valid.");
@@ -15,32 +17,32 @@ void ConfigurationManager::resetSetting(std::string key){
 
 // Setter
 
-void ConfigurationManager::setBool(std::string key, bool value){
+void Config::setBool(std::string key, bool value){
     setValue<bool>(key, value);
 }
 
-void ConfigurationManager::setInt(std::string key, int value){
+void Config::setInt(std::string key, int value){
     setValue<int>(key, value);
 }
 
-void ConfigurationManager::setDouble(std::string key, double value){
+void Config::setDouble(std::string key, double value){
     setValue<double>(key, value);
 }
 
 // Getter
 
-bool ConfigurationManager::getBool(std::string key){
+bool Config::getBool(std::string key){
     return getValue<bool>(key);
 }
 
-int ConfigurationManager::getInt(std::string key){
+int Config::getInt(std::string key){
     return getValue<int>(key);
 }
 
-double ConfigurationManager::getDouble(std::string key){
+double Config::getDouble(std::string key){
     return getValue<double>(key);
 }
-void ConfigurationManager::registerHandler(SettingTag group_tag, std::function<void()> func){
+void Config::registerHandler(SettingTag group_tag, std::function<void()> func){
     if(handlers.contains(group_tag)){
         handlers[group_tag] = func;
     }
@@ -49,18 +51,17 @@ void ConfigurationManager::registerHandler(SettingTag group_tag, std::function<v
     }
 }
 
-void ConfigurationManager::unregisterHandler(SettingTag group_tag){
+void Config::unregisterHandler(SettingTag group_tag){
     if(!handlers.contains(group_tag)) return;
     handlers.erase(group_tag);
 }
 
-void ConfigurationManager::unregisterHandlers(){
+void Config::unregisterHandlers(){
     handlers.clear();
 }
 
-void ConfigurationManager::loadSettings(){
-    std::ifstream file(CONFIG_FILE_NAME);
-    settings = DEFAULT_CONFIG;
+void Config::loadSettings(std::string file_path){
+    std::ifstream file(file_path);
     if(!file.is_open()){
         CORE_WARN("ConfigurationManager - Config file not found. Using default configuration.");
         return;
@@ -81,20 +82,20 @@ void ConfigurationManager::loadSettings(){
             continue;
         }
 
-        switch (d_value.getType()){
-            case Setting::Type::Bool:
+        switch (d_value.index()){
+            case 0:
             {
-                settings[key].setValue(root[key].asBool());
+                std::get<Setting<bool>>(settings[key]).setValue(root[key].asBool());
                 break;
             }
-            case Setting::Type::Int:
+            case 1:
             {
-                settings[key].setValue(root[key].asInt());
+                std::get<Setting<int>>(settings[key]).setValue(root[key].asInt());
                 break;
             }
-            case Setting::Type::Double:
+            case 2:
             {
-                settings[key].setValue(root[key].asDouble());
+                std::get<Setting<double>>(settings[key]).setValue(root[key].asDouble());
                 break;
             }
         }
@@ -102,20 +103,46 @@ void ConfigurationManager::loadSettings(){
     file.close();
 }
 
-void ConfigurationManager::saveSettings(){
+void Config::loadSettingDetails(std::string file_path){
+    std::ifstream file(file_path);
+    if(!file.is_open()){
+        throw std::runtime_error("ConfigurationManager - SettingDetails '" + file_path + "' file not found");
+    }
+
+    Json::Reader reader;
+    Json::Value root;
+    std::string errs;
+    if(!reader.parse(file, root)) {
+        throw std::runtime_error("ConfigurationManager - Failed parsing configuration file: " + errs);
+    }
+
+    
+    for (const auto& key : root.getMemberNames()){
+        bool skip = false;
+        for(const auto& key : REQUIRED_SETTING_MEMBERS){
+            if(!root.isMember(key)) skip = true;
+        }
+        
+        SettingType type = stringToType(root[key]["type"].asString());
+
+        if(skip) continue;
+    
+    file.close();
+}
+void Config::saveSettings(){
     Json::Value root;
     for(auto [key, value] : settings){
-        switch(value.getType()){
-            case Setting::Type::Bool:
-                root[key] = std::get<bool>(value.getValue());
+        switch(value.index()){
+            case 0:
+                root[key] = std::get<Setting<bool>>(value).getValue();
                 break;
 
-            case Setting::Type::Int:
-                root[key] = std::get<int>(value.getValue());
+            case 1:
+                root[key] = std::get<Setting<int>>(value).getValue();
                 break;
 
-            case Setting::Type::Double:
-                root[key] = std::get<double>(value.getValue());
+            case 2:
+                root[key] = std::get<Setting<double>>(value).getValue();
                 break;
         }
     }
@@ -129,4 +156,9 @@ void ConfigurationManager::saveSettings(){
     file << root;
     CORE_DEBUG("ConfigurationManager - writing - Saved config file");
     file.close();
+}
+
+void Config::load(std::string file_settings, std::string file_setting_details){
+    loadSettingDetails(file_setting_details);
+    loadSettings(file_settings);
 }

@@ -1,5 +1,5 @@
-#ifndef CONFIGURATION_MANAGER_HPP
-#define CONFIGURATION_MANAGER_HPP
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
 
 #include <string>
 #include <unordered_map>
@@ -11,9 +11,23 @@
 #include "DefaultConfig.hpp"
 
 
-class ConfigurationManager{
+class Config{
+using SettingWrapper = std::variant<Setting<bool>, Setting<int>, Setting<double>>;
+enum class SettingType {BOOL, INT, DOUBLE};
+SettingType stringToType(std::string type_string){
+    if (type_string == "bool") {
+        return SettingType::BOOL;
+    } else if (type_string == "int") {
+        return SettingType::INT;
+    } else if (type_string == "double") {
+        return SettingType::DOUBLE;
+    } else {
+        // Handle the case when the input string is not a valid type
+        throw std::runtime_error("Invalid setting type: " + type_string);
+    }
+}
 private:
-    std::unordered_map<std::string, Setting> settings;
+    std::unordered_map<std::string, SettingWrapper> settings;
     std::unordered_map<SettingTag, std::function<void()>> handlers;
 
     void resetSetting(std::string key);
@@ -21,9 +35,14 @@ private:
     template <typename T>
     void setValue(std::string key, T value){
         if(settings.contains(key)) {
-            settings[key].setValue(value);
-            if(handlers.contains(settings[key].getTag())) {
-                handlers[settings[key].getTag()]();
+            try {
+                std::get<Setting<T>>(settings[key]).setValue(value);
+                if(handlers.contains(std::get<Setting<T>>(settings[key]).getTag())) {
+                    handlers[std::get<Setting<T>>(settings[key]).getTag()]();
+                }
+            }
+            catch (std::bad_variant_access const& e){
+                throw std::runtime_error("ConfigurationManager - setValue - Setting is of type: " + std::to_string(settings[key].index()));
             }
         }
         else{
@@ -34,12 +53,23 @@ private:
     template <typename T>
     T getValue(std::string key){
         if(settings.contains(key)){
-            return std::get<T>(settings[key].getValue());
+            try {
+                return std::get<Setting<T>>(settings[key]).getValue();
+            }
+            catch (std::bad_variant_access const& e){
+                throw std::runtime_error("ConfigurationManager - getValue - Setting is of type: " + std::to_string(settings[key].index()));
+            }
         }
         else {
             throw std::runtime_error("ConfigurationManager - getValue - Setting '" + key + "' is not valid"); 
         }
     }
+
+    // Trys to load the settings from a .json file
+    // which file path is defined in DEFINITIONS.hpp
+    void loadSettings(std::string file_path);
+    void loadSettingDetails(std::string file_path);
+    void saveSettings();
 
 public:
     void setBool(std::string key, bool value);
@@ -58,12 +88,10 @@ public:
     void unregisterHandler(SettingTag group_tag);
     void unregisterHandlers();
 
-    // Trys to load the settings from a .json file
-    // which file path is defined in DEFINITIONS.hpp
-    void loadSettings();
+    void load(std::string file_settings, std::string file_setting_details);
     // Saves the settings to a .json file
     // which file path is defined in DEFINITIONS.hpp
-    void saveSettings();
+    void save();
 };
 
 #endif

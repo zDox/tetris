@@ -6,6 +6,6 @@
 #include <string>
 
 
-extern std::unordered_map<std::string, Setting> DEFAULT_CONFIG;
+extern std::unordered_map<std::string, std::variant<Setting<bool>, Setting<int>, Setting<double>>> DEFAULT_CONFIG;
 
 #endif

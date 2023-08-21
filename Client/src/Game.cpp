@@ -7,7 +7,7 @@ Game::Game(){
 };
 
 bool Game::init(){
-    data->config.loadSettings();
+    data->config.load("user_settings.json", "user_settings_details.json");
     
     if(!data->network_manager.init()) return false;
 
@@ -67,6 +67,6 @@ void Game::run(){
 };
 
 void Game::close(){
-    data->config.saveSettings();
+    data->config.save();
     data->network_manager.destroy();
 }

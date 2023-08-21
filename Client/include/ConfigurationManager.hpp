@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <functional>
 #include <variant>
+#include <json/json.h>
 
 #include "Log.hpp"
 #include "Setting.hpp"
@@ -14,7 +15,7 @@
 class Config{
 using SettingWrapper = std::variant<Setting<bool>, Setting<int>, Setting<double>>;
 enum class SettingType {BOOL, INT, DOUBLE};
-SettingType stringToType(std::string type_string){
+SettingType parseType(std::string type_string){
     if (type_string == "bool") {
         return SettingType::BOOL;
     } else if (type_string == "int") {
@@ -26,10 +27,12 @@ SettingType stringToType(std::string type_string){
         throw std::runtime_error("Invalid setting type: " + type_string);
     }
 }
+
 private:
     std::unordered_map<std::string, SettingWrapper> settings;
     std::unordered_map<SettingTag, std::function<void()>> handlers;
-
+    std::string file_path_settings;
+    std::string file_path_settings_details;
     void resetSetting(std::string key);
 
     template <typename T>
@@ -69,7 +72,7 @@ private:
     // which file path is defined in DEFINITIONS.hpp
     void loadSettings(std::string file_path);
     void loadSettingDetails(std::string file_path);
-    void saveSettings();
+    void saveSettings(std::string file_path);
 
 public:
     void setBool(std::string key, bool value);

@@ -9,7 +9,9 @@
 #include <vector>
 #include <memory>
 #include <vector>
-#include <string>
+#include <string> 
+#include <json/json.h>
+#include <utility>
 
 #include "Log.hpp"
 
@@ -18,7 +20,7 @@ enum class SettingTag{
     GAMEPLAY
 };
 
-static const std::vector<std::string> REQUIRED_SETTING_MEMBERS {"type", "default", "validator"};
+static const std::vector<std::string> REQUIRED_SETTING_MEMBERS {"type", "default_value", "validator"};
 
 template <typename T>
 concept AllowedTypes = std::is_same_v<T, int> ||
@@ -39,40 +41,24 @@ public:
     class RangeValueValidator : public ValueValidator{
     public:
         struct Range{
-            enum class BoundType{
-                CLOSED,
-                OPEN,
-            };
-
             T lower;
             T upper;
-            BoundType lower_bound_type;
-            BoundType upper_bound_type;
 
-            Range(T t_lower, T t_upper, 
-                    BoundType t_lower_bound_type, BoundType t_upper_bound_type) : 
-                lower(t_lower), upper(t_upper), lower_bound_type(t_lower_bound_type), 
-                upper_bound_type(t_upper_bound_type){
-                };
-            Range(T t_lower, T t_upper){
-                Setting::RangeValueValidator::Range(t_lower, t_upper, 
-                                                    BoundType::CLOSED, BoundType::CLOSED);
-            }
+            Range(T t_lower, T t_upper) : 
+                lower(t_lower), upper(t_upper){
+            };
  
             bool contains(const T& value) const {
-                bool lower_bound_check = (lower_bound_type == BoundType::CLOSED) ? 
-                                         (value >= lower) : true;
-                bool upper_bound_check = (upper_bound_type == BoundType::CLOSED) ? 
-                                         (value <= upper) : true;
-                return (lower_bound_check && upper_bound_check);
+                return (lower <= value && value <= upper);
             }
         };
 
         RangeValueValidator(const std::vector<Range>& t_ranges){
             for(size_t i = 0; i < t_ranges.size()-1; i++){
-                if(t_ranges[i].upper_bound_type != t_ranges[i+1].lower_bound_type){
+                if(t_ranges[i].upper > t_ranges[i+1].lower){
                     CORE_WARN("Setting - RangeValueValidator - Upper bound of Range({}) is overlapping with lower bound of Range({})",i , i+1);
                 }
+                ranges.push_back(t_ranges[i]);
             }
         };
 
@@ -164,10 +150,59 @@ public:
         }
     };
 
+    static SettingTag parseTag(std::string tag_string){
+        if(tag_string == "GRAPHICS"){
+            return SettingTag::GRAPHICS;
+        }
+        else if(tag_string == "GAMEPLAY"){
+            return SettingTag::GAMEPLAY;
+        }
+        else {
+            throw std::runtime_error("Invalid setting tag: " + tag_string);
+        }
+    }
+
+    static Setting parseSetting(Json::Value obj){
+        SettingTag tag = parseTag(obj["tag"].asString());
+        T default_value = obj["default_value"].as<T>();
+        
+        std::shared_ptr<Setting<T>::ValueValidator> validator = parseValidator(obj["validator"]);
+        return Setting<T>(tag, default_value, validator); 
+    }
+
+    static std::shared_ptr<Setting<T>::ValueValidator> parseValidator(Json::Value obj){
+        std::shared_ptr<Setting<T>::ValueValidator> validator;
+        if(obj["type"] == "range"){
+            std::vector<typename Setting<T>::RangeValueValidator::Range> vec;
+            for(auto const& range : obj["ranges"]){
+                if(range.size() == 2){
+                    vec.push_back(typename Setting<T>::RangeValueValidator::Range(range[0].as<T>(),
+                                                                         range[1].as<T>()));
+                }
+            }
+
+            validator = std::make_shared<Setting<T>::RangeValueValidator>(std::as_const(vec));
+        }
+        else if(obj["type"] == "discrete"){
+            std::vector<T> vec;
+            for(auto const& valid_value : obj["valid_values"]){
+                vec.push_back(valid_value.as<T>());
+            }
+
+            validator = std::make_shared<Setting<T>::DiscreteValueValidator>(std::as_const(vec));
+        }
+        else throw std::runtime_error("ConfigurationManager - parseValidator - No type of Validator specified");
+        return validator;
+    }
+
     Setting(SettingTag t_tag, T t_value, T t_default_value, std::shared_ptr<ValueValidator> t_validator) :
         tag(t_tag), validator(t_validator) {
             value = t_value;
             setValue(t_value);
+    }
+
+    Setting(SettingTag t_tag, T t_default_value, std::shared_ptr<ValueValidator> t_validator) { 
+        Setting(t_tag, t_default_value, t_default_value, t_validator);
     }
 
     Setting(){

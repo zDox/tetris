@@ -1,6 +1,7 @@
 #include "ConfigurationManager.hpp"
 #include <json/json.h>
 #include <fstream>
+#include <filesystem>
 
 #include "Definitions.hpp"
 
@@ -76,11 +77,12 @@ void Config::loadSettings(std::string file_path){
         return;
     }
     
-    for(auto [key, d_value] : DEFAULT_CONFIG){
+    for(auto [key, d_value] : settings){
         if(!root.isMember(key)){
-            CORE_WARN("ConfigurationManager - Key: {} not found in config file. Using default", key);
+            CORE_WARN("ConfigurationManager - Key: {} not found in config file. Falling back to default.", key);
             continue;
         }
+        CORE_DEBUG("Key: {}", key);
 
         switch (d_value.index()){
             case 0:
@@ -119,17 +121,38 @@ void Config::loadSettingDetails(std::string file_path){
     
     for (const auto& key : root.getMemberNames()){
         bool skip = false;
-        for(const auto& key : REQUIRED_SETTING_MEMBERS){
-            if(!root.isMember(key)) skip = true;
+        for(const auto& check_key : REQUIRED_SETTING_MEMBERS){
+            if(!root[key].isMember(check_key)){
+                CORE_WARN("ConfigurationManager - loadSettingDetails - Required member '{}' not in setting '{}'",
+                           check_key, key);
+                skip = true;
+            }
         }
         
-        SettingType type = stringToType(root[key]["type"].asString());
-
         if(skip) continue;
+        SettingType type = parseType(root[key]["type"].asString());
+
+        SettingWrapper setting;
+        switch (type){
+            case SettingType::BOOL:
+                setting = Setting<bool>::parseSetting(root[key]); 
+                break;
+            case SettingType::INT: 
+                setting = Setting<bool>::parseSetting(root[key]);
+                break;
+            case SettingType::DOUBLE:
+                setting = Setting<double>::parseSetting(root[key]);
+                break;
+            default:
+                continue;
+        }
+        settings.emplace(key, setting);
+    }
+
     
     file.close();
 }
-void Config::saveSettings(){
+void Config::saveSettings(std::string file_path){
     Json::Value root;
     for(auto [key, value] : settings){
         switch(value.index()){
@@ -147,7 +170,7 @@ void Config::saveSettings(){
         }
     }
 
-    std::ofstream file(CONFIG_FILE_NAME);
+    std::ofstream file(file_path);
     if(!file.is_open()){
         CORE_WARN("ConfigurationManager - writing - Failed to open file");
         return;
@@ -158,7 +181,13 @@ void Config::saveSettings(){
     file.close();
 }
 
-void Config::load(std::string file_settings, std::string file_setting_details){
-    loadSettingDetails(file_setting_details);
-    loadSettings(file_settings);
+void Config::load(std::string t_filename_settings, std::string t_filename_settings_details){
+    file_path_settings = t_filename_settings;
+    file_path_settings_details = t_filename_settings_details;
+    loadSettingDetails(file_path_settings_details);
+    loadSettings(file_path_settings);
+}
+
+void Config::save(){
+    saveSettings(file_path_settings);
 }

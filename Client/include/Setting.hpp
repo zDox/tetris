@@ -166,12 +166,12 @@ public:
         SettingTag tag = parseTag(obj["tag"].asString());
         T default_value = obj["default_value"].as<T>();
         
-        std::shared_ptr<Setting<T>::ValueValidator> validator = parseValidator(obj["validator"]);
-        return Setting<T>(tag, default_value, validator); 
+        std::unique_ptr<Setting<T>::ValueValidator> validator = parseValidator(obj["validator"]);
+        return Setting<T>(tag, default_value, std::move(validator)); 
     }
 
-    static std::shared_ptr<Setting<T>::ValueValidator> parseValidator(Json::Value obj){
-        std::shared_ptr<Setting<T>::ValueValidator> validator;
+    static std::unique_ptr<Setting<T>::ValueValidator> parseValidator(Json::Value obj){
+        std::unique_ptr<Setting<T>::ValueValidator> validator = nullptr;
         if(obj["type"] == "range"){
             std::vector<typename Setting<T>::RangeValueValidator::Range> vec;
             for(auto const& range : obj["ranges"]){
@@ -181,7 +181,7 @@ public:
                 }
             }
 
-            validator = std::make_shared<Setting<T>::RangeValueValidator>(std::as_const(vec));
+            validator = std::make_unique<Setting<T>::RangeValueValidator>(std::as_const(vec));
         }
         else if(obj["type"] == "discrete"){
             std::vector<T> vec;
@@ -189,19 +189,21 @@ public:
                 vec.push_back(valid_value.as<T>());
             }
 
-            validator = std::make_shared<Setting<T>::DiscreteValueValidator>(std::as_const(vec));
+            validator = std::make_unique<Setting<T>::DiscreteValueValidator>(std::as_const(vec));
         }
         else throw std::runtime_error("ConfigurationManager - parseValidator - No type of Validator specified");
-        return validator;
+        return std::move(validator);
     }
 
-    Setting(SettingTag t_tag, T t_value, T t_default_value, std::shared_ptr<ValueValidator> t_validator) :
-        tag(t_tag), validator(t_validator) {
+    Setting(SettingTag t_tag, T t_value, T t_default_value, std::unique_ptr<ValueValidator> t_validator) :
+        tag(t_tag) {
             value = t_value;
+            validator = std::move(t_validator);
+            if(validator == nullptr) CORE_WARN("ConfigurationManager - Setting Constructor - No validator supplied");
             setValue(t_value);
     }
 
-    Setting(SettingTag t_tag, T t_default_value, std::shared_ptr<ValueValidator> t_validator) { 
+    Setting(SettingTag t_tag, T t_default_value, std::unique_ptr<ValueValidator> t_validator) { 
         Setting(t_tag, t_default_value, t_default_value, t_validator);
     }
 
@@ -213,12 +215,13 @@ public:
     }
 
     void setValue(T t_value){
+        if(!validator) CORE_WARN("ConfigurationManager - setValue - value has no validator.");
         if(validator->isValid(t_value)){
             value = t_value;
         }
         else {
-            CORE_INFO("ConfigurationManager - setValue - value: {} is not valid", std::to_string(t_value));
             value = validator->getClosestValidValue(t_value);
+            CORE_INFO("ConfigurationManager - setValue - value: {} is not valid. Falling back to: {}", std::to_string(t_value), std::to_string(value));
         }
     }
 
@@ -229,6 +232,10 @@ public:
     T getValue() const {
         return value;
     }   
+
+    bool hasValidator(){
+        return validator != nullptr;
+    }
 private:
     SettingTag tag;
     T value;

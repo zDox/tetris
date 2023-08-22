@@ -136,17 +136,33 @@ void Config::loadSettingDetails(std::string file_path){
         switch (type){
             case SettingType::BOOL:
                 setting = Setting<bool>::parseSetting(root[key]); 
+                if(!std::get<Setting<bool>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
                 break;
             case SettingType::INT: 
-                setting = Setting<bool>::parseSetting(root[key]);
+                setting = Setting<int>::parseSetting(root[key]);
+                if(!std::get<Setting<int>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
                 break;
             case SettingType::DOUBLE:
                 setting = Setting<double>::parseSetting(root[key]);
+                if(!std::get<Setting<double>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
                 break;
             default:
                 continue;
         }
-        settings.emplace(key, setting);
+        settings.emplace(key, std::move(setting));
+        switch (type){
+            case SettingType::BOOL:
+                if(std::get<Setting<bool>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
+                break;
+            case SettingType::INT: 
+                if(std::get<Setting<int>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
+                break;
+            case SettingType::DOUBLE:
+                if(std::get<Setting<double>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
+                break;
+            default:
+                continue;
+        }
     }
 
     

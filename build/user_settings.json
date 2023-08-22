@@ -1,3 +1,4 @@
 {
-    "WIDTH": 1920
+    "WIDTH": 1920,
+    "VSYNC": true
 }

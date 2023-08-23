@@ -2,7 +2,7 @@
     "WIDTH": {
         "type": "int",
         "tag": "GRAPHICS",
-        "default_value": 1920,
+        "default_value": 200,
         "validator": {
             "type": "discrete",
             "valid_values": [1920]

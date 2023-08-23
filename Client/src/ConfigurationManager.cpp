@@ -136,33 +136,17 @@ void Config::loadSettingDetails(std::string file_path){
         switch (type){
             case SettingType::BOOL:
                 setting = Setting<bool>::parseSetting(root[key]); 
-                if(!std::get<Setting<bool>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
                 break;
             case SettingType::INT: 
                 setting = Setting<int>::parseSetting(root[key]);
-                if(!std::get<Setting<int>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
                 break;
             case SettingType::DOUBLE:
                 setting = Setting<double>::parseSetting(root[key]);
-                if(!std::get<Setting<double>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
                 break;
             default:
                 continue;
         }
         settings.emplace(key, std::move(setting));
-        switch (type){
-            case SettingType::BOOL:
-                if(std::get<Setting<bool>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
-                break;
-            case SettingType::INT: 
-                if(std::get<Setting<int>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
-                break;
-            case SettingType::DOUBLE:
-                if(std::get<Setting<double>>(setting).hasValidator()) CORE_TRACE("Setting key: {} has validator", key);
-                break;
-            default:
-                continue;
-        }
     }
 
     
@@ -198,8 +182,8 @@ void Config::saveSettings(std::string file_path){
 }
 
 void Config::load(std::string t_filename_settings, std::string t_filename_settings_details){
-    file_path_settings = t_filename_settings;
-    file_path_settings_details = t_filename_settings_details;
+    file_path_settings = "res/" + t_filename_settings;
+    file_path_settings_details = "res/" + t_filename_settings_details;
     loadSettingDetails(file_path_settings_details);
     loadSettings(file_path_settings);
 }

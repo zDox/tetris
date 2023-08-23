@@ -13,7 +13,6 @@ set(CMAKE_BUILD_PARALLEL_LEVEL 8)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 set(CMAKE_CXX_STANDARD 23)
 
-
 # Libs Header dirs
 set(YOJIMBO_DIR ../External/yojimbo)
 set(ZPP_BITS_DIR ../External/zpp_bits)
@@ -31,6 +30,12 @@ aux_source_directory(${COMMON_DIR}/include COMMON_HEADERS)
 aux_source_directory(${COMMON_DIR}/src COMMON_SOURCES)
 
 add_executable(TetrisClient ${SOURCES} ${COMMON_SOURCES} ${HEADERS} ${COMMON_HEADERS})
+
+# Commands to run before building
+# Copy resources
+add_custom_command(TARGET TetrisClient PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${CMAKE_SOURCE_DIR}/Client/res/ $<TARGET_FILE_DIR:TetrisClient>/res)
 
 # Specify the include directories
 target_include_directories(TetrisClient PUBLIC include)

@@ -31,14 +31,7 @@ template
 <AllowedTypes T>
 class Setting{
 public:
-
     class ValueValidator{
-    public:
-        virtual bool isValid(const T& value) const = 0;
-        virtual T getClosestValidValue(const T& value) const = 0;
-    };
-
-    class RangeValueValidator : public ValueValidator{
     public:
         struct Range{
             T lower;
@@ -53,7 +46,7 @@ public:
             }
         };
 
-        RangeValueValidator(const std::vector<Range>& t_ranges){
+        ValueValidator(const std::vector<Range>& t_ranges){
             for(size_t i = 0; i < t_ranges.size()-1; i++){
                 if(t_ranges[i].upper > t_ranges[i+1].lower){
                     CORE_WARN("Setting - RangeValueValidator - Upper bound of Range({}) is overlapping with lower bound of Range({})",i , i+1);
@@ -62,7 +55,10 @@ public:
             }
         };
 
-        bool isValid(const T& value) const override{
+        ValueValidator(){
+        };
+
+        bool isValid(const T& value) const{
             for(const Range& range: ranges){
                 if(range.contains(value)){
                     return true;
@@ -71,7 +67,7 @@ public:
             return false;
         };
  
-        T getClosestValidValue(const T& value) const override {
+        T getClosestValidValue(const T& value) const{
             T min_distance = std::numeric_limits<T>::max();
             int closest_index = -1;
 
@@ -114,42 +110,6 @@ public:
         std::vector<Range> ranges;
     };
 
-    class DiscreteValueValidator : public ValueValidator{
-    private:
-        std::vector<T> valid_values;
-    public:
-        DiscreteValueValidator(const std::vector<T>& t_valid_values) :
-            valid_values(t_valid_values) {};
-
-        bool isValid(const T& value) const override {
-            for(const T& c_value : valid_values){
-                if(c_value != value) return false;
-            }
-            return true;
-        };
-
-        T getClosestValidValue(const T& value) const override{
-            T closest_value = valid_values[0];
-            T min_distance = std::numeric_limits<T>::max();
-
-            for (const T& c_value : valid_values) {
-                T distance = std::abs(c_value - value);
-                if (distance < min_distance) {
-                    min_distance = distance;
-                    closest_value = c_value;
-                }
-                // No need to further search because a distance smaller than 0 is not possible
-                if(distance == 0) break; 
-            }
-
-            return closest_value;
-        }
-
-        std::vector<T> getValidValues(){
-            return valid_values;
-        }
-    };
-
     static SettingTag parseTag(std::string tag_string){
         if(tag_string == "GRAPHICS"){
             return SettingTag::GRAPHICS;
@@ -166,44 +126,42 @@ public:
         SettingTag tag = parseTag(obj["tag"].asString());
         T default_value = obj["default_value"].as<T>();
         
-        std::unique_ptr<Setting<T>::ValueValidator> validator = parseValidator(obj["validator"]);
-        return Setting<T>(tag, default_value, std::move(validator)); 
+        Setting<T>::ValueValidator validator = parseValidator(obj["validator"]);
+        return Setting<T>(tag, default_value, validator); 
     }
 
-    static std::unique_ptr<Setting<T>::ValueValidator> parseValidator(Json::Value obj){
-        std::unique_ptr<Setting<T>::ValueValidator> validator = nullptr;
+    static Setting<T>::ValueValidator parseValidator(Json::Value obj){
         if(obj["type"] == "range"){
-            std::vector<typename Setting<T>::RangeValueValidator::Range> vec;
+            std::vector<typename Setting<T>::ValueValidator::Range> vec;
             for(auto const& range : obj["ranges"]){
                 if(range.size() == 2){
-                    vec.push_back(typename Setting<T>::RangeValueValidator::Range(range[0].as<T>(),
+                    vec.push_back(typename Setting<T>::ValueValidator::Range(range[0].as<T>(),
                                                                          range[1].as<T>()));
                 }
             }
 
-            validator = std::make_unique<Setting<T>::RangeValueValidator>(std::as_const(vec));
+            return Setting<T>::ValueValidator(std::as_const(vec));
         }
         else if(obj["type"] == "discrete"){
-            std::vector<T> vec;
+            std::vector<typename Setting<T>::ValueValidator::Range> vec;
             for(auto const& valid_value : obj["valid_values"]){
-                vec.push_back(valid_value.as<T>());
+                vec.push_back(typename Setting<T>::ValueValidator::Range(valid_value.as<T>(),
+                                                                         valid_value.as<T>()));
             }
 
-            validator = std::make_unique<Setting<T>::DiscreteValueValidator>(std::as_const(vec));
+            return Setting<T>::ValueValidator(std::as_const(vec));
         }
         else throw std::runtime_error("ConfigurationManager - parseValidator - No type of Validator specified");
-        return std::move(validator);
     }
 
-    Setting(SettingTag t_tag, T t_value, T t_default_value, std::unique_ptr<ValueValidator> t_validator) :
+    Setting(SettingTag t_tag, T t_value, T t_default_value, ValueValidator t_validator) :
         tag(t_tag) {
             value = t_value;
-            validator = std::move(t_validator);
-            if(validator == nullptr) CORE_WARN("ConfigurationManager - Setting Constructor - No validator supplied");
+            validator = t_validator;
             setValue(t_value);
     }
 
-    Setting(SettingTag t_tag, T t_default_value, std::unique_ptr<ValueValidator> t_validator) { 
+    Setting(SettingTag t_tag, T t_default_value, ValueValidator t_validator) { 
         Setting(t_tag, t_default_value, t_default_value, t_validator);
     }
 
@@ -215,12 +173,11 @@ public:
     }
 
     void setValue(T t_value){
-        if(!validator) CORE_WARN("ConfigurationManager - setValue - value has no validator.");
-        if(validator->isValid(t_value)){
+        if(validator.isValid(t_value)){
             value = t_value;
         }
         else {
-            value = validator->getClosestValidValue(t_value);
+            value = validator.getClosestValidValue(t_value);
             CORE_INFO("ConfigurationManager - setValue - value: {} is not valid. Falling back to: {}", std::to_string(t_value), std::to_string(value));
         }
     }
@@ -233,14 +190,11 @@ public:
         return value;
     }   
 
-    bool hasValidator(){
-        return validator != nullptr;
-    }
 private:
     SettingTag tag;
     T value;
     T default_value;
-    std::shared_ptr<ValueValidator> validator;
+    ValueValidator validator;
 };
 
 #endif

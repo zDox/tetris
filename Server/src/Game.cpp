@@ -247,6 +247,7 @@ void Game::broadcastGrid(uint64_t client_id, std::vector<std::vector<sf::Color>>
 }
 
 void Game::sendPlayerJoin(uint64_t sender_id, uint64_t receiver_id){
+    CORE_TRACE("Game({}) - SendMessage - PlayerJoin - sender: {}, receiver: {}", game_id, players[sender_id]->player.name, players[receiver_id]->player.name);
     int client_index = getPlayersClientIndex(receiver_id);
     PlayerJoinMessage* message = (PlayerJoinMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_JOIN);
     message->game_id = game_id;
@@ -263,6 +264,7 @@ void Game::broadcastPlayerJoin(uint64_t client_id){
 
 void Game::broadcastPlayerLeave(uint64_t client_id){
     for(auto [p_client_id, player] : players){
+        CORE_TRACE("Game({}) - SendMessage - PlayerLeave - sender: {}, receiver: {}", game_id, players[client_id]->player.name, players[p_client_id]->player.name);
         int client_index = getPlayersClientIndex(p_client_id);
         PlayerLeaveMessage* message = (PlayerLeaveMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_LEAVE);
         message->game_id = game_id;
@@ -276,6 +278,7 @@ void Game::sendPlayerData(uint64_t sender_id, uint64_t receiver_id){
     std::shared_ptr<GamePlayer> s_player = players[sender_id];
     Player player = s_player->player;
     int client_index = getPlayersClientIndex(receiver_id);
+    CORE_TRACE("Game({}) - SendMessage - PlayerData - sender: {}, receiver: {}", game_id, player.name, players[receiver_id]->player.name);
     PlayerDataMessage* message = (PlayerDataMessage*) server->CreateMessage(client_index, (int)MessageType::PLAYER_DATA);
     message->game_id = game_id;
     message->player = player;

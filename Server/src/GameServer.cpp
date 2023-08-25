@@ -240,7 +240,7 @@ void GameServer::sendGameData(uint64_t receiver_id, int game_id){
 
     int client_index = getPlayersClientIndex(receiver_id);
 
-    CORE_TRACE("GameServer - Sending GameData(game_id:{}) to Player({})", game_id, receiver_id);
+    CORE_TRACE("GameServer - SendMessage - GameData({}) to Player({})", game_id, players[receiver_id]->player.name);
 
     GameDataMessage* message = (GameDataMessage*) server->CreateMessage(client_index, (int)MessageType::GAME_DATA);
     message->game_data = games[game_id]->getGameData();

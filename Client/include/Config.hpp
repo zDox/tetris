@@ -45,11 +45,11 @@ private:
                 }
             }
             catch (std::bad_variant_access const& e){
-                throw std::runtime_error("ConfigurationManager - setValue - Setting is of type: " + std::to_string((*settings[key]).index()));
+                throw std::runtime_error("Config - setValue - Setting is of type: " + std::to_string((*settings[key]).index()));
             }
         }
         else{
-            throw std::runtime_error("ConfigurationManager - setValue - Setting '" + key + "' is not valid.");
+            throw std::runtime_error("Config - setValue - Setting '" + key + "' is not valid.");
         }
     }
 
@@ -60,11 +60,11 @@ private:
                 return std::get<Setting<T>>(*settings[key]).getValue();
             }
             catch (std::bad_variant_access const& e){
-                throw std::runtime_error("ConfigurationManager - getValue - Setting is of type: " + std::to_string((*settings[key]).index()));
+                throw std::runtime_error("Config - getValue - Setting is of type: " + std::to_string((*settings[key]).index()));
             }
         }
         else {
-            throw std::runtime_error("ConfigurationManager - getValue - Setting '" + key + "' is not valid"); 
+            throw std::runtime_error("Config - getValue - Setting '" + key + "' is not valid"); 
         }
     }
 

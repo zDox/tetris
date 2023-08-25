@@ -2,7 +2,7 @@
     "WIDTH": {
         "type": "int",
         "tag": "GRAPHICS",
-        "default_value": 200,
+        "default_value": 1920,
         "validator": {
             "type": "discrete",
             "valid_values": [1920]
@@ -38,7 +38,7 @@
     "FORCED_FALLING_SPEED": {
         "type": "double",
         "tag": "GAMEPLAY",
-        "default_value": 40.0,
+        "default_value": 4.0,
         "validator": {
             "type": "range",
             "ranges": [[1.0, 100.0]]

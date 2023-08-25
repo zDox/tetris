@@ -61,10 +61,12 @@ void NetworkManager::connect(std::string text_address){
     if(server_address.GetPort() == 0) server_address.SetPort(SERVER_PORT);
 
     client->InsecureConnect(DEFAULT_PRIVATE_KEY, client_id, server_address);
+    connection_status_handler(getConnectionStatus());
 } 
 
 void NetworkManager::disconnect(){
     client->Disconnect();
+    connection_status_handler(getConnectionStatus());
 }
 
 void NetworkManager::start(){

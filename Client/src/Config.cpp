@@ -1,4 +1,4 @@
-#include "ConfigurationManager.hpp"
+#include "Config.hpp"
 #include <json/json.h>
 #include <fstream>
 #include <filesystem>
@@ -12,7 +12,7 @@ void Config::resetSetting(std::string key){
         }, (*settings[key]));
     }
     else {
-        throw std::runtime_error("ConfigurationManager - resetSetting - Setting '" + key + "' is not valid.");
+        throw std::runtime_error("Config - resetSetting - Setting '" + key + "' is not valid.");
     }
 }
 
@@ -64,7 +64,7 @@ void Config::unregisterHandlers(){
 void Config::loadSettings(std::string file_path){
     std::ifstream file(file_path);
     if(!file.is_open()){
-        CORE_WARN("ConfigurationManager - Config file not found. Using default configuration.");
+        CORE_WARN("Config - Config file not found. Using default configuration.");
         return;
     }
 
@@ -72,14 +72,14 @@ void Config::loadSettings(std::string file_path){
     Json::Value root;
     std::string errs;
     if(!Json::parseFromStream(reader_builder, file, &root, &errs)) {
-        CORE_WARN("ConfigurationManager - Failed parsing configuration file: {}", errs);
-        CORE_WARN("ConfigurationManager - using default configuration");
+        CORE_WARN("Config - Failed parsing configuration file: {}", errs);
+        CORE_WARN("Config - using default configuration");
         return;
     }
     
     for(auto [key, d_value] : settings){
         if(!root.isMember(key)){
-            CORE_WARN("ConfigurationManager - Key: {} not found in config file. Falling back to default.", key);
+            CORE_WARN("Config - Key: {} not found in config file. Falling back to default.", key);
             continue;
         }
         CORE_DEBUG("Key: {}", key);
@@ -108,22 +108,21 @@ void Config::loadSettings(std::string file_path){
 void Config::loadSettingDetails(std::string file_path){
     std::ifstream file(file_path);
     if(!file.is_open()){
-        throw std::runtime_error("ConfigurationManager - SettingDetails '" + file_path + "' file not found");
+        throw std::runtime_error("Config - SettingDetails '" + file_path + "' file not found");
     }
 
     Json::Reader reader;
     Json::Value root;
     std::string errs;
     if(!reader.parse(file, root)) {
-        throw std::runtime_error("ConfigurationManager - Failed parsing configuration file: " + errs);
+        throw std::runtime_error("Config - Failed parsing configuration file: " + errs);
     }
-
     
     for (const auto& key : root.getMemberNames()){
         bool skip = false;
         for(const auto& check_key : REQUIRED_SETTING_MEMBERS){
             if(!root[key].isMember(check_key)){
-                CORE_WARN("ConfigurationManager - loadSettingDetails - Required member '{}' not in setting '{}'",
+                CORE_WARN("Config - loadSettingDetails - Required member '{}' not in setting '{}'",
                            check_key, key);
                 skip = true;
             }
@@ -172,16 +171,17 @@ void Config::saveSettings(std::string file_path){
 
     std::ofstream file(file_path);
     if(!file.is_open()){
-        CORE_WARN("ConfigurationManager - writing - Failed to open file");
+        CORE_WARN("Config - writing - Failed to open file");
         return;
     }
 
     file << root;
-    CORE_DEBUG("ConfigurationManager - writing - Saved config file");
+    CORE_DEBUG("Config - writing - Saved config file");
     file.close();
 }
 
 void Config::load(std::string t_filename_settings, std::string t_filename_settings_details){
+    CORE_INFO("Config - loading config for '{}'", t_filename_settings);
     file_path_settings = "res/" + t_filename_settings;
     file_path_settings_details = "res/" + t_filename_settings_details;
     loadSettingDetails(file_path_settings_details);

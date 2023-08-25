@@ -14,7 +14,7 @@
 #include "Definitions.hpp"
 #include "StateManager.hpp"
 #include "NetworkManager.hpp"
-#include "ConfigurationManager.hpp"
+#include "Config.hpp"
 
 enum CollisionType{
     NONE,

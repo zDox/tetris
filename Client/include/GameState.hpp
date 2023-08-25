@@ -39,12 +39,13 @@ private:
     bool hold_up = false;
     bool hold_left = false;
     bool hold_right = false;
+    sf::Time forced_falling_time;
     sf::Clock game_clock;
     sf::Time next_cycle = sf::seconds(0);
 
 
     void handleNextTetramino();
-    void handleKeyboard();
+    void handleKeyboard(sf::Time dt);
     void updateUI();
     void updatePlayerUI(uint64_t p_client_id);
     void updatePlayerUIs();

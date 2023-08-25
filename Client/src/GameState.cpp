@@ -139,7 +139,7 @@ void GameState::updatePlayerUIs(){
     }
 }
 
-void GameState::handleKeyboard(){
+void GameState::handleKeyboard(sf::Time dt){
     PlayerInput player_input;
     if(data->window->hasFocus()){
         // Left
@@ -164,8 +164,12 @@ void GameState::handleKeyboard(){
         if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) hold_up = false;
 
         // Down
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)){
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && forced_falling_time <= sf::seconds(0)){
             player_input.down = true;
+            forced_falling_time = sf::Time(sf::seconds(1/data->config.getDouble("FORCED_FALLING_SPEED")));
+        }
+        else {
+            forced_falling_time -= dt;
         }
     }
 
@@ -353,9 +357,9 @@ void GameState::update(sf::Time dt){
     }
 
     if(roundstate == RoundStateType::INGAME){
-        handleKeyboard();
+        handleKeyboard(dt);
         handleNextTetramino();
-        data->network_manager.update();
+        data->network_manager.update(); 
         game_logic.update(dt);
         frame_counter++;
     }

@@ -29,7 +29,7 @@ SettingType parseType(std::string type_string){
 }
 
 private:
-    std::unordered_map<std::string, SettingWrapper> settings;
+    std::unordered_map<std::string, std::shared_ptr<SettingWrapper>> settings;
     std::unordered_map<SettingTag, std::function<void()>> handlers;
     std::string file_path_settings;
     std::string file_path_settings_details;
@@ -39,13 +39,13 @@ private:
     void setValue(std::string key, T value){
         if(settings.contains(key)) {
             try {
-                std::get<Setting<T>>(settings[key]).setValue(value);
-                if(handlers.contains(std::get<Setting<T>>(settings[key]).getTag())) {
-                    handlers[std::get<Setting<T>>(settings[key]).getTag()]();
+                std::get<Setting<T>>(*settings[key]).setValue(value);
+                if(handlers.contains(std::get<Setting<T>>(*settings[key]).getTag())) {
+                    handlers[std::get<Setting<T>>(*settings[key]).getTag()]();
                 }
             }
             catch (std::bad_variant_access const& e){
-                throw std::runtime_error("ConfigurationManager - setValue - Setting is of type: " + std::to_string(settings[key].index()));
+                throw std::runtime_error("ConfigurationManager - setValue - Setting is of type: " + std::to_string((*settings[key]).index()));
             }
         }
         else{
@@ -57,10 +57,10 @@ private:
     T getValue(std::string key){
         if(settings.contains(key)){
             try {
-                return std::get<Setting<T>>(settings[key]).getValue();
+                return std::get<Setting<T>>(*settings[key]).getValue();
             }
             catch (std::bad_variant_access const& e){
-                throw std::runtime_error("ConfigurationManager - getValue - Setting is of type: " + std::to_string(settings[key].index()));
+                throw std::runtime_error("ConfigurationManager - getValue - Setting is of type: " + std::to_string((*settings[key]).index()));
             }
         }
         else {

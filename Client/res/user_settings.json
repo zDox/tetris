@@ -1,3 +1,7 @@
 {
-    "WIDTH": 1920
+	"FORCED_FALLING_SPEED" : 0.0,
+	"FRAME_LIMIT" : 22016,
+	"HEIGHT" : 22016,
+	"VSYNC" : false,
+	"WIDTH" : 1920
 }

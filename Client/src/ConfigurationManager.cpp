@@ -9,7 +9,7 @@ void Config::resetSetting(std::string key){
     if(settings.contains(key)){
         std::visit([](auto&& setting){
             setting.reset();
-        }, settings[key]);
+        }, (*settings[key]));
     }
     else {
         throw std::runtime_error("ConfigurationManager - resetSetting - Setting '" + key + "' is not valid.");
@@ -84,20 +84,20 @@ void Config::loadSettings(std::string file_path){
         }
         CORE_DEBUG("Key: {}", key);
 
-        switch (d_value.index()){
+        switch ((*d_value).index()){
             case 0:
             {
-                std::get<Setting<bool>>(settings[key]).setValue(root[key].asBool());
+                std::get<Setting<bool>>(*settings[key]).setValue(root[key].asBool());
                 break;
             }
             case 1:
             {
-                std::get<Setting<int>>(settings[key]).setValue(root[key].asInt());
+                std::get<Setting<int>>(*settings[key]).setValue(root[key].asInt());
                 break;
             }
             case 2:
             {
-                std::get<Setting<double>>(settings[key]).setValue(root[key].asDouble());
+                std::get<Setting<double>>(*settings[key]).setValue(root[key].asDouble());
                 break;
             }
         }
@@ -132,21 +132,21 @@ void Config::loadSettingDetails(std::string file_path){
         if(skip) continue;
         SettingType type = parseType(root[key]["type"].asString());
 
-        SettingWrapper setting;
+        std::shared_ptr<SettingWrapper> setting;
         switch (type){
             case SettingType::BOOL:
-                setting = Setting<bool>::parseSetting(root[key]); 
+                setting = std::make_shared<SettingWrapper>(Setting<bool>::parseSetting(root[key])); 
                 break;
             case SettingType::INT: 
-                setting = Setting<int>::parseSetting(root[key]);
+                setting = std::make_shared<SettingWrapper>(Setting<int>::parseSetting(root[key])); 
                 break;
             case SettingType::DOUBLE:
-                setting = Setting<double>::parseSetting(root[key]);
+                setting = std::make_shared<SettingWrapper>(Setting<double>::parseSetting(root[key])); 
                 break;
             default:
                 continue;
         }
-        settings.emplace(key, std::move(setting));
+        settings.try_emplace(key, setting);
     }
 
     
@@ -155,17 +155,17 @@ void Config::loadSettingDetails(std::string file_path){
 void Config::saveSettings(std::string file_path){
     Json::Value root;
     for(auto [key, value] : settings){
-        switch(value.index()){
+        switch((*value).index()){
             case 0:
-                root[key] = std::get<Setting<bool>>(value).getValue();
+                root[key] = std::get<Setting<bool>>(*value).getValue();
                 break;
 
             case 1:
-                root[key] = std::get<Setting<int>>(value).getValue();
+                root[key] = std::get<Setting<int>>(*value).getValue();
                 break;
 
             case 2:
-                root[key] = std::get<Setting<double>>(value).getValue();
+                root[key] = std::get<Setting<double>>(*value).getValue();
                 break;
         }
     }

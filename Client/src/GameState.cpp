@@ -252,7 +252,10 @@ void GameState::drawPlayers(){
    
     for(auto[p_client_id, c_player] : players){
         if(p_client_id == client_id) continue;
-        if(c_player->player.grid.size() < ROWS-1)continue;
+        if(c_player->player.grid.size() < ROWS-1){
+            CORE_WARN("GameState - drawPlayers - player({}) has to small grid size({}).", p_client_id, c_player->player.grid.size());
+            continue;
+        };
 
         int row = static_cast<int>((std::floor(count % a)));
         int col = static_cast<int>((std::floor(count / a)));
@@ -275,7 +278,7 @@ void GameState::drawUI(){
 
 void GameState::handleGridMessage(yojimbo::Message* t_message){
     GridMessage* message = (GridMessage*) t_message;
-    NETWORK_TRACE("PROCESS_MESSAGE - GridMessage - Player({}", message->client_id);
+    NETWORK_TRACE("PROCESS_MESSAGE - GridMessage - Player({})", message->client_id);
     if(!players.contains(message->client_id)) return;
     if(message->client_id == client_id) return;
     players[message->client_id]->player.grid = message->grid;
@@ -317,8 +320,8 @@ void GameState::handlePlayerJoinMessage(yojimbo::Message* t_message){
     
     players.emplace(c_player->player.client_id, c_player);
 
-    initPlayerDrawingGrid(c_player->player.client_id);
-    initPlayerUI(c_player->player.client_id);
+    initPlayerDrawingGrid(message->client_id);
+    initPlayerUI(message->client_id);
 };
 
 void GameState::handlePlayerLeaveMessage(yojimbo::Message* t_message){

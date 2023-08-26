@@ -38,7 +38,7 @@ void Game::addPlayer(Player t_player){
     std::shared_ptr<GamePlayer> new_player = std::make_shared<GamePlayer>();
     new_player->player = t_player;
     new_player->gamelogic.init();
-    
+    new_player->player.grid = convertGridToColors(new_player->gamelogic.getGrid()); 
     players.emplace(t_player.client_id, new_player);
 
     CORE_INFO("Matchmaking - Player({}) joined the game({})", t_player.name, game_id); if(players.size() >= MIN_STARTING_PLAYERS && !lobby_clock_running){
@@ -48,7 +48,7 @@ void Game::addPlayer(Player t_player){
     }
 
     broadcastPlayerJoin(t_player.client_id);
-    broadcastGrid(t_player.client_id, new_player->gamelogic.getGrid());
+    broadcastGrid(t_player.client_id);
     broadcastPlayerData(t_player.client_id);
 
     // Send to him all nescerray data
@@ -56,7 +56,6 @@ void Game::addPlayer(Player t_player){
         if(p_client_id == t_player.client_id) continue;
         sendPlayerJoin(p_client_id, t_player.client_id);
         sendPlayerData(p_client_id, t_player.client_id);
-        sendGrid(p_client_id, t_player.client_id, players[p_client_id]->gamelogic.getGrid());
     }
 
     sendGameData(t_player.client_id);
@@ -231,18 +230,18 @@ void Game::broadcastGameData(){
     }
 }
 
-void Game::sendGrid(uint64_t sender_id, uint64_t receiver_id, std::vector<std::vector<sf::Color>> grid){
+void Game::sendGrid(uint64_t sender_id, uint64_t receiver_id){
     int client_index = getPlayersClientIndex(receiver_id);
     GridMessage* message = (GridMessage*) server->CreateMessage(client_index, (int)MessageType::GRID);
     message->game_id = game_id;
     message->client_id = sender_id;
-    message->grid = convertGridToColors(grid);
+    message->grid = convertGridToColors(players[sender_id]->gamelogic.getGrid());
     server->SendMessage(client_index, (int) GameChannel::RELIABLE, message);
 }
 
-void Game::broadcastGrid(uint64_t client_id, std::vector<std::vector<sf::Color>> grid){
+void Game::broadcastGrid(uint64_t client_id){
     for(auto [p_client_id, player] : players){
-        sendGrid(client_id, p_client_id, grid);
+        sendGrid(client_id, p_client_id);
     }
 }
 
@@ -364,7 +363,7 @@ void Game::updateIngameState(sf::Time dt){
         }
 
         if(!vecsAreEqual(old_grid, new_grid)){
-            broadcastGrid(client_id, new_grid);
+            broadcastGrid(client_id);
         }
     }
 

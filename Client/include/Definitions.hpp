@@ -6,9 +6,6 @@
 // Window 
 #define WINDOW_TITLE "Tetris"
 #define MENU_FPS 60
-#define GAME_FPS 144
-#define HEIGHT 800
-#define WIDTH 1000
 
 
 // GameSelector
@@ -25,7 +22,5 @@
 
 #define SPACING_PER_RECT 4.0 // Spacing between every rect in grid
 #define SPACING_BETWEEN_GRIDS 10 // Spaing between each opponent grid or the players own grid
-
-#define SIDE_LENGTH (static_cast<float>((HEIGHT- SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS)
 
 #endif

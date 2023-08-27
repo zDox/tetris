@@ -68,13 +68,14 @@ void GameState::initUI(){
 
 void GameState::initPlayerDrawingGrid(uint64_t p_client_id){
     if(!players.contains(p_client_id)) return;
+    float side_length = (static_cast<float>((data->config.getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
     c_player->drawing_grid.resize(ROWS);
     for(int i=0; i<ROWS; i++){
         for(int k=0; k<COLUMNS; k++){
-            std::shared_ptr<sf::RectangleShape> rect = std::make_shared<sf::RectangleShape>(sf::Vector2f(SIDE_LENGTH, SIDE_LENGTH));
+            std::shared_ptr<sf::RectangleShape> rect = std::make_shared<sf::RectangleShape>(sf::Vector2f(side_length, side_length));
             rect->setFillColor(GRID_COLOR);
-            rect->setPosition(k*SIDE_LENGTH + k*SPACING_PER_RECT + SPACING_LEFT, i*SIDE_LENGTH + i*SPACING_PER_RECT + SPACING_TOP);
+            rect->setPosition(k*side_length + k*SPACING_PER_RECT + SPACING_LEFT, i*side_length + i*SPACING_PER_RECT + SPACING_TOP);
             c_player->drawing_grid[i].push_back(rect);
         }
     }
@@ -191,12 +192,12 @@ void GameState::handleNextTetramino(){
 void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, float scale){
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
     // CORE_TRACE("GameState - drawPlayer - off_x: {}, off_y: {}", offset_x, offset_y);
-
+    float side_length = (static_cast<float>((data->config.getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
     // Draw the grid 
     for(int i = 0; i < ROWS; i++){
         for(int k = 0; k < COLUMNS; k++){
-            int pos_x = k*SIDE_LENGTH*scale + k*SPACING_PER_RECT*scale + offset_x;
-            int pos_y = i*SIDE_LENGTH*scale + i*SPACING_PER_RECT*scale + offset_y;
+            int pos_x = k*side_length*scale + k*SPACING_PER_RECT*scale + offset_x;
+            int pos_y = i*side_length*scale + i*SPACING_PER_RECT*scale + offset_y;
             uint32_t color_uint = c_player->player.grid[i][k];
             uint8_t red = (color_uint >> 24) & 0xFF;
             uint8_t green = (color_uint >> 16) & 0xFF;
@@ -204,7 +205,7 @@ void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, flo
             uint8_t alpha = color_uint & 0xFF;
             sf::Color color(red, green, blue, alpha);
             std::shared_ptr<sf::RectangleShape> rect = players[p_client_id]->drawing_grid[i][k];
-            rect->setSize(sf::Vector2(SIDE_LENGTH*scale, SIDE_LENGTH*scale));
+            rect->setSize(sf::Vector2(side_length*scale, side_length*scale));
             rect->setPosition(pos_x, pos_y);
             rect->setFillColor(color);
             data->window->draw(*rect);
@@ -213,7 +214,7 @@ void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, flo
 
     // Draw UI Elements
     c_player->stats_label->setPosition(offset_x, offset_y);
-    c_player->main_label->setPosition(offset_x, offset_y + HEIGHT*scale / 2);
+    c_player->main_label->setPosition(offset_x, offset_y + data->config.getInt("HEIGHT") *scale / 2);
 }
 
 void GameState::prepareLocalGrid(){
@@ -222,10 +223,11 @@ void GameState::prepareLocalGrid(){
 }
 
 void GameState::drawPlayers(){
-    int grid_pixel_width = ((SPACING_PER_RECT+SIDE_LENGTH)*COLUMNS);
-    int grid_pixel_height = ((SPACING_PER_RECT+SIDE_LENGTH)*ROWS);
-    int free_pixel_x = (WIDTH - SPACING_LEFT - grid_pixel_width);
-    int free_pixel_y = (HEIGHT - SPACING_TOP);
+    float side_length = (static_cast<float>((data->config.getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
+    int grid_pixel_width = ((SPACING_PER_RECT+side_length)*COLUMNS);
+    int grid_pixel_height = ((SPACING_PER_RECT+side_length)*ROWS);
+    int free_pixel_x = (data->config.getInt("WIDTH") - SPACING_LEFT - grid_pixel_width);
+    int free_pixel_y = (data->config.getInt("HEIGHT") - SPACING_TOP);
     
 
     prepareLocalGrid();

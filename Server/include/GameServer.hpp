@@ -52,8 +52,9 @@ private:
 
     // Processing Messages
     void processLoginRequest(uint64_t client_id, LoginRequestMessage* message);
-    void processGameJoinRequest(uint64_t client_id, GameJoinRequestMessage* message);
     void processGameListRequest(uint64_t client_id, GameListRequestMessage* message);
+    void processGameJoinRequest(uint64_t client_id, GameJoinRequestMessage* message);
+    void processGameLeaveRequest(uint64_t client_id, GameLeaveRequestMessage* message);
 
     void processMessage(int client_index, yojimbo::Message* message);
     void processMessages();

@@ -90,7 +90,7 @@ public:
 
     RoundStateType getRoundState();
     
-    void processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message);
+    void processPlayerInput(uint64_t client_id, PlayerInputMessage* message);
 
     void update(sf::Time dt);
 };

@@ -21,6 +21,10 @@ void GameState::destroy(){
     data->network_manager.unregisterMessageHandlers();
 };
 
+void GameState::leaveLobby(){
+    data->network_manager.queueGameLeaveRequest();
+    data->state_manager.switchToState(std::make_shared<GameSelectState>(data));
+}
 
 void GameState::initWindow(){  
     data->window->setFramerateLimit(data->config.getInt("FRAME_LIMIT"));
@@ -28,6 +32,13 @@ void GameState::initWindow(){
 
 void GameState::initVariables(){
     data->network_manager.start();
+
+    game_exit_button = tgui::Button::create("Exit Lobby");
+    game_exit_button->setVisible(false);
+    game_exit_button->setOrigin(1,1);
+    game_exit_button->setPosition("95%", "95%");
+    game_exit_button->onPress(&GameState::leaveLobby, this);
+    data->gui.add(game_exit_button);
 
     std::shared_ptr<ClientPlayer> c_player = std::make_shared<ClientPlayer>();
     c_player->drawing_grid.resize(ROWS);
@@ -98,6 +109,9 @@ void GameState::initPlayerUI(uint64_t p_client_id){
 }
 
 void GameState::updateUI(){
+    if(roundstate == RoundStateType::END){
+        game_exit_button->setVisible(true);
+    }
 }
 
 void GameState::updatePlayerUI(uint64_t p_client_id){
@@ -123,9 +137,10 @@ void GameState::updatePlayerUI(uint64_t p_client_id){
             break;
 
         case RoundStateType::END:
+            game_exit_button->setVisible(true);
             c_player->stats_label->setVisible(false);
             c_player->main_label->setVisible(true);
-            main_text = "Place " + std::to_string(c_player->player.position) + ".";
+            main_text = "Place " + std::to_string(c_player->player.position) + ".\n" + c_player->player.name;
             break;
         default:
             break;
@@ -358,7 +373,7 @@ void GameState::update(sf::Time dt){
     }
 
     if(roundstate == RoundStateType::DEAD){
-        data->state_manager.switchToState(std::make_shared<GameSelectState>(data));
+        leaveLobby();
     }
 
     if(roundstate == RoundStateType::INGAME){

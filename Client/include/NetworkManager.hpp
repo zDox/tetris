@@ -41,12 +41,13 @@ private:
     unsigned long cycle_count = 0;
 
     // Queues for Messages to be send
-    int game_id;
+    int game_id = -1;
     std::shared_ptr<PlayerInput> player_input;
     std::string requested_username = "";
     int wanted_game_id = -1;
     bool should_send_gamelist_request = false;
-    
+    bool should_send_gameleave_request = false;
+
     void generateClientID();
 
     void processMessage(yojimbo::Message* message);
@@ -57,6 +58,7 @@ private:
     void sendLoginRequest();
     void sendGameListRequest();
     void sendGameJoinRequest();
+    void sendGameLeaveRequest();
     void sendMessages(); 
 public:
     NetworkManager();
@@ -86,6 +88,7 @@ public:
     void queueLoginRequest(std::string username);
     void queueGameListRequest();
     void queueGameJoinRequest(int t_game_id);
+    void queueGameLeaveRequest();
 
     void update();
 };

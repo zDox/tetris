@@ -92,10 +92,6 @@ void NetworkManager::processMessage(yojimbo::Message* message){
         return;
     }
 
-    if(!message) {
-        CORE_ERROR("NetworkManager - processMessage - Message undefined");
-        return;
-    }
     if(message_handlers.contains(message_type)){
         message_handlers[message_type](message);
     }
@@ -133,8 +129,16 @@ void NetworkManager::queueGameJoinRequest(int t_game_id){
     wanted_game_id = t_game_id;
 }
 
+void NetworkManager::queueGameLeaveRequest(){
+    should_send_gameleave_request = true;
+}
+
 void NetworkManager::sendPlayerInput(){
     if(!player_input) return;
+    if(game_id == -1){
+        CORE_WARN("NetworkManager - sendPlayerInput - GameID is not set");
+        return;
+    }
 
     PlayerInputMessage* message = (PlayerInputMessage*) client->CreateMessage((int)MessageType::PLAYER_INPUT);
     message->game_id = game_id;
@@ -182,11 +186,23 @@ void NetworkManager::sendGameJoinRequest(){
     wanted_game_id = -1;
 }
 
+void NetworkManager::sendGameLeaveRequest(){
+    if(!should_send_gameleave_request) return;
+
+    CORE_TRACE("NetworkManager - Sending GameLeaveRequest - game: {}", game_id);
+    GameLeaveRequestMessage* message = (GameLeaveRequestMessage*) client->CreateMessage((int) MessageType::GAME_LEAVE_REQUEST);
+    message->game_id = game_id;
+    client->SendMessage((int)GameChannel::RELIABLE, message);
+    should_send_gameleave_request = false;
+    game_id = -1;
+}
+
 void NetworkManager::sendMessages(){
     sendPlayerInput();
     sendLoginRequest();
     sendGameListRequest();
     sendGameJoinRequest();
+    sendGameLeaveRequest();
 }
 
 void NetworkManager::registerConnectionStatusHandler(std::function<void(ConnectionStatus)> func){

@@ -28,6 +28,7 @@ private:
     // SFML
     // SFML -- Drawing data
     long frame_counter=0;
+    tgui::Button::Ptr game_exit_button;
 
     // Game Logic                       
     int game_id = -1;
@@ -64,6 +65,7 @@ private:
     void initPlayerDrawingGrid(uint64_t p_client_id);
     void initPlayerUI(uint64_t p_client_id);
 
+    void leaveLobby();
 public:
     explicit GameState(std::shared_ptr<ApplicationData> t_data);
     void init() override;

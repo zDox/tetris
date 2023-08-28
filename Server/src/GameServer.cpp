@@ -154,15 +154,26 @@ void GameServer::processGameJoinRequest(uint64_t client_id, GameJoinRequestMessa
         CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was unsuccessful. Game is not in LobbyState", client_id);
         answer->result = GameJoinResult::ALREADY_STARTED;
     }
-    else {
-        // GameJoin would be succesfull so add Player to the game
-        CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was succesfull", client_id);
-        server->SendMessage(client_index, (int)GameChannel::RELIABLE, answer);
-        games[wanted_game_id]->addPlayer(players[client_id]->player);
-        broadcastGameData(wanted_game_id);
+    server->SendMessage(client_index, (int)GameChannel::RELIABLE, answer);
+
+    if(answer->result != GameJoinResult::SUCCESS) return;
+    // GameJoin would be succesfull so add Player to the game
+    CORE_TRACE("GameServer - MatchMaking - GameJoin from player({}) was succesfull", client_id);
+    games[wanted_game_id]->addPlayer(players[client_id]->player);
+    broadcastGameData(wanted_game_id);
+}
+
+void GameServer::processGameLeaveRequest(uint64_t client_id, GameLeaveRequestMessage* message){
+    if(!games.contains(message->game_id)){
+        CORE_TRACE("GameServer - MatchMaking - GameLeave from player({}) - Game ID: {} is invalid", client_id, message->game_id);
         return;
     }
-    server->SendMessage(client_index, (int)GameChannel::RELIABLE, answer);
+    if(!games[message->game_id]->hasPlayer(client_id)) {
+        CORE_TRACE("GameServer - MatchMaking - GameLeave from player({}) - Player is not in game({})", client_id, message->game_id);
+        return;
+    }
+    games[message->game_id]->removePlayer(client_id);
+    broadcastGameData(message->game_id);
 }
 
 void GameServer::processGameListRequest(uint64_t client_id, GameListRequestMessage* message){
@@ -178,7 +189,7 @@ void GameServer::processMessage(int client_index, yojimbo::Message* message){
         {
             PlayerInputMessage* player_input_message = reinterpret_cast<PlayerInputMessage*>(message);
             if(!games.contains(player_input_message->game_id)) return;
-            games[player_input_message->game_id]->processPlayerInputMessage(client_id, reinterpret_cast<PlayerInputMessage*>(message));
+            games[player_input_message->game_id]->processPlayerInput(client_id, player_input_message);
             break;
         }
         case (int)MessageType::LOGIN_REQUEST:
@@ -193,6 +204,11 @@ void GameServer::processMessage(int client_index, yojimbo::Message* message){
             processGameJoinRequest(client_id, (GameJoinRequestMessage*) message);
             break;
 
+        case (int)MessageType::GAME_LEAVE_REQUEST:
+        {
+            processGameLeaveRequest(client_id, (GameLeaveRequestMessage*) message);
+            break;
+        }
         default:
             break;
     }

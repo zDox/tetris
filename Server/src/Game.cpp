@@ -57,23 +57,19 @@ void Game::addPlayer(Player t_player){
         sendPlayerJoin(p_client_id, t_player.client_id);
         sendPlayerData(p_client_id, t_player.client_id);
     }
-
-    sendGameData(t_player.client_id);
 }
 
 
 void Game::removePlayer(uint64_t client_id){
     if(!players.contains(client_id)) return;
-    players.erase(client_id);
     broadcastPlayerLeave(client_id);
+    players.erase(client_id);
     CORE_INFO("Matchmaking - Player({}) leaved the game({})", client_id, game_id);
     if(roundstate == RoundStateType::INGAME && players.size() < MIN_INGAME_PLAYERS){
         roundstate = RoundStateType::END;
-        broadcastGameData();
     }
     else if(roundstate == RoundStateType::LOBBY && players.size() < MIN_STARTING_PLAYERS){
         lobby_clock_running = false;
-        broadcastGameData();
     }
 }
 
@@ -186,7 +182,7 @@ void Game::handleGameFinished(){
     broadcastGameData();
 }
 
-void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* message){
+void Game::processPlayerInput(uint64_t client_id, PlayerInputMessage* message){
     if(!players.contains(client_id)) return;
     if(game_id != message->game_id) return;
     /*
@@ -216,6 +212,7 @@ void Game::processPlayerInputMessage(uint64_t client_id, PlayerInputMessage* mes
         player->playout_buffer.push_back(message->player_input);
     }
 }
+
 
 void Game::sendGameData(uint64_t p_client_id){
     int client_index = getPlayersClientIndex(p_client_id);

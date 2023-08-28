@@ -23,6 +23,7 @@ enum class MessageType {
     GAME_DATA,
     GAME_JOIN_REQUEST,
     GAME_JOIN_RESPONSE,
+    GAME_LEAVE_REQUEST,
     GAME_LIST_REQUEST,
     TETRAMINO_PLACEMENT,
     LOGIN_REQUEST, // Player Message when trying connecting to GameServer
@@ -74,7 +75,7 @@ struct GameConnectionConfig : yojimbo::ClientServerConfig {
     GameConnectionConfig()  {
         numChannels = 1;
         channel[(int)GameChannel::RELIABLE].type = yojimbo::CHANNEL_TYPE_RELIABLE_ORDERED;
-        protocolId = 4;
+        protocolId = 5;
     }
 };
 
@@ -197,6 +198,22 @@ struct GameJoinResponseMessage : public yojimbo::Message
         int result_value = static_cast<int>(result);
         serialize_int(stream, result_value, 0, 32);
         result = static_cast<GameJoinResult>(result_value);
+        return true;
+    }
+
+    YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS();
+};
+
+struct GameLeaveRequestMessage : public yojimbo::Message
+{
+    int game_id;
+
+
+    GameLeaveRequestMessage(){}; 
+
+    template <typename Stream> 
+    bool Serialize( Stream & stream ){        
+        serialize_int(stream, game_id, 0, std::numeric_limits<int>::max());
         return true;
     }
 
@@ -364,6 +381,7 @@ YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GRID, GridMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_DATA, GameDataMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_JOIN_REQUEST, GameJoinRequestMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_JOIN_RESPONSE, GameJoinResponseMessage);
+YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_LEAVE_REQUEST, GameLeaveRequestMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::GAME_LIST_REQUEST, GameListRequestMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::TETRAMINO_PLACEMENT, TetraminoPlacementMessage);
 YOJIMBO_DECLARE_MESSAGE_TYPE((int)MessageType::LOGIN_REQUEST, LoginRequestMessage);
@@ -385,6 +403,7 @@ inline MessageType convToMessageType(int message_type){
         GENERATE_MESSAGE_TYPE_CASE(GAME_DATA)
         GENERATE_MESSAGE_TYPE_CASE(GAME_JOIN_REQUEST)
         GENERATE_MESSAGE_TYPE_CASE(GAME_JOIN_RESPONSE)
+        GENERATE_MESSAGE_TYPE_CASE(GAME_LEAVE_REQUEST)
         GENERATE_MESSAGE_TYPE_CASE(GAME_LIST_REQUEST)
         GENERATE_MESSAGE_TYPE_CASE(TETRAMINO_PLACEMENT)
         GENERATE_MESSAGE_TYPE_CASE(LOGIN_REQUEST)

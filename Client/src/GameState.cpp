@@ -109,9 +109,6 @@ void GameState::initPlayerUI(uint64_t p_client_id){
 }
 
 void GameState::updateUI(){
-    if(roundstate == RoundStateType::END){
-        game_exit_button->setVisible(true);
-    }
 }
 
 void GameState::updatePlayerUI(uint64_t p_client_id){
@@ -137,7 +134,6 @@ void GameState::updatePlayerUI(uint64_t p_client_id){
             break;
 
         case RoundStateType::END:
-            game_exit_button->setVisible(true);
             c_player->stats_label->setVisible(false);
             c_player->main_label->setVisible(true);
             main_text = "Place " + std::to_string(c_player->player.position) + ".\n" + c_player->player.name;
@@ -291,6 +287,23 @@ void GameState::drawUI(){
     data->gui.draw();
 }
 
+void GameState::roundStateChange(){
+    switch (roundstate){
+        case RoundStateType::LOBBY:
+            break;
+        case RoundStateType::INGAME:
+            break;
+        case RoundStateType::END:
+            game_exit_button->setVisible(true);
+            break;
+        case RoundStateType::DEAD:
+            leaveLobby();
+            break;
+        case RoundStateType::COUNT:
+            break;
+    }
+};
+
 // Functions to process messages
 
 void GameState::handleGridMessage(yojimbo::Message* t_message){
@@ -308,8 +321,12 @@ void GameState::handleGameDataMessage(yojimbo::Message* t_message){
     if(game_id != game_data.game_id){
         return;
     }
+    RoundStateType previous = roundstate; 
     roundstate = game_data.roundstate;
-};
+    if(previous != roundstate){
+        roundStateChange();
+    }
+}
 
 void GameState::handleTetraminoPlacementMessage(yojimbo::Message* t_message){
     TetraminoPlacementMessage* message = (TetraminoPlacementMessage*) t_message;
@@ -370,10 +387,6 @@ void GameState::update(sf::Time dt){
     if(roundstate == RoundStateType::INGAME && !game_logic.isFinished() && !game_logic.isRunning()){
         game_logic.start();
         game_clock.restart();
-    }
-
-    if(roundstate == RoundStateType::DEAD){
-        leaveLobby();
     }
 
     if(roundstate == RoundStateType::INGAME){

@@ -66,6 +66,7 @@ private:
     void initPlayerUI(uint64_t p_client_id);
 
     void leaveLobby();
+    void roundStateChange();
 public:
     explicit GameState(std::shared_ptr<ApplicationData> t_data);
     void init() override;

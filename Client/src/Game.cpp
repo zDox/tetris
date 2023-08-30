@@ -7,13 +7,24 @@ Game::Game(){
 };
 
 bool Game::init(){
-    data->config.load("user_settings.json", "user_settings_details.json");
+    // Config init
+    data->config = std::make_shared<Config>();
+    data->config->load("user_settings.json", "user_settings_details.json");
+    
+    // Graphics init
+    data->gui = std::make_shared<tgui::Gui>();
+    sf::VideoMode desktop_mode = sf::VideoMode::getDesktopMode();
+    data->window->create(sf::VideoMode(data->config->getInt("WIDTH"), data->config->getInt("HEIGHT"), desktop_mode.bitsPerPixel), WINDOW_TITLE, sf::Style::Close | sf::Style::Titlebar);
+    data->gui->setWindow(*data->window);
+
+    // Overlay init
+    data->overlay = std::make_shared<ApplicationOverlay>(data->gui);
+    data->overlay->init();
+    data->overlay->addButton(9, "exit_app", "Exit Application", std::bind(&Game::close, this));
+
     
     if(!data->network_manager.init()) return false;
 
-    sf::VideoMode desktop_mode = sf::VideoMode::getDesktopMode();
-    data->window->create(sf::VideoMode(data->config.getInt("WIDTH"), data->config.getInt("HEIGHT"), desktop_mode.bitsPerPixel), WINDOW_TITLE, sf::Style::Close | sf::Style::Titlebar);
-    data->gui.setWindow(*data->window);
 
 
     data->state_manager.switchToState(std::make_shared<LoginState>(data));
@@ -67,6 +78,7 @@ void Game::run(){
 };
 
 void Game::close(){
-    data->config.save();
+    data->state_manager.destroyState();
+    data->config->save();
     data->network_manager.destroy();
 }

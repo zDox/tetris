@@ -15,7 +15,7 @@ void GameState::init(){
 }
 
 void GameState::destroy(){
-    data->gui.removeAllWidgets();
+    data->gui->remove(main_panel);
     data->network_manager.setGameID(-1);
     data->network_manager.stop();
     data->network_manager.unregisterMessageHandlers();
@@ -27,18 +27,21 @@ void GameState::leaveLobby(){
 }
 
 void GameState::initWindow(){  
-    data->window->setFramerateLimit(data->config.getInt("FRAME_LIMIT"));
+    data->window->setFramerateLimit(data->config->getInt("FRAME_LIMIT"));
 }
 
 void GameState::initVariables(){
     data->network_manager.start();
+
+    main_panel = tgui::Panel::create({"100%", "100%"});
+    data->gui->add(main_panel);
 
     game_exit_button = tgui::Button::create("Exit Lobby");
     game_exit_button->setVisible(false);
     game_exit_button->setOrigin(1,1);
     game_exit_button->setPosition("95%", "95%");
     game_exit_button->onPress(&GameState::leaveLobby, this);
-    data->gui.add(game_exit_button);
+    main_panel->add(game_exit_button);
 
     std::shared_ptr<ClientPlayer> c_player = std::make_shared<ClientPlayer>();
     c_player->drawing_grid.resize(ROWS);
@@ -79,7 +82,7 @@ void GameState::initUI(){
 
 void GameState::initPlayerDrawingGrid(uint64_t p_client_id){
     if(!players.contains(p_client_id)) return;
-    float side_length = (static_cast<float>((data->config.getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
+    float side_length = (static_cast<float>((data->config->getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
     c_player->drawing_grid.resize(ROWS);
     for(int i=0; i<ROWS; i++){
@@ -104,8 +107,8 @@ void GameState::initPlayerUI(uint64_t p_client_id){
     c_player->stats_label->setVisible(false);
     c_player->stats_label->setTextSize(14);
 
-    data->gui.add(c_player->main_label);
-    data->gui.add(c_player->stats_label);
+    main_panel->add(c_player->main_label);
+    main_panel->add(c_player->stats_label);
 }
 
 void GameState::updateUI(){
@@ -178,7 +181,7 @@ void GameState::handleKeyboard(sf::Time dt){
         // Down
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && forced_falling_time <= sf::seconds(0)){
             player_input.down = true;
-            forced_falling_time = sf::Time(sf::seconds(1/data->config.getDouble("FORCED_FALLING_SPEED")));
+            forced_falling_time = sf::Time(sf::seconds(1/data->config->getDouble("FORCED_FALLING_SPEED")));
         }
         else {
             forced_falling_time -= dt;
@@ -203,7 +206,7 @@ void GameState::handleNextTetramino(){
 void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, float scale){
     std::shared_ptr<ClientPlayer> c_player = players[p_client_id];
     // CORE_TRACE("GameState - drawPlayer - off_x: {}, off_y: {}", offset_x, offset_y);
-    float side_length = (static_cast<float>((data->config.getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
+    float side_length = (static_cast<float>((data->config->getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
     // Draw the grid 
     for(int i = 0; i < ROWS; i++){
         for(int k = 0; k < COLUMNS; k++){
@@ -225,7 +228,7 @@ void GameState::drawPlayer(uint64_t p_client_id, int offset_x, int offset_y, flo
 
     // Draw UI Elements
     c_player->stats_label->setPosition(offset_x, offset_y);
-    c_player->main_label->setPosition(offset_x, offset_y + data->config.getInt("HEIGHT") *scale / 2);
+    c_player->main_label->setPosition(offset_x, offset_y + data->config->getInt("HEIGHT") *scale / 2);
 }
 
 void GameState::prepareLocalGrid(){
@@ -234,11 +237,11 @@ void GameState::prepareLocalGrid(){
 }
 
 void GameState::drawPlayers(){
-    float side_length = (static_cast<float>((data->config.getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
+    float side_length = (static_cast<float>((data->config->getInt("HEIGHT") - SPACING_TOP - SPACING_BOTTOM) - static_cast<float>(ROWS) * SPACING_PER_RECT)) / static_cast<float>(ROWS);
     int grid_pixel_width = ((SPACING_PER_RECT+side_length)*COLUMNS);
     int grid_pixel_height = ((SPACING_PER_RECT+side_length)*ROWS);
-    int free_pixel_x = (data->config.getInt("WIDTH") - SPACING_LEFT - grid_pixel_width);
-    int free_pixel_y = (data->config.getInt("HEIGHT") - SPACING_TOP);
+    int free_pixel_x = (data->config->getInt("WIDTH") - SPACING_LEFT - grid_pixel_width);
+    int free_pixel_y = (data->config->getInt("HEIGHT") - SPACING_TOP);
     
 
     prepareLocalGrid();
@@ -284,7 +287,7 @@ void GameState::drawPlayers(){
 }
 
 void GameState::drawUI(){
-    data->gui.draw();
+    data->gui->draw();
 }
 
 void GameState::roundStateChange(){
@@ -369,7 +372,7 @@ void GameState::handlePlayerLeaveMessage(yojimbo::Message* t_message){
 void GameState::handleInputs(){
     sf::Event event;
     while(data->window->pollEvent(event)){
-        data->gui.handleEvent(event);
+        data->gui->handleEvent(event);
         if(event.type == sf::Event::Closed){
             data->window->close();
         }

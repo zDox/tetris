@@ -12,13 +12,13 @@ void LoginState::initVariables(){
 }
 
 void LoginState::initUi(){
-    int width = data->config.getInt("WIDTH");
-    int height = data->config.getInt("HEIGHT");
+    int width = data->config->getInt("WIDTH");
+    int height = data->config->getInt("HEIGHT");
     panel = tgui::Panel::create();
     panel->setOrigin(0, 0);
     panel->setPosition(0, 0);
     panel->setSize(width/2/2 < 600 ? width : width/2, height); 
-    data->gui.add(panel);
+    data->gui->add(panel);
 
     heading = tgui::Label::create("Connect to Server");
     heading->setOrigin(0.5f, 0);
@@ -79,7 +79,7 @@ void LoginState::init(){
 }
 
 void LoginState::destroy(){
-    data->gui.removeAllWidgets();
+    data->gui->remove(panel);
     data->network_manager.unregisterMessageHandlers();
     data->network_manager.unregisterConnectionStatusHandler();
 }
@@ -134,9 +134,14 @@ void LoginState::handleConnectionStatusChange(ConnectionStatus status){
 void LoginState::handleInputs(){
     sf::Event event;
     while(data->window->pollEvent(event)){
-        data->gui.handleEvent(event);
+        data->gui->handleEvent(event);
+        if(event.type == sf::Event::KeyPressed){
+            if(event.key.code == sf::Keyboard::Escape){
+                data->overlay->toggle();
+            }
+        }
         if(event.type == sf::Event::Closed){
-            data->window->close(); 
+            data->overlay->setEnabled(true);
         }
     }
 }
@@ -148,7 +153,7 @@ void LoginState::update(sf::Time dt){
 void LoginState::draw(){
     data->window->clear(BACKGROUND_COLOR);
 
-    data->gui.draw();
+    data->gui->draw();
 
     data->window->display();
 }

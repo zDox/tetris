@@ -9,7 +9,6 @@
 
 #include "Log.hpp"
 #include "Setting.hpp"
-#include "DefaultConfig.hpp"
 
 
 class Config{

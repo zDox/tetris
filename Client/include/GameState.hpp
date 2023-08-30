@@ -28,6 +28,7 @@ private:
     // SFML
     // SFML -- Drawing data
     long frame_counter=0;
+    tgui::Panel::Ptr main_panel;
     tgui::Button::Ptr game_exit_button;
 
     // Game Logic                       

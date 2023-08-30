@@ -12,22 +12,19 @@
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
 #include "Definitions.hpp"
+#include "ApplicationOverlay.hpp"
 #include "StateManager.hpp"
 #include "NetworkManager.hpp"
 #include "Config.hpp"
 
-enum CollisionType{
-    NONE,
-    SIDE,
-    BOTTOM
-};
 
 struct ApplicationData{
     StateManager state_manager;
     NetworkManager network_manager;
     std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>();
-    Config config;
-    tgui::Gui gui;
+    std::shared_ptr<Config> config;
+    std::shared_ptr<tgui::Gui> gui;
+    std::shared_ptr<ApplicationOverlay> overlay;
     int game_id = -1;
 };
 

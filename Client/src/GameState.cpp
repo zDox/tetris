@@ -15,6 +15,7 @@ void GameState::init(){
 }
 
 void GameState::destroy(){
+    data->overlay->removeButton("leave_lobby");
     data->gui->remove(main_panel);
     data->network_manager.setGameID(-1);
     data->network_manager.stop();
@@ -34,14 +35,8 @@ void GameState::initVariables(){
     data->network_manager.start();
 
     main_panel = tgui::Panel::create({"100%", "100%"});
+    main_panel->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
     data->gui->add(main_panel);
-
-    game_exit_button = tgui::Button::create("Exit Lobby");
-    game_exit_button->setVisible(false);
-    game_exit_button->setOrigin(1,1);
-    game_exit_button->setPosition("95%", "95%");
-    game_exit_button->onPress(&GameState::leaveLobby, this);
-    main_panel->add(game_exit_button);
 
     std::shared_ptr<ClientPlayer> c_player = std::make_shared<ClientPlayer>();
     c_player->drawing_grid.resize(ROWS);
@@ -73,10 +68,17 @@ void GameState::initHandlers(){
     data->network_manager.registerMessageHandler(
             MessageType::PLAYER_LEAVE, 
             std::bind(&GameState::handlePlayerLeaveMessage, this, std::placeholders::_1));
-    CORE_DEBUG("GameState - registration of message handler completed");
+
+    data->overlay->addButton(8, "leave_lobby", "Leave Lobby", std::bind(&GameState::leaveLobby, this));
 }
 
 void GameState::initUI(){
+    game_exit_button = tgui::Button::create("Exit Lobby");
+    game_exit_button->setVisible(false);
+    game_exit_button->setOrigin(1,1);
+    game_exit_button->setPosition("95%", "95%");
+    game_exit_button->onPress(&GameState::leaveLobby, this);
+    main_panel->add(game_exit_button);
 }
 
 
@@ -375,6 +377,14 @@ void GameState::handleInputs(){
         data->gui->handleEvent(event);
         if(event.type == sf::Event::Closed){
             data->window->close();
+        }
+        if(event.type == sf::Event::KeyPressed){
+            if(event.key.code == sf::Keyboard::Escape){
+                data->overlay->toggle();
+            }
+        }
+        if(event.type == sf::Event::Closed){
+            data->overlay->setEnabled(true);
         }
     }
 };

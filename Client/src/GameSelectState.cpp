@@ -144,8 +144,13 @@ void GameSelectState::handleInputs(){
     sf::Event event;
     while(data->window->pollEvent(event)){
         data->gui->handleEvent(event);
+        if(event.type == sf::Event::KeyPressed){
+            if(event.key.code == sf::Keyboard::Escape){
+                data->overlay->toggle();
+            }
+        }
         if(event.type == sf::Event::Closed){
-            data->window->close(); 
+            data->overlay->setEnabled(true);
         }
     }
 }

@@ -1,8 +1,8 @@
 #include "SettingsOverlay.hpp"
 #include "Definitions.hpp"
 
-SettingsOverlay::SettingsOverlay(std::shared_ptr<tgui::Gui> t_gui):
-    gui(t_gui){};
+SettingsOverlay::SettingsOverlay(std::shared_ptr<tgui::Gui> t_gui, std::shared_ptr<Config> t_config):
+    gui(t_gui), config(t_config){};
 
 void SettingsOverlay::init(){
     int current_width = gui->getWindow()->getSize().x;
@@ -20,6 +20,12 @@ void SettingsOverlay::init(){
 
     gui->add(background_panel);
     gui->add(main_panel);
+
+    // Width
+    width_combobox = tgui::ComboBox::create();
+    for(auto val : config->getValidValues<int>("WIDTH")){
+        width_combobox->addItem(std::to_string(val));
+    }
 
 }
 

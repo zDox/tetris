@@ -67,6 +67,7 @@ private:
         }
     }
 
+
     // Trys to load the settings from a .json file
     // which file path is defined in DEFINITIONS.hpp
     void loadSettings(std::string file_path);
@@ -82,7 +83,39 @@ public:
     int getInt(std::string key);
     double getDouble(std::string key);
 
+    template <typename T>
+    std::vector<T> getValidValues(std::string key){
+        if(settings.contains(key)){
+            try {
+                Setting<T> setting = std::get<Setting<T>>(*settings[key]);
+                std::shared_ptr<DiscreteValueValidator<T>> validator = dynamic_cast<std::shared_ptr<DiscreteValueValidator<T>>>(setting.getValidator());
+                return validator->getValidValues();
+            }
+            catch (std::bad_variant_access const& e){
+                throw std::runtime_error("Config - getValue - Setting is of type: " + std::to_string((*settings[key]).index()));
+            }
+        }
+        else {
+            throw std::runtime_error("Config - getValue - Setting '" + key + "' is not valid"); 
+        }
+    }
 
+    template <typename T>
+    std::pair<T,T> getRange(std::string key){
+        if(settings.contains(key)){
+            try {
+                Setting<T> setting = std::get<Setting<T>>(*settings[key]);
+                std::shared_ptr<RangeValueValidator<T>> validator = dynamic_cast<std::shared_ptr<RangeValueValidator<T>>>(setting.getValidator());
+                return validator->getRange();
+            }
+            catch (std::bad_variant_access const& e){
+                throw std::runtime_error("Config - getValue - Setting is of type: " + std::to_string((*settings[key]).index()));
+            }
+        }
+        else {
+            throw std::runtime_error("Config - getValue - Setting '" + key + "' is not valid"); 
+        }
+    }
     // Registers a handler 
     // Hanlder gets called when a setting changes
     // who has the group_tag assigned to it.

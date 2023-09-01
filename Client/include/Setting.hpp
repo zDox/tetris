@@ -43,7 +43,7 @@ class RangeValueValidator : public ValueValidator<T>{
     }
 public:
     RangeValueValidator(const std::pair<T, T>& t_ranges){
-        if(t_ranges[0] > t_ranges[1]) return;
+        if(t_ranges.first > t_ranges.second) return;
 
         lower = t_ranges.first;
         upper = t_ranges.second;
@@ -86,12 +86,8 @@ public:
         }        
     }
 
-    T getMin(){
-        return lower;
-    }
-
-    T getMax(){
-        return upper;
+    T getRange(){
+        return std::make_pair<T, T>(lower, upper);
     }
 
 private:
@@ -163,14 +159,14 @@ public:
         Json::Value val_obj = obj["validator"];
 
         if(val_obj["type"] == "range"){
-            std::vector<typename RangeValueValidator<T>::Range> vec;
+            std::pair<T, T> pair;
             Json::Value range = val_obj["range"];
             if(range.size() == 2){
-                vec.push_back(typename RangeValueValidator<T>::Range(range[0].as<T>(),
-                                                                     range[1].as<T>()));
+                pair = std::make_pair(range[0].as<T>(),
+                               range[1].as<T>());
             }
 
-            validator = std::make_unique<RangeValueValidator<T>>(std::as_const(vec));
+            validator = std::make_unique<RangeValueValidator<T>>(std::as_const(pair));
         }
         else if(val_obj["type"] == "discrete"){
             std::vector<T> vec;
@@ -216,6 +212,10 @@ public:
     T getValue() const {
         return value;
     }   
+
+    std::shared_ptr<ValueValidator<T>> getValidator(){
+        return std::make_shared<ValueValidator<T>>(validator);
+    }
 
 private:
     std::string name;

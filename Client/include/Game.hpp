@@ -24,7 +24,7 @@ struct ApplicationData{
     std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>();
     std::shared_ptr<Config> config;
     std::shared_ptr<tgui::Gui> gui;
-    std::shared_ptr<ApplicationOverlay> overlay;
+    std::shared_ptr<ApplicationOverlay> app_overlay;
     int game_id = -1;
 };
 

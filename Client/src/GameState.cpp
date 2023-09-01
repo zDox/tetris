@@ -15,7 +15,7 @@ void GameState::init(){
 }
 
 void GameState::destroy(){
-    data->overlay->removeButton("leave_lobby");
+    data->app_overlay->removeButton("leave_lobby");
     data->gui->remove(main_panel);
     data->network_manager.setGameID(-1);
     data->network_manager.stop();
@@ -69,7 +69,7 @@ void GameState::initHandlers(){
             MessageType::PLAYER_LEAVE, 
             std::bind(&GameState::handlePlayerLeaveMessage, this, std::placeholders::_1));
 
-    data->overlay->addButton(8, "leave_lobby", "Leave Lobby", std::bind(&GameState::leaveLobby, this));
+    data->app_overlay->addButton(8, "leave_lobby", "Leave Lobby", std::bind(&GameState::leaveLobby, this));
 }
 
 void GameState::initUI(){
@@ -380,11 +380,11 @@ void GameState::handleInputs(){
         }
         if(event.type == sf::Event::KeyPressed){
             if(event.key.code == sf::Keyboard::Escape){
-                data->overlay->toggle();
+                data->app_overlay->toggle();
             }
         }
         if(event.type == sf::Event::Closed){
-            data->overlay->setEnabled(true);
+            data->app_overlay->setEnabled(true);
         }
     }
 };

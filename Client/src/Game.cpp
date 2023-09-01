@@ -18,9 +18,9 @@ bool Game::init(){
     data->gui->setWindow(*data->window);
 
     // Overlay init
-    data->overlay = std::make_shared<ApplicationOverlay>(data->gui);
-    data->overlay->init();
-    data->overlay->addButton(9, "exit_app", "Exit Application", std::bind(&Game::close, this));
+    data->app_overlay = std::make_shared<ApplicationOverlay>(data->gui);
+    data->app_overlay->init();
+    data->app_overlay->addButton(9, "exit_app", "Exit Application", std::bind(&Game::close, this));
 
     
     if(!data->network_manager.init()) return false;

@@ -4,6 +4,7 @@
 ApplicationOverlay::ApplicationOverlay(std::shared_ptr<tgui::Gui> t_gui):
     gui(t_gui){};
 
+
 void ApplicationOverlay::init(){
     int current_width = gui->getWindow()->getSize().x;
     main_panel = tgui::ScrollablePanel::create({
@@ -25,21 +26,6 @@ void ApplicationOverlay::init(){
 void ApplicationOverlay::destroy(){
     gui->remove(background_panel);
     gui->remove(main_panel);
-}
-
-
-void ApplicationOverlay::setEnabled(bool t_enabled){
-    enabled = t_enabled;
-    main_panel->setVisible(enabled);
-    background_panel->setVisible(enabled);
-    background_panel->moveToFront();
-    main_panel->moveToFront();
-
-}
-
-void ApplicationOverlay::toggle(){
-    enabled = !enabled;
-    setEnabled(enabled);
 }
 
 void ApplicationOverlay::pressButton(std::string identifier){

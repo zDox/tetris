@@ -8,6 +8,8 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
+#include "Overlay.hpp"
+
 struct ButtonSlot{
     int slot;
     tgui::Button::Ptr ptr;
@@ -16,7 +18,7 @@ struct ButtonSlot{
 };
 
 // Its main porpose is to enable States to add buttons 
-class ApplicationOverlay{
+class ApplicationOverlay : public Overlay{
 private:
     std::vector<ButtonSlot> buttons;
     std::shared_ptr<tgui::Gui> gui;
@@ -25,12 +27,8 @@ private:
     bool enabled = false;
 public:
     ApplicationOverlay(std::shared_ptr<tgui::Gui> t_gui);
-
-    void init();
-    void destroy();
-
-    void setEnabled(bool t_enabled);
-    void toggle();
+    void init() override;
+    void destroy() override;
 
     void pressButton(std::string identifier);
     void addButton(int slot, std::string identifier, std::string text, std::function<void()> func);

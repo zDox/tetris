@@ -146,11 +146,11 @@ void GameSelectState::handleInputs(){
         data->gui->handleEvent(event);
         if(event.type == sf::Event::KeyPressed){
             if(event.key.code == sf::Keyboard::Escape){
-                data->overlay->toggle();
+                data->app_overlay->toggle();
             }
         }
         if(event.type == sf::Event::Closed){
-            data->overlay->setEnabled(true);
+            data->app_overlay->setEnabled(true);
         }
     }
 }

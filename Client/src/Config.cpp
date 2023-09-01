@@ -134,13 +134,14 @@ void Config::loadSettingDetails(std::string file_path){
         std::shared_ptr<SettingWrapper> setting;
         switch (type){
             case SettingType::BOOL:
-                setting = std::make_shared<SettingWrapper>(Setting<bool>::parseSetting(root[key])); 
+                setting = std::make_shared<SettingWrapper>(Setting<bool>::parseSetting(key, root[key])); 
                 break;
             case SettingType::INT: 
-                setting = std::make_shared<SettingWrapper>(Setting<int>::parseSetting(root[key])); 
+                setting = std::make_shared<SettingWrapper>(Setting<int>::parseSetting(key, root[key])); 
+                std::get<Setting<int>>(*setting).setValue(2);
                 break;
             case SettingType::DOUBLE:
-                setting = std::make_shared<SettingWrapper>(Setting<double>::parseSetting(root[key])); 
+                setting = std::make_shared<SettingWrapper>(Setting<double>::parseSetting(key, root[key])); 
                 break;
             default:
                 continue;
